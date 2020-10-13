@@ -31,15 +31,28 @@
 class RealTimeVdoSLAM {
 
     public:
-        RealTimeVdoSLAM();
+        RealTimeVdoSLAM(ros::NodeHandle& n);
         ~RealTimeVdoSLAM();
 
 
     private:
-        ros::Subscriber image_subscriber;
-        ros::Publisher results;
 
-        
+        ros::NodeHandle handler;
+        SceneFlow sceneflow;
+
+        std::string output_video_topic;
+
+        image_transport::ImageTransport image_transport;
+        image_transport::Subscriber image_subscriber;
+        image_transport::Publisher results;
+
+        //shoudl be greyscale
+        bool is_first;
+        cv::Mat previous_image;
+
+        void image_callback(const sensor_msgs::ImageConstPtr& msg);
+
+
 
 };
 

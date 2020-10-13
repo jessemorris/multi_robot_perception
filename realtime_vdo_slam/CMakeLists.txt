@@ -158,8 +158,9 @@ include_directories(
 
 
 add_executable(${PROJECT_NAME}_node
-		src/realtime_vdo_slam.cpp
-		src/SceneFlow.cpp)
+		src/main.cpp
+		src/SceneFlow.cpp
+		src/RealTimeVdoSlam.cpp)
 
 
 

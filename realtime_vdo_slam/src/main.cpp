@@ -16,7 +16,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 
-#include "SceneFlow.hpp"
+#include "RealTimeVdoSlam.hpp"
 
 #include <string>
 #include <vector>
@@ -34,8 +34,7 @@ int main(int argc, char **argv)
     std::string image_topic;
     n.getParam("darknet_lidar_projection/image_topic", image_topic);
 
-    SceneFlow scene_flow;
-
+    RealTimeVdoSLAM real_time_vdom(n);
 
     // ros::Subscriber image_depth_sub = n.subscribe<lidar_camera_projection::ImagePixelDepth>(image_depth_topic, 10, &DarknetLidarFusion::image_depth_call_back, &darknet_lidar_fusion);
     // ros::Subscriber bounding_box_sub = n.subscribe<darknet_ros_msgs::BoundingBoxes>(bounding_box_topic, 10, &DarknetLidarFusion::bounding_box_call_back, &darknet_lidar_fusion);
