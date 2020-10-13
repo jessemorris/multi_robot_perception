@@ -7,18 +7,18 @@
 **/
 
 
-#include "Tracking.h"
+#include "obj_slam.hpp"
 
 #include <Eigen/Core>
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui.hpp>
-#include <cvplot/cvplot.h>
+// #include <cvplot/cvplot.h>
 
-#include"Converter.h"
-#include"Map.h"
-#include"Optimizer.h"
+// #include"Converter.h"
+// #include"Map.h"
+// #include"Optimizer.h"
 
 #include<iostream>
 #include<string>

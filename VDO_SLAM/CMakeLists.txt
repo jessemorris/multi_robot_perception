@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
-project(ObjSLAM)
+project(vdo_slam)
+
+set(LIB_NAME ${PROJECT_NAME})
+set(PACKAGE_LIB_PREFIX "obj_slam")
+set(LIB_NAME ${PACKAGE_LIB_PREFIX}${PROJECT_NAME})
+
+
 
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
@@ -49,22 +55,38 @@ ${EIGEN3_INCLUDE_DIR}
 ${CSPARSE_INCLUDE_DIR}
 )
 
+set(PUBLIC_HEADER_FILES
+    include/${PROJECT_NAME}/Converter.h
+    include/${PROJECT_NAME}/Frame.h
+    include/${PROJECT_NAME}/Map.h
+    include/${PROJECT_NAME}/Optimizer.h
+    include/${PROJECT_NAME}/ORBextractor.h
+    include/${PROJECT_NAME}/System.h
+    include/${PROJECT_NAME}/Tracking.h
+
+    include/${PROJECT_NAME}/cvplot/color.h
+    include/${PROJECT_NAME}/cvplot/cvplot.h
+    include/${PROJECT_NAME}/cvplot/figure.h
+    include/${PROJECT_NAME}/cvplot/highgui.h
+    include/${PROJECT_NAME}/cvplot/window.h
+)
+
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 add_library(${PROJECT_NAME} SHARED
-src/System.cc
-src/Tracking.cc
-src/ORBextractor.cc
-src/Converter.cc
-src/Map.cc
-src/Optimizer.cc
-src/Frame.cc
+   src/System.cc
+   src/Tracking.cc
+   src/ORBextractor.cc
+   src/Converter.cc
+   src/Map.cc
+   src/Optimizer.cc
+   src/Frame.cc
 
-src/cvplot/color.cc
-src/cvplot/figure.cc
-src/cvplot/highgui.cc
-src/cvplot/window.cc
-src/cvplot/internal.h
+   src/cvplot/color.cc
+   src/cvplot/figure.cc
+   src/cvplot/highgui.cc
+   src/cvplot/window.cc
+   src/cvplot/internal.h
 )
 
 target_link_libraries(
@@ -78,6 +100,8 @@ ${CSPARSE_LIBRARY}
 ${PROJECT_SOURCE_DIR}/dependencies/g2o/lib/libg2o.so
 )
 
+# Configure target warnings (PRIVATE doesn't pass on options to targets linking to target)
+target_compile_options(${LIB_NAME} PRIVATE -Wno-psabi)
 
 # Build example
 
@@ -86,5 +110,22 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example)
 add_executable(vdo_slam
 example/vdo_slam.cc)
 target_link_libraries(vdo_slam ${PROJECT_NAME})
+
+
+
+# Install library as an export target
+install(TARGETS ${LIB_NAME}
+        EXPORT ${PROJECT_NAME}-export
+        PUBLIC_HEADER DESTINATION include/${PACKAGE_NAME}/${PROJECT_NAME}
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+)
+
+
+# Install Header Files
+install(FILES ${PUBLIC_HEADER_FILES} DESTINATION include/${PACKAGE_NAME}/${PROJECT_NAME})
+install(FILES include/${PROJECT_NAME}.hpp DESTINATION include/${PACKAGE_NAME})
+
 
 

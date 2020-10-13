@@ -6,7 +6,7 @@
 *
 **/
 
-#include "Map.h"
+#include "obj_slam/Map.h"
 
 namespace VDO_SLAM
 {

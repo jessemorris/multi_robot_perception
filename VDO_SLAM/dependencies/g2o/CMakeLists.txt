@@ -1,7 +1,12 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
-PROJECT(g2o)
+PROJECT(g2o_vdo)
+
+set(PACKAGE_LIB_PREFIX "obj_slam")
+set(LIB_NAME ${PACKAGE_LIB_PREFIX}${PROJECT_NAME})
+
+
 
 SET(g2o_C_FLAGS)
 SET(g2o_CXX_FLAGS)
@@ -12,6 +17,7 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF()
 
 MESSAGE(STATUS "BUILD TYPE:" ${CMAKE_BUILD_TYPE})
+message("G20 source dir" ${g2o_SOURCE_DIR})
 
 SET (G2O_LIB_TYPE SHARED)
 
@@ -93,7 +99,7 @@ ${G2O_EIGEN3_INCLUDE})
 
 
 # Include the subdirectories
-ADD_LIBRARY(g2o ${G2O_LIB_TYPE}
+ADD_LIBRARY(g2o_vdo ${G2O_LIB_TYPE}
 
 #types
 g2o/types/eigen_types_new.h
@@ -230,4 +236,15 @@ g2o/solvers/g2o_csparse_api.h
 g2o/solvers/linear_solver_csparse.h
 )
 
-target_link_libraries(g2o ${CSPARSE_LIBRARY})
+target_link_libraries(g2o_vdo ${CSPARSE_LIBRARY})
+
+# Install library as an export target
+install(TARGETS ${LIB_NAME}
+        EXPORT ${PROJECT_NAME}-export
+        PUBLIC_HEADER DESTINATION include/${PACKAGE_NAME}/${PROJECT_NAME}
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin)
+
+
+

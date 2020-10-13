@@ -1,4 +1,4 @@
-#include "cvplot/color.h"
+#include "opj_slam/cvplot/color.h"
 
 #include <cmath>
 #include <map>
