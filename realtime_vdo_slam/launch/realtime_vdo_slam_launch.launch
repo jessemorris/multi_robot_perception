@@ -1,0 +1,8 @@
+<launch>
+<node pkg="realtime_vdo_slam" type="realtime_vdo_slam_node" name="realtime_vdo_slam" output="screen">
+  <!-- set a private parameter for the node -->
+  <param name="image_topic" value="/gmsl/A0/image_color" />
+  <!-- <param name="darknet_bounding_box_topic" value="/darknet_ros/bounding_boxes" /> -->
+  
+</node>
+</launch>
