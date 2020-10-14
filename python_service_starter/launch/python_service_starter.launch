@@ -1,0 +1,8 @@
+
+<launch>
+	# Parameters
+
+	# Launch the node
+	<node pkg="python_service_starter" type="python_service_starter" name="python_service_starter" output="screen">
+	</node>
+</launch>
