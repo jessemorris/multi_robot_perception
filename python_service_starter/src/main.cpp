@@ -12,6 +12,7 @@ int main(int argc, char ** argv) {
     ros::init(argc, argv, "python_service_starter");
 
     PythonServiceStarter python_service_starter;
+    python_service_starter.init_flow_net();
     ros::spin();
 
 }

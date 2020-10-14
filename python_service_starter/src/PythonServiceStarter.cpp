@@ -2,6 +2,7 @@
 #include <string>
 #include <thread>
 #include <sstream>
+#include <memory>
 
 #include "PythonServiceStarter.hpp"
 
@@ -11,9 +12,9 @@ PythonServiceStarter::PythonServiceStarter() :
     nh("~"),
     flow_status(false),
     run_output_threads(true),
-    python_flow_net_full_path("/home/jesse/Code/src/ros/src/multi_robot_perception/FlowNetPytorch/")
+    python_flow_net_full_path("/home/jesse/Code/src/ros/src/multi_robot_perception/FlowNetPytorch/flow_net.py")
 {
-    start_flow_net_service = nh.advertiseService("start_flow_net", &PythonServiceStarter::init_flow_net, this);
+    // start_flow_net_service = nh.advertiseService("start_flow_net", &PythonServiceStarter::init_flow_net, this);
 }
 
 PythonServiceStarter::~PythonServiceStarter() {
@@ -34,22 +35,60 @@ PythonServiceStarter::~PythonServiceStarter() {
     // }
 }
 
-bool PythonServiceStarter::init_flow_net(python_service_starter::StartFlowNet::Request& request, python_service_starter::StartFlowNet::Response& response) {
+// bool PythonServiceStarter::init_flow_net(python_service_starter::StartFlowNet::Request& request, python_service_starter::StartFlowNet::Response& response) {
+bool PythonServiceStarter::init_flow_net() {
+    // if (request.start) {
 
-    if (request.start) {
-        ROS_INFO_STREAM("Starting Python IK script");
-        std::string command = "python3 " + python_flow_net_full_path;
-        ROS_INFO_STREAM("executing command: " << command);
-        pipe_in_IK = popen(command.c_str(), "r");
-        flow_status = true;
 
-        ros::Duration(3).sleep();
+        int pipe_py_to_cpp[2];
 
-        char buff[255];
-        // fscanf(pipe_in_IK, "%s", buff);
-        //
-        // ROS_INFO_STREAM("file output: " << std::string(buff));
-    }
+        if (::pipe(pipe_py_to_cpp)) {
+            ROS_WARN_STREAM("Could not open pipes");
+            return false;
+        }
+        else {
+            pid_t pid = fork();
+
+            if (pid == 0) {
+                ROS_INFO_STREAM("Setting up env variables for program flow_net.py" );
+                ::close(pipe_py_to_cpp[0]);
+
+                std::string program_name("flow_net");
+                std::ostringstream oss;
+
+                ROS_INFO_STREAM(pipe_py_to_cpp[1]);
+
+                // oss << "export " << program_name << "_ " << "PY_WRITE_FD=" << pipe_py_to_cpp[1] << " && "
+                //     << "export PYTHONUNBUFFERED=true && " // Force stdin, stdout and stderr to be totally unbuffered.
+                //     << "python3 " << python_flow_net_full_path;
+                setenv(std::string(program_name + "_" + "PY_WRITE_FD").c_str(), std::to_string(pipe_py_to_cpp[1]).c_str(), 1);
+                setenv("PYTHONUNBUFFERED", "true", 1);
+                oss << "python3 " << python_flow_net_full_path;
+
+
+                ::system(oss.str().c_str());
+                ::close(pipe_py_to_cpp[1]);
+                flow_status = true;
+                ros::Duration(3).sleep();
+            }
+            else if (pid < 0) {
+                ROS_WARN_STREAM("Program forking failed");
+                return false;
+            }
+            else {
+
+                pipe_comms_manager = std::make_unique<PipeCommsManager>("flow_net", pipe_py_to_cpp, pid);
+                ::close(pipe_py_to_cpp[1]);
+
+                pipe_comms_manager->run_listener();
+                
+
+            }
+
+                
+        }
+
+    // }
     return true;
 }
 
