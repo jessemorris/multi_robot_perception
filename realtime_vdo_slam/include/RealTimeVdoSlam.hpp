@@ -39,8 +39,6 @@ class RealTimeVdoSLAM {
 
         ros::NodeHandle handler;
         SceneFlow sceneflow;
-        int scene_flow_count;
-        int scene_flow_count_max;
 
         std::string output_video_topic;
 

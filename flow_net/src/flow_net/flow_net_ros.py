@@ -106,11 +106,12 @@ class FlowNetRos():
         input_tensor = input_tensor.to(self.device)
         # compute output
         output_tensor = self.model(input_tensor)
-        # print(output_tensor.shape)
-        # if args.upsampling is not None:
-        #     output = F.interpolate(output, size=img1.size()[-2:], mode=args.upsampling, align_corners=False)
+
+        #choices=['nearest', 'bilinear']
+        output_tensor = F.interpolate(output_tensor, size=previous_image_tensor.size()[-2:], mode='bilinear', align_corners=False)
         rgb_flow = flow2rgb(self.div_flow * output_tensor, max_value=self.max_flow)
         output_image = (rgb_flow * 255).astype(np.uint8).transpose(1,2,0)
+
         # print(output_image.shape)
 
         # bgr_flow = flow2bgr(self.div_flow * output_tensor, max_value=self.max_flow)

@@ -58,9 +58,6 @@ bool PythonServiceStarter::init_flow_net() {
 
                 ROS_INFO_STREAM(pipe_py_to_cpp[1]);
 
-                // oss << "export " << program_name << "_ " << "PY_WRITE_FD=" << pipe_py_to_cpp[1] << " && "
-                //     << "export PYTHONUNBUFFERED=true && " // Force stdin, stdout and stderr to be totally unbuffered.
-                //     << "python3 " << python_flow_net_full_path;
                 setenv(std::string(program_name + "_" + "PY_WRITE_FD").c_str(), std::to_string(pipe_py_to_cpp[1]).c_str(), 1);
                 setenv("PYTHONUNBUFFERED", "true", 1);
                 oss << "python3 " << python_flow_net_full_path;

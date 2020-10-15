@@ -36,10 +36,7 @@ bool SceneFlow::analyse_image(cv::Mat& current_image,cv::Mat& previous_image, cv
             ROS_ERROR_STREAM("Flow net service returned failed success");
             return false;
         }
-
-
-
-
+        
     }
     else {
         ROS_ERROR_STREAM("Failed to call flow net service");
