@@ -50,7 +50,7 @@ bool PythonServiceStarter::init_flow_net() {
             pid_t pid = fork();
 
             if (pid == 0) {
-                ROS_INFO_STREAM("Setting up env variables for program flow_net.py" );
+                ROS_INFO_STREAM("Setting up env variables for program flow_net_interface.py" );
                 ::close(pipe_py_to_cpp[0]);
 
                 std::string program_name("flow_net");

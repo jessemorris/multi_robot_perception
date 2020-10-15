@@ -35,8 +35,6 @@ class AverageMeter(object):
 def flow2rgb(flow_map, max_value):
     flow_map = flow_map.squeeze(0)
     flow_map_np = flow_map.detach().cpu().numpy()
-    print(flow_map_np.shape)
-    print(type(flow_map_np))
     _, h, w = flow_map_np.shape
     flow_map_np[:,(flow_map_np[0] == 0) & (flow_map_np[1] == 0)] = float('nan')
 
@@ -53,8 +51,6 @@ def flow2rgb(flow_map, max_value):
 def flow2bgr(flow_map, max_value):
     flow_map = flow_map.squeeze(0)
     flow_map_np = flow_map.detach().cpu().numpy()
-    print(flow_map_np.shape)
-    print(type(flow_map_np))
     _, h, w = flow_map_np.shape
     flow_map_np[:,(flow_map_np[0] == 0) & (flow_map_np[1] == 0)] = float('nan')
 

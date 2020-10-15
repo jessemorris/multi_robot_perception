@@ -71,6 +71,7 @@ class FlowNetRos():
 
         #set up service calls
         self.flow_net_service = rospy.Service("flow_net_service",FlowNet, self.flow_net_service_callback)
+        self.flow_net_test_publisher = rospy.Publisher('flow_net/test', Image, queue_size=10)
         self.log_to_ros("Service call ready")
 
     def log_to_ros(self, msg):
@@ -85,6 +86,10 @@ class FlowNetRos():
         try:
             previous_image = ros_numpy.numpify(req.previous_image)
             current_image = ros_numpy.numpify(req.current_image)
+
+            image = ros_numpy.msgify(Image, previous_image, encoding='rgb8')
+            image.header.frame_id = "base_link"
+            self.flow_net_test_publisher.publish(image)
 
             # previous_image = self.bridge.imgmsg_to_cv2(req.previous_image, "bgr8")
             # current_image = self.bridge.imgmsg_to_cv2(req.current_image, "bgr8")
@@ -111,7 +116,7 @@ class FlowNetRos():
         # bgr_flow = flow2bgr(self.div_flow * output_tensor, max_value=self.max_flow)
         # output_image = (bgr_flow * 255).astype(np.uint8).transpose(1,2,0)
 
-        self.log_to_ros(str(output_image.shape))
+        # self.log_to_ros(str(output_image.shape))
 
         #note this is RGB!
         # output_image_msg = self.bridge.cv2_to_imgmsg(output_image, "rgb8")
