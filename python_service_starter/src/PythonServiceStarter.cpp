@@ -12,7 +12,7 @@ PythonServiceStarter::PythonServiceStarter() :
     nh("~"),
     flow_status(false),
     run_output_threads(true),
-    python_flow_net_full_path("/home/jesse/Code/src/ros/src/multi_robot_perception/FlowNetPytorch/flow_net.py")
+    python_flow_net_full_path("/home/jesse/Code/src/ros/src/multi_robot_perception/flow_net/scripts/flow_net_interface.py")
 {
     // start_flow_net_service = nh.advertiseService("start_flow_net", &PythonServiceStarter::init_flow_net, this);
 }
