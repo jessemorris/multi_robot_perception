@@ -6,7 +6,7 @@
 
 
 SceneFlow::SceneFlow(ros::NodeHandle& n) :
-        nh(n) 
+        nh(n)
     {
       
     flow_net_client  = n.serviceClient<flow_net::FlowNet>("flow_net_service");

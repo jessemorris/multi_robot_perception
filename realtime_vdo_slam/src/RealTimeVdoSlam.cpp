@@ -16,6 +16,10 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     handler.param<std::string>("/realtime_vdo_slam/info_msg_suffix", info_msg_suffix, "/camera_info");
 
     handler.param<std::string>("/realtime_vdo_slam/camera_selection", camera_selection, "A0");
+
+
+    //sceneflow params
+    handler.param<bool>("/realtime_vdo_slam/apply_undistortion", undistord_images, false);
     ROS_INFO_STREAM("camera selection " << camera_selection);
 
     // gmsl/<>/image_colour
@@ -25,29 +29,22 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     ROS_INFO_STREAM("video topic " << output_video_topic);
     ROS_INFO_STREAM("camera info topic " << camea_info_topic);
 
+    camera_information.topic = output_video_topic;
+
         
     auto info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camea_info_topic, handler, ros::Duration(3));
-
-    //this is so dumb but trying to avoid boost
-    std::vector<double> camera_intrinsic_vector;
-
-    //length of intrinsic matrix is 9
-    for (int i = 0; i < 9; i++) {
-        camera_intrinsic_vector.push_back(info->K[i]);
-    }
-    int count = 0;
-    for(int i = 0; i < 3; i++) {
-        std::vector<double> row;
-        for(int j = 0; j < 3; j++) {
-            row.push_back(camera_intrinsic_vector[count]);
-            count++;
-        }
-        camera_intrinsic_matrix.push_back(row);
-    }
-
-    camera_distortion_matrix = info->D;
     ROS_INFO_STREAM("Received camera info");
 
+    camera_information.intrinsic = (cv::Mat_<double>(3,3) << info->K[0], info->K[1], info->K[2], 
+                                                             info->K[3], info->K[4], info->K[5], 
+                                                             info->K[6], info->K[7], info->K[8]);
+    ROS_INFO_STREAM("Set camera intrinsics");
+
+    camera_information.distortion = cv::Mat_<double>(1,info->D.size());
+    memcpy(camera_information.distortion.data, info->D.data(), info->D.size()*sizeof(double));
+    ROS_INFO_STREAM("Set camera distortion");
+
+    
 
     // handler.param<int>("realtime_vdo_slam/scene_flow_delay_count", scene_flow_count_max, 5);
 
@@ -66,8 +63,12 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     cv::Mat image;
 
 
-
-    cv::undistort(distored, image, camera_intrinsic_matrix, camera_distortion_matrix);
+    if (undistord_images) {
+        cv::undistort(distored, image, camera_information.intrinsic, camera_information.distortion);
+    }
+    else {
+        image = distored;
+    }
     cv::Mat flow_matrix;
 
     if (is_first) {

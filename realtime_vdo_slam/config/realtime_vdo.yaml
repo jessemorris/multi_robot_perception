@@ -16,3 +16,7 @@ camera_topics_prefixes:
   gmsl_centre_link: A0
   gmsl_right_link: A2
   gmsl_back_link: A3
+
+
+#options for images
+apply_undistortion: False

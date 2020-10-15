@@ -29,6 +29,13 @@
 #include <algorithm>
 #include <map>
 
+//wrapper for camera information
+struct CameraInformation {
+    std::string topic;
+    cv::Mat intrinsic;
+    cv::Mat distortion;
+};
+
 
 class RealTimeVdoSLAM {
 
@@ -47,12 +54,11 @@ class RealTimeVdoSLAM {
         ros::NodeHandle handler;
         SceneFlow sceneflow;
 
+        //evnetually become list when i have more than one camera
         std::string output_video_topic;
         std::string camea_info_topic;
-        // sensor_msgs::CameraInfo camera_info;
-        std::vector<std::vector<double>> camera_intrinsic_matrix;
-        std::vector<double> camera_distortion_matrix;
-
+        CameraInformation camera_information;
+        
 
         image_transport::ImageTransport image_transport;
         image_transport::Subscriber image_subscriber;
@@ -60,6 +66,10 @@ class RealTimeVdoSLAM {
 
         bool is_first;
         cv::Mat previous_image;
+
+        
+        //if set to true cv::undistort will be applied to the images
+        bool undistord_images;
 
         void image_callback(const sensor_msgs::ImageConstPtr& msg);
 
