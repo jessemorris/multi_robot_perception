@@ -8,6 +8,8 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/CameraInfo.h>
+
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
@@ -36,11 +38,21 @@ class RealTimeVdoSLAM {
 
 
     private:
+        std::string topic_prefix;
+        std::string camera_suffix;
+        std::string info_msg_suffix;
+
+        std::string camera_selection;
 
         ros::NodeHandle handler;
         SceneFlow sceneflow;
 
         std::string output_video_topic;
+        std::string camea_info_topic;
+        // sensor_msgs::CameraInfo camera_info;
+        std::vector<std::vector<double>> camera_intrinsic_matrix;
+        std::vector<double> camera_distortion_matrix;
+
 
         image_transport::ImageTransport image_transport;
         image_transport::Subscriber image_subscriber;

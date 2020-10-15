@@ -1,1 +1,1 @@
-Testing for running vdoslam in realtime without cameras from datasets
+Testing for running vdoslam in realtime with cameras from datasets

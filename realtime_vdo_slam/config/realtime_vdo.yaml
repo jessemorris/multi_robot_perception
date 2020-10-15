@@ -1,1 +1,18 @@
 scene_flow_delay_count: 1
+
+#taken from multicamera lidar config
+topic_prefix: "/gmsl/"
+camera_suffix: "/image_color"
+info_msg_suffix: "/camera_info"
+
+#for now so I can just select one camera
+camera_selection: "A0"
+
+
+camera_topics_prefixes:
+  gmsl_left_side_link: B0
+  gmsl_right_side_link: B1
+  gmsl_left_link: A1
+  gmsl_centre_link: A0
+  gmsl_right_link: A2
+  gmsl_back_link: A3

@@ -6,7 +6,7 @@
     		<rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg config_file)"/>
 
   <!-- set a private parameter for the node -->
-  <param name="image_topic" value="/gmsl/A0/image_color" />
+  <!-- <param name="image_topic" value="/gmsl/A0/image_color" /> -->
   <!-- <param name="darknet_bounding_box_topic" value="/darknet_ros/bounding_boxes" /> -->
   
 </node>
