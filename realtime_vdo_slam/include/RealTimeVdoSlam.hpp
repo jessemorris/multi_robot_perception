@@ -46,7 +46,6 @@ class RealTimeVdoSLAM {
         image_transport::Subscriber image_subscriber;
         image_transport::Publisher results;
 
-        //shoudl be greyscale
         bool is_first;
         cv::Mat previous_image;
 

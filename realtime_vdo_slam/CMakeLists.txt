@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 	tf2_sensor_msgs
 	image_transport
 	lidar_camera_projection
+	flow_net
 	visualization_msgs
 	message_generation
 	darknet_ros_msgs
@@ -139,6 +140,7 @@ catkin_package(
 	nav_msgs
 	sensor_msgs
 	cv_bridge
+	flow_net
 	message_runtime
 	DEPENDS system_lib
 )

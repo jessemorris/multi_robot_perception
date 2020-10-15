@@ -10,6 +10,8 @@
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+#include <flow_net/FlowNet.h>
+
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/PoseStamped.h>
 
@@ -22,11 +24,15 @@
 class SceneFlow {
 
     public:
-        SceneFlow() {};
+        SceneFlow(ros::NodeHandle& n);
         ~SceneFlow() {};
 
 
-        void analyse_image(cv::Mat& src, cv::Mat& dst);
+        bool analyse_image(cv::Mat& current_image,cv::Mat& previous_image, cv::Mat& dst);
+
+    private:
+        ros::NodeHandle nh;
+        ros::ServiceClient flow_net_client;
 
 
         

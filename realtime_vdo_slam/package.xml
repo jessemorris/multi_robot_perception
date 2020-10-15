@@ -61,6 +61,8 @@
   <depend>visualization_msgs</depend>
   <depend>darknet_ros_msgs</depend>
   <depend>pcl_ros</depend>
+  <depend>flow_net</depend>
+
 
   <depend>sensor_msgs</depend>
   <depend>rosbag</depend>
