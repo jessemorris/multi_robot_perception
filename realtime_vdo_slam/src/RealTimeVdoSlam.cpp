@@ -43,6 +43,7 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     camera_information.distortion = cv::Mat_<double>(1,info->D.size());
     memcpy(camera_information.distortion.data, info->D.data(), info->D.size()*sizeof(double));
     ROS_INFO_STREAM("Set camera distortion");
+    ROS_INFO_STREAM("UnDistorting images " << undistord_images);
 
     
 
@@ -76,7 +77,6 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         is_first = false;
         return;
     }
-    // else if(scene_flow_count >= scene_flow_count_max) {
     else {
         cv::Mat current_image = image;
         bool result = sceneflow.analyse_image(current_image, previous_image, flow_matrix);
@@ -84,10 +84,10 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         if (result) {
             std_msgs::Header header = std_msgs::Header();
 
-            //TODO: proper headers
-            header.frame_id = "base_link";
-            header.stamp = ros::Time::now();
-            sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", flow_matrix).toImageMsg();
+            // //TODO: proper headers
+            // header.frame_id = "base_link";
+            // header.stamp = ros::Time::now();
+            sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "rgb8", flow_matrix).toImageMsg();
             results.publish(img_msg);
         }
         else {

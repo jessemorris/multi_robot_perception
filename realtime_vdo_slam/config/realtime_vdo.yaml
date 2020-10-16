@@ -19,4 +19,4 @@ camera_topics_prefixes:
 
 
 #options for images
-apply_undistortion: False
+apply_undistortion: True
