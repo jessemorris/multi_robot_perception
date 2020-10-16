@@ -39,6 +39,7 @@ srv/_*.py
 *.pyc
 qtcreator-*
 *.user
+*.ipynb
 
 /planning/cfg
 /planning/docs
