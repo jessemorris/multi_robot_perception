@@ -41,6 +41,11 @@ qtcreator-*
 *.user
 *.ipynb
 
+**/mask_rcnn/build/*
+**/mask_rcnn/assets
+**/mask_rcnn/*.egg-info
+**/mask_rcnn/data/*
+
 /planning/cfg
 /planning/docs
 /planning/src
