@@ -22,6 +22,8 @@ import IPython.display
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../")
+import random as rng
+rng.seed(12345)
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -83,7 +85,7 @@ def apply_mask(image, mask, color, alpha=0.5):
 
 
 def display_instances(image, boxes, masks, class_ids, class_names,
-                      scores=None, title="",
+                      scores, title="",
                       figsize=(16, 16), ax=None,
                       show_mask=True, show_bbox=True,
                       colors=None, captions=None):
@@ -99,7 +101,6 @@ def display_instances(image, boxes, masks, class_ids, class_names,
     colors: (optional) An array or colors to use with each object
     captions: (optional) A list of strings to use as captions for each object
     """
-    print("Displaying Instances")
     # Number of instances
     N = boxes.shape[0]
     if not N:
@@ -114,8 +115,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
     #     auto_show = True
 
     # Generate random colors
-    image = image.copy()
-    colors = colors or random_colors(N)
+    # image = image.copy()
 
     # Show area outside image boundaries.
     # height, width = image.shape[:2]
@@ -126,30 +126,30 @@ def display_instances(image, boxes, masks, class_ids, class_names,
 
     masked_image = image.astype(np.uint32).copy()
     for i in range(N):
-        color = colors[i]
+        class_id = class_ids[i]
+        score = scores[i]
+
+        if score < 0.85:
+            continue
+        label = class_names[class_id]
+
+        color = (rng.randint(0,256), rng.randint(0,256), rng.randint(0,256))
 
         # Bounding box
         if not np.any(boxes[i]):
             # Skip this instance. Has no bbox. Likely lost in image cropping.
             continue
         y1, x1, y2, x2 = boxes[i]
-        if show_bbox:
-            # p = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2,
-            #                     alpha=0.7, linestyle="dashed",
-            #                     edgecolor=color, facecolor='none')
-            cv2.rectangle(image, (x1,y1), (x2 - x1, y2 - y1), color, 2)
-            # ax.add_patch(p)
+        #convert from bottom left, top right to top left bottom right
+        top_left = (x1, y2)
+        bottom_right = (x2,y1)
+        cv2.rectangle(image, top_left, bottom_right, color, 2)
+        # ax.add_patch(p)
 
-        # Label
-        if not captions:
-            class_id = class_ids[i]
-            score = scores[i] if scores is not None else None
-            label = class_names[class_id]
-            caption = "{} {:.3f}".format(label, score) if score else label
-            print("Caption {}".format(caption))
-            cv2.putText(image, caption, (x1,y1+8), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 2, cv2.LINE_AA)
-        else:
-            caption = captions[i]
+        caption = "{} {:.3f}".format(label, score) if score else label
+        print("Caption {}".format(caption))
+        cv2.putText(image, caption, (x1,y1+8), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1, cv2.LINE_AA)
+       
         # ax.text(x1, y1 + 8, caption,
         #         color='w', size=11, backgroundcolor="none")
 
@@ -168,9 +168,6 @@ def display_instances(image, boxes, masks, class_ids, class_names,
         for verts in contours:
             # Subtract the padding and flip (y, x) to (x, y)
             verts = np.fliplr(verts) - 1
-            print(type(verts))
-            print(verts.shape)
-            print(len(verts))
             # p = Polygon(verts, facecolor="none", edgecolor=color)
             # cv2.fillPoly(image, [verts], (255, 255, 255), 8)
             verts = np.array(verts).reshape((-1,1,2)).astype(np.int32)
