@@ -23,6 +23,7 @@
 
 
 #include "SceneFlow.hpp"
+#include "MaskRcnnInterface.hpp"
 
 #include <string>
 #include <vector>
@@ -53,6 +54,11 @@ class RealTimeVdoSLAM {
 
         ros::NodeHandle handler;
         SceneFlow sceneflow;
+        MaskRcnnInterface mask_rcnn_interface;
+
+        bool run_scene_flow;
+        bool run_mask_rcnn;
+
 
         //evnetually become list when i have more than one camera
         std::string output_video_topic;

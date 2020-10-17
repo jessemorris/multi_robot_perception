@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 	image_transport
 	lidar_camera_projection
 	flow_net
+	mask_rcnn
 	visualization_msgs
 	message_generation
 	darknet_ros_msgs
@@ -141,6 +142,7 @@ catkin_package(
 	sensor_msgs
 	cv_bridge
 	flow_net
+	mask_rcnn
 	message_runtime
 	DEPENDS system_lib
 )
@@ -162,6 +164,7 @@ include_directories(
 add_executable(${PROJECT_NAME}_node
 		src/main.cpp
 		src/SceneFlow.cpp
+		src/MaskRcnnInterface.cpp
 		src/RealTimeVdoSlam.cpp)
 
 

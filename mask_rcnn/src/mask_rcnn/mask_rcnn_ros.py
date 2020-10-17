@@ -29,6 +29,7 @@ from mrcnn.visualize import display_instances
 from sensor_msgs.msg import Image
 import ros_numpy
 import rospy
+import struct
 
 from mask_rcnn.srv import MaskRcnn, MaskRcnnResponse
 
@@ -149,7 +150,7 @@ class MaskRcnnRos:
 
         #set up service calls
         self.mask_rcnn_service = rospy.Service("mask_rcnn_service",MaskRcnn, self.mask_rcnn_service_callback)
-        self.flow_net_test_publisher = rospy.Publisher('mask_rcnn/test', Image, queue_size=10)
+        self.mask_rcnn_test_publisher = rospy.Publisher('mask_rcnn/test', Image, queue_size=10)
         self.log_to_ros("Service call ready")
 
     def log_to_ros(self, msg):
@@ -167,6 +168,8 @@ class MaskRcnnRos:
             response_image = self.analyse_image(input_image)
 
             output_image_msg = ros_numpy.msgify(Image, response_image, encoding='rgb8')
+            self.mask_rcnn_test_publisher.publish(output_image_msg)
+
             response.success = True
             response.output_image = output_image_msg
             return response
@@ -189,29 +192,29 @@ class MaskRcnnRos:
 
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     
 
-    rcnn = MaskRcnnRos()
-    # image = cv2.imread("/home/jesse/Downloads/dash_cam_image.png", cv2.IMREAD_UNCHANGED)
-    cap = cv2.VideoCapture(0)
+#     rcnn = MaskRcnnRos()
+#     # image = cv2.imread("/home/jesse/Downloads/dash_cam_image.png", cv2.IMREAD_UNCHANGED)
+#     cap = cv2.VideoCapture(0)
 
-    while(True):
-        # Capture frame-by-frame
-        ret, frame = cap.read()
-        print("Reading Frame")
-        resized = cv2.resize(frame, (640,480), interpolation = cv2.INTER_AREA) 
-        result = rcnn.analyse_image(resized)
+#     while(True):
+#         # Capture frame-by-frame
+#         ret, frame = cap.read()
+#         print("Reading Frame")
+#         resized = cv2.resize(frame, (640,480), interpolation = cv2.INTER_AREA) 
+#         result = rcnn.analyse_image(resized)
 
-        # Our operations on the frame come here
-        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#         # Our operations on the frame come here
+#         # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        # Display the resulting frame
-        cv2.imshow('frame',result)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+#         # Display the resulting frame
+#         cv2.imshow('frame',result)
+#         if cv2.waitKey(1) & 0xFF == ord('q'):
+#             break
 
-# When everything done, release the capture
-    cap.release()
-    cv2.destroyAllWindows()
+# # When everything done, release the capture
+#     cap.release()
+#     cv2.destroyAllWindows()
 

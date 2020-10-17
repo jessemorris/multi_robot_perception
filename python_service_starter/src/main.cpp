@@ -13,6 +13,7 @@ int main(int argc, char ** argv) {
 
     PythonServiceStarter python_service_starter;
     python_service_starter.init_flow_net();
+    python_service_starter.init_mask_rcnn();
     ros::spin();
 
 }

@@ -16,6 +16,7 @@ class PythonServiceStarter {
 
         // bool init_flow_net(python_service_starter::StartFlowNet::Request& request, python_service_starter::StartFlowNet::Response& response);
         bool init_flow_net();
+        bool init_mask_rcnn();
         //TODO
         // bool shutdown_services();
   
@@ -29,8 +30,11 @@ class PythonServiceStarter {
         // ros::ServiceServer start_flow_net_service;
 
         std::string python_flow_net_full_path;
+        std::string python_mask_rcnn_full_path;
 
-        std::unique_ptr<PipeCommsManager> pipe_comms_manager;
+        std::unique_ptr<PipeCommsManager> pipe_comms_manager_flow_net;
+        std::unique_ptr<PipeCommsManager> pipe_comms_manager_mask_rcnn;
+
 
 
 

@@ -6,6 +6,7 @@
 RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
         handler(n),
         sceneflow(n),
+        mask_rcnn_interface(n),
         image_transport(n),
         is_first(true)
 {
@@ -18,8 +19,10 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     handler.param<std::string>("/realtime_vdo_slam/camera_selection", camera_selection, "A0");
 
 
-    //sceneflow params
     handler.param<bool>("/realtime_vdo_slam/apply_undistortion", undistord_images, false);
+    handler.param<bool>("/realtime_vdo_slam/run_mask_rcnn", run_mask_rcnn, false);
+    handler.param<bool>("/realtime_vdo_slam/run_flow_net", run_scene_flow, false);
+
     ROS_INFO_STREAM("camera selection " << camera_selection);
 
     // gmsl/<>/image_colour
@@ -43,7 +46,7 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     camera_information.distortion = cv::Mat_<double>(1,info->D.size());
     memcpy(camera_information.distortion.data, info->D.data(), info->D.size()*sizeof(double));
     ROS_INFO_STREAM("Set camera distortion");
-    ROS_INFO_STREAM("UnDistorting images " << undistord_images);
+    ROS_INFO_STREAM("Un-distorting images " << undistord_images);
 
     
 
@@ -70,7 +73,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     else {
         image = distored;
     }
-    cv::Mat flow_matrix;
+    cv::Mat flow_matrix, segmentation_mask;
 
     if (is_first) {
         previous_image = image;
@@ -79,19 +82,38 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     }
     else {
         cv::Mat current_image = image;
-        bool result = sceneflow.analyse_image(current_image, previous_image, flow_matrix);
+        if (run_scene_flow) {
+            bool result = sceneflow.analyse_image(current_image, previous_image, flow_matrix);
 
-        if (result) {
-            std_msgs::Header header = std_msgs::Header();
+            if (result) {
+                std_msgs::Header header = std_msgs::Header();
 
-            // //TODO: proper headers
-            // header.frame_id = "base_link";
-            // header.stamp = ros::Time::now();
-            sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "rgb8", flow_matrix).toImageMsg();
-            results.publish(img_msg);
+                // //TODO: proper headers
+                // header.frame_id = "base_link";
+                // header.stamp = ros::Time::now();
+                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "rgb8", flow_matrix).toImageMsg();
+                results.publish(img_msg);
+            }
+            else {
+                ROS_WARN_STREAM("Could not analyse scene flow images");
+            }
         }
-        else {
-            ROS_WARN_STREAM("Could not analyse scene flow images");
+
+        if (run_mask_rcnn) {
+            bool result = mask_rcnn_interface.analyse_image(current_image, segmentation_mask);
+
+            if (result) {
+                std_msgs::Header header = std_msgs::Header();
+
+                // //TODO: proper headers
+                // header.frame_id = "base_link";
+                // header.stamp = ros::Time::now();
+                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "rgb8", segmentation_mask).toImageMsg();
+                // results.publish(img_msg);
+            }
+            else {
+                ROS_WARN_STREAM("Could not analyse mask rcnn images");
+            }
         }
 
 

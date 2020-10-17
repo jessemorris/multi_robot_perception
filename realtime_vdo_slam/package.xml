@@ -62,6 +62,7 @@
   <depend>darknet_ros_msgs</depend>
   <depend>pcl_ros</depend>
   <depend>flow_net</depend>
+  <depend>mask_rcnn</depend>
 
 
   <depend>sensor_msgs</depend>
