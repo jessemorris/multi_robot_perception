@@ -1,4 +1,5 @@
 must recompile everytime 
+run python3 install.py install (instead of the usual setup.py so it doesn't conflict with ROS)
 
 
 # Mask R-CNN for Object Detection and Segmentation
