@@ -27,6 +27,8 @@ ROOT_DIR = os.path.abspath("../")
 sys.path.append(ROOT_DIR)  # To find local version of the library
 from mrcnn import utils
 
+import cv2
+
 
 ############################################################
 #  Visualization
@@ -97,6 +99,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
     colors: (optional) An array or colors to use with each object
     captions: (optional) A list of strings to use as captions for each object
     """
+    print("Displaying Instances")
     # Number of instances
     N = boxes.shape[0]
     if not N:
@@ -105,20 +108,21 @@ def display_instances(image, boxes, masks, class_ids, class_names,
         assert boxes.shape[0] == masks.shape[-1] == class_ids.shape[0]
 
     # If no axis is passed, create one and automatically call show()
-    auto_show = False
-    if not ax:
-        _, ax = plt.subplots(1, figsize=figsize)
-        auto_show = True
+    # auto_show = False
+    # if not ax:
+    #     _, ax = plt.subplots(1, figsize=figsize)
+    #     auto_show = True
 
     # Generate random colors
+    image = image.copy()
     colors = colors or random_colors(N)
 
     # Show area outside image boundaries.
-    height, width = image.shape[:2]
-    ax.set_ylim(height + 10, -10)
-    ax.set_xlim(-10, width + 10)
-    ax.axis('off')
-    ax.set_title(title)
+    # height, width = image.shape[:2]
+    # ax.set_ylim(height + 10, -10)
+    # ax.set_xlim(-10, width + 10)
+    # ax.axis('off')
+    # ax.set_title(title)
 
     masked_image = image.astype(np.uint32).copy()
     for i in range(N):
@@ -130,10 +134,11 @@ def display_instances(image, boxes, masks, class_ids, class_names,
             continue
         y1, x1, y2, x2 = boxes[i]
         if show_bbox:
-            p = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2,
-                                alpha=0.7, linestyle="dashed",
-                                edgecolor=color, facecolor='none')
-            ax.add_patch(p)
+            # p = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2,
+            #                     alpha=0.7, linestyle="dashed",
+            #                     edgecolor=color, facecolor='none')
+            cv2.rectangle(image, (x1,y1), (x2 - x1, y2 - y1), color, 2)
+            # ax.add_patch(p)
 
         # Label
         if not captions:
@@ -141,10 +146,12 @@ def display_instances(image, boxes, masks, class_ids, class_names,
             score = scores[i] if scores is not None else None
             label = class_names[class_id]
             caption = "{} {:.3f}".format(label, score) if score else label
+            print("Caption {}".format(caption))
+            cv2.putText(image, caption, (x1,y1+8), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 2, cv2.LINE_AA)
         else:
             caption = captions[i]
-        ax.text(x1, y1 + 8, caption,
-                color='w', size=11, backgroundcolor="none")
+        # ax.text(x1, y1 + 8, caption,
+        #         color='w', size=11, backgroundcolor="none")
 
         # Mask
         mask = masks[:, :, i]
@@ -157,14 +164,24 @@ def display_instances(image, boxes, masks, class_ids, class_names,
             (mask.shape[0] + 2, mask.shape[1] + 2), dtype=np.uint8)
         padded_mask[1:-1, 1:-1] = mask
         contours = find_contours(padded_mask, 0.5)
+        print("Making contours: {}".format(len(contours)))
         for verts in contours:
             # Subtract the padding and flip (y, x) to (x, y)
             verts = np.fliplr(verts) - 1
-            p = Polygon(verts, facecolor="none", edgecolor=color)
-            ax.add_patch(p)
-    ax.imshow(masked_image.astype(np.uint8))
-    if auto_show:
-        plt.show()
+            print(type(verts))
+            print(verts.shape)
+            print(len(verts))
+            # p = Polygon(verts, facecolor="none", edgecolor=color)
+            # cv2.fillPoly(image, [verts], (255, 255, 255), 8)
+            verts = np.array(verts).reshape((-1,1,2)).astype(np.int32)
+            cv2.drawContours(image, [verts], 0, color,3)
+    # Only drawind the lines would be:
+            # ax.add_patch(p)
+    # ax.imshow(masked_image.astype(np.uint8))
+    # if auto_show:
+    #     plt.show()
+    # return masked_image.astype(np.uint8)
+    return image
 
 
 def display_differences(image,

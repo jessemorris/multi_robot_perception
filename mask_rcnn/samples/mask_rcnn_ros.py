@@ -169,125 +169,10 @@ class MaskRcnnRos:
 
         # Visualize results
         r = results[0]
-        display_instances(image, r['rois'], r['masks'], r['class_ids'], 
+        return display_instances(image, r['rois'], r['masks'], r['class_ids'], 
                                     self.class_names, r['scores'])
 
-    
 
-############################################################
-#  COCO Evaluation
-############################################################
-
-def build_coco_results(dataset, image_ids, rois, class_ids, scores, masks):
-    """Arrange resutls to match COCO specs in http://cocodataset.org/#format
-    """
-    # If no results, return an empty list
-    if rois is None:
-        print("ROIS are none")
-        return []
-    results = []
-    for image_id in image_ids:
-        print("Number of rois: {}".format(rois.shape[0]))
-        # Loop through detections
-        for i in range(rois.shape[0]):
-            class_id = class_ids[i]
-            score = scores[i]
-            bbox = np.around(rois[i], 1)
-            mask = masks[:, :, i]
-
-            result = {
-                "image_id": image_id,
-                "category_id": dataset.get_source_class_id(class_id, "coco"),
-                "bbox": [bbox[1], bbox[0], bbox[3] - bbox[1], bbox[2] - bbox[0]],
-                "score": score,
-                "segmentation": maskUtils.encode(np.asfortranarray(mask))
-            }
-            print(result)
-            results.append(result)
-    return results
-
-
-def evaluate_coco(model, dataset, coco, eval_type="bbox", limit=0, image_ids=None):
-    """Runs official COCO evaluation.
-    dataset: A Dataset object with valiadtion data
-    eval_type: "bbox" or "segm" for bounding box or segmentation evaluation
-    limit: if not 0, it's the number of images to use for evaluation
-    """
-    # Pick COCO images from the dataset
-    image_ids = image_ids or dataset.image_ids
-
-    # Limit to a subset
-    if limit:
-        image_ids = image_ids[:limit]
-
-    # Get corresponding COCO image IDs.
-    coco_image_ids = [dataset.image_info[id]["id"] for id in image_ids]
-    class_names = dataset.class_names
-
-    print("Evaluating image ids: {}".format(coco_image_ids))
-
-    t_prediction = 0
-    t_start = time.time()
-
-    results = []
-    raw_results = []
-    image = None
-    for i, image_id in enumerate(image_ids):
-        # Load image
-        image = dataset.load_image(image_id)
-        cv_image = image
-
-        # Run detection
-        t = time.time()
-        r = model.detect([image], verbose=0)[0]
-        t_prediction += (time.time() - t)
-        raw_results.append(r)
-
-        # Convert results to COCO format
-        # Cast masks to uint8 because COCO tools errors out on bool
-        image_results = build_coco_results(dataset, coco_image_ids[i:i + 1],
-                                           r["rois"], r["class_ids"],
-                                           r["scores"],
-                                           r["masks"].astype(np.uint8))
-
-
-            # color = (rng.randint(0,256), rng.randint(0,256), rng.randint(0,256))
-            # if result["score"] > 0.85:
-            #     bounding_box = result["bbox"]
-            #     cv2.rectangle(cv_image, (int(bounding_box[0]), int(bounding_box[1])), (int(bounding_box[2]), int(bounding_box[3])), color, 2)
-
-        # file_name = package_path + "results/" + str(image_id) + ".jpg"
-        # print("saving file: {}".format(file_name))
-        # cv2.imwrite(file_name, cv_image)
-
-        results.extend(image_results)
-        # results.append(image_results)
-    r = raw_results[0]
-    print(r)
-    display_instances(image, r['rois'], r['masks'], r['class_ids'], 
-                            class_names, r['scores'])
-    
-
-
-
-    # Load results. This modifies results with additional attributes.
-    # coco_results = coco.loadRes(results)
-
-    # Evaluate
-    # cocoEval = COCOeval(coco, coco_results, eval_type)
-    # cocoEval.params.imgIds = coco_image_ids
-    # cocoEval.evaluate()
-    # cocoEval.accumulate()
-    # cocoEval.summarize()
-
-    print("Prediction time: {}. Average {}/image".format(
-        t_prediction, t_prediction / len(image_ids)))
-    print("Total time: ", time.time() - t_start)
-
-
-############################################################
-#  Training
-############################################################
 
 
 if __name__ == '__main__':
@@ -305,6 +190,25 @@ if __name__ == '__main__':
     #     print("'{}' is not recognized. "
     #           "Use 'train' or 'evaluate'".format(args.command))
     rcnn = MaskRcnnRos()
-    image = cv2.imread("/home/jesse/Downloads/dash_cam_image.png", cv2.IMREAD_UNCHANGED)
-    rcnn.analyse_image(image)
+    # image = cv2.imread("/home/jesse/Downloads/dash_cam_image.png", cv2.IMREAD_UNCHANGED)
+    cap = cv2.VideoCapture(0)
+
+    while(True):
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+        print("Reading Frame")
+        resized = cv2.resize(frame, (640,480), interpolation = cv2.INTER_AREA) 
+        result = rcnn.analyse_image(resized)
+
+        # Our operations on the frame come here
+        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # Display the resulting frame
+        cv2.imshow('frame',result)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+# When everything done, release the capture
+    cap.release()
+    cv2.destroyAllWindows()
 
