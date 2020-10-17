@@ -11,17 +11,19 @@
 class PythonServiceStarter {
 
     public:
-        PythonServiceStarter();
+        PythonServiceStarter(ros::NodeHandle& _nh);
         ~PythonServiceStarter();
 
         // bool init_flow_net(python_service_starter::StartFlowNet::Request& request, python_service_starter::StartFlowNet::Response& response);
         bool init_flow_net();
         bool init_mask_rcnn();
         //TODO
-        // bool shutdown_services();
+        bool shutdown_services();
+
   
     private:
         bool flow_status;
+        bool mask_rcnn_status;
         // PipeCommsManager flow_net_communication;
 
         bool run_output_threads;
@@ -35,7 +37,7 @@ class PythonServiceStarter {
         std::unique_ptr<PipeCommsManager> pipe_comms_manager_flow_net;
         std::unique_ptr<PipeCommsManager> pipe_comms_manager_mask_rcnn;
 
-
-
-
 };
+
+typedef std::unique_ptr<PythonServiceStarter> PythonServiceStarterPtr;
+

@@ -1,4 +1,5 @@
 #include "PipeCommsManager.hpp"
+#include <signal.h>
 
 #include <stdexcept>
 
@@ -48,7 +49,7 @@ void PipeCommsManager::listen_to_program() {
         }
         catch(std::exception& e) {
             ROS_WARN_STREAM("Listen to program (" << program_name << ") exception. Closing pipes and exiting");
-            close_pipes(); 
+            shutdown(); 
             return;   
         }
     }
@@ -56,7 +57,7 @@ void PipeCommsManager::listen_to_program() {
 
     //doing this is dangerous as we create the memory for pipe_py_to_cpp in a different space and then close it here
     //but cant think of another way of doing this as we need to listen in a thread!
-    close_pipes();    
+    shutdown();    
 
 }
 
@@ -125,7 +126,11 @@ bool PipeCommsManager::read_string(std::string& output,uint32_t size) {
 }
 
 
-bool PipeCommsManager::close_pipes() {
+bool PipeCommsManager::shutdown() {
     ::close(pipe_py_to_cpp[1]);
+    ros::Duration(2).sleep();
+    ROS_INFO_STREAM("Killing child process " << pid_result);
+
+    kill(pid_result, SIGKILL);
 }
 

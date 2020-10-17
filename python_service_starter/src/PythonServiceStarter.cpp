@@ -8,9 +8,10 @@
 
 
 
-PythonServiceStarter::PythonServiceStarter() :
-    nh("~"),
+PythonServiceStarter::PythonServiceStarter(ros::NodeHandle& _nh) :
+    nh(_nh),
     flow_status(false),
+    mask_rcnn_status(false),
     run_output_threads(true),
     python_flow_net_full_path("/home/jesse/Code/src/ros/src/multi_robot_perception/flow_net/scripts/flow_net_interface.py"),
     python_mask_rcnn_full_path("/home/jesse/Code/src/ros/src/multi_robot_perception/mask_rcnn/scripts/mask_rcnn_interface.py")
@@ -50,6 +51,8 @@ bool PythonServiceStarter::init_flow_net() {
         }
         else {
             pid_t pid = fork();
+            flow_status = true;
+
 
             if (pid == 0) {
                 ROS_INFO_STREAM("Setting up env variables for program flow_net_interface.py" );
@@ -67,7 +70,6 @@ bool PythonServiceStarter::init_flow_net() {
 
                 ::system(oss.str().c_str());
                 ::close(pipe_py_to_cpp[1]);
-                flow_status = true;
                 ros::Duration(3).sleep();
             }
             else if (pid < 0) {
@@ -75,6 +77,7 @@ bool PythonServiceStarter::init_flow_net() {
                 return false;
             }
             else {
+                //is parent
 
                 pipe_comms_manager_flow_net = std::make_unique<PipeCommsManager>("flow_net", pipe_py_to_cpp, pid);
                 ::close(pipe_py_to_cpp[1]);
@@ -100,12 +103,15 @@ bool PythonServiceStarter::init_mask_rcnn() {
         //change this to be the pipecommsmanager array for memory?
         int pipe_py_to_cpp[2];
 
+
         if (::pipe(pipe_py_to_cpp)) {
             ROS_WARN_STREAM("Could not open pipes");
             return false;
         }
         else {
             pid_t pid = fork();
+            mask_rcnn_status = true;
+
 
             if (pid == 0) {
                 ROS_INFO_STREAM("Setting up env variables for program mask_rcnn_interface.py" );
@@ -123,7 +129,6 @@ bool PythonServiceStarter::init_mask_rcnn() {
 
                 ::system(oss.str().c_str());
                 ::close(pipe_py_to_cpp[1]);
-                flow_status = true;
                 ros::Duration(3).sleep();
             }
             else if (pid < 0) {
@@ -144,6 +149,16 @@ bool PythonServiceStarter::init_mask_rcnn() {
         }
 
     // }
+    return true;
+}
+
+bool PythonServiceStarter::shutdown_services() {
+    if (mask_rcnn_status) {
+        pipe_comms_manager_mask_rcnn->shutdown();
+    }
+    if (flow_status) {
+        pipe_comms_manager_flow_net->shutdown();
+    }
     return true;
 }
 

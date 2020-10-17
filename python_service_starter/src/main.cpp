@@ -2,18 +2,32 @@
 #include <string>
 #include <thread>
 #include <sstream>
+#include <memory>
+#include <signal.h>
 
 #include "PythonServiceStarter.hpp"
+
+PythonServiceStarterPtr service_starter;
+
+void shutdown_signal_handler(int sig) {
+    ROS_INFO_STREAM("shutting down python services");
+    service_starter->shutdown_services();
+    ros::shutdown();
+}
 
 
 
 int main(int argc, char ** argv) {
 
-    ros::init(argc, argv, "python_service_starter");
+    ros::init(argc, argv, "python_service_starter", ros::init_options::NoSigintHandler);
+    ros::NodeHandle nh;
 
-    PythonServiceStarter python_service_starter;
-    python_service_starter.init_flow_net();
-    python_service_starter.init_mask_rcnn();
+    signal(SIGINT, shutdown_signal_handler);
+
+    service_starter = std::make_unique<PythonServiceStarter>(nh);
+
+    service_starter->init_flow_net();
+    service_starter->init_mask_rcnn();
     ros::spin();
 
 }

@@ -11,7 +11,7 @@ class PipeCommsManager {
 
         void run_listener();
         void listen_to_program();
-        bool close_pipes();
+        bool shutdown();
 
         const int get_read_fd();
 

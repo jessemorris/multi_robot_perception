@@ -75,6 +75,7 @@ class FlowNetRos():
         self.log_to_ros("Service call ready")
 
     def log_to_ros(self, msg):
+        #TODO: try catch on BrokPipeError and move into python utils (unwritten)
         msg_size = struct.pack('<I', len(msg))
         self.write_pipe.write(msg_size)
         self.write_pipe.write(msg.encode("utf-8"))
