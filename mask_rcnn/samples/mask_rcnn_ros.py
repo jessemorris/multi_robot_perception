@@ -163,6 +163,15 @@ class MaskRcnnRos:
         self.model.load_weights(self._weights_path, by_name=True)
         print("Weights loaded")
 
+    def analyse_image(self, image):
+        print("Analysing Image")
+        results = self.model.detect([image], verbose=1)
+
+        # Visualize results
+        r = results[0]
+        display_instances(image, r['rois'], r['masks'], r['class_ids'], 
+                                    self.class_names, r['scores'])
+
     
 
 ############################################################
@@ -285,15 +294,17 @@ if __name__ == '__main__':
     # Configurations
 
     # Load weights
-    print("Loading weights ", model_path)
-    model.load_weights(model_path, by_name=True)
-    dataset_val = CocoDataset()
-    coco = dataset_val.load_coco(args.dataset, val_type, year=args.year, return_coco=True, auto_download=args.download)
-    dataset_val.prepare()
-    print("Running COCO evaluation on {} images.".format(args.limit))
-        evaluate_coco(model, dataset_val, coco, "bbox", limit=int(args.limit))
-    else:
-        print("'{}' is not recognized. "
-              "Use 'train' or 'evaluate'".format(args.command))
+    # print("Loading weights ", model_path)
+    # model.load_weights(model_path, by_name=True)
+    # dataset_val = CocoDataset()
+    # coco = dataset_val.load_coco(args.dataset, val_type, year=args.year, return_coco=True, auto_download=args.download)
+    # dataset_val.prepare()
+    # print("Running COCO evaluation on {} images.".format(args.limit))
+    #     evaluate_coco(model, dataset_val, coco, "bbox", limit=int(args.limit))
+    # else:
+    #     print("'{}' is not recognized. "
+    #           "Use 'train' or 'evaluate'".format(args.command))
     rcnn = MaskRcnnRos()
+    image = cv2.imread("/home/jesse/Downloads/dash_cam_image.png", cv2.IMREAD_UNCHANGED)
+    rcnn.analyse_image(image)
 
