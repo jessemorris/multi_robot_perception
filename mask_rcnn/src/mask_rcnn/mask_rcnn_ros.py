@@ -124,12 +124,16 @@ class MaskRcnnRos:
         self.config = InferenceConfig()
         # self.config.display()
 
-        self._write_fd = int(os.getenv("mask_rcnn_PY_WRITE_FD"))
-        self.write_pipe = os.fdopen(self._write_fd, 'wb', 0)
+        try:
+            self._write_fd = int(os.getenv("mask_rcnn_PY_WRITE_FD"))
+            self.write_pipe = os.fdopen(self._write_fd, 'wb', 0)
+        except:
+            self.write_pipe = None
 
 
         if self.write_pipe == None:
             #do stuff
+            #TODO if not constructed just print
             pass
 
 
@@ -139,7 +143,7 @@ class MaskRcnnRos:
 
         # Select weights file to load
         #we could use imagenet? (see original code in mas_rcnn/coco/coco.py in main)
-        self.log_to_ros("Loading weights ", self._weights_path)
+        self.log_to_ros("Loading weights {}".format(self._weights_path))
         self.model.load_weights(self._weights_path, by_name=True)
         self.log_to_ros("Weights loaded")
 
@@ -149,9 +153,12 @@ class MaskRcnnRos:
         self.log_to_ros("Service call ready")
 
     def log_to_ros(self, msg):
-        msg_size = struct.pack('<I', len(msg))
-        self.write_pipe.write(msg_size)
-        self.write_pipe.write(msg.encode("utf-8"))
+        if self.write_pipe is None:
+            print(msg)
+        else:
+            msg_size = struct.pack('<I', len(msg))
+            self.write_pipe.write(msg_size)
+            self.write_pipe.write(msg.encode("utf-8"))
 
     def mask_rcnn_service_callback(self, req):
         response = MaskRcnnResponse()
@@ -182,40 +189,29 @@ class MaskRcnnRos:
 
 
 
-#if __name__ == '__main__':
-    # Configurations
+if __name__ == '__main__':
+    
 
-    # Load weights
-    # print("Loading weights ", model_path)
-    # model.load_weights(model_path, by_name=True)
-    # dataset_val = CocoDataset()
-    # coco = dataset_val.load_coco(args.dataset, val_type, year=args.year, return_coco=True, auto_download=args.download)
-    # dataset_val.prepare()
-    # print("Running COCO evaluation on {} images.".format(args.limit))
-    #     evaluate_coco(model, dataset_val, coco, "bbox", limit=int(args.limit))
-    # else:
-    #     print("'{}' is not recognized. "
-    #           "Use 'train' or 'evaluate'".format(args.command))
-#     rcnn = MaskRcnnRos()
-#     # image = cv2.imread("/home/jesse/Downloads/dash_cam_image.png", cv2.IMREAD_UNCHANGED)
-#     cap = cv2.VideoCapture(0)
+    rcnn = MaskRcnnRos()
+    # image = cv2.imread("/home/jesse/Downloads/dash_cam_image.png", cv2.IMREAD_UNCHANGED)
+    cap = cv2.VideoCapture(0)
 
-#     while(True):
-#         # Capture frame-by-frame
-#         ret, frame = cap.read()
-#         print("Reading Frame")
-#         resized = cv2.resize(frame, (640,480), interpolation = cv2.INTER_AREA) 
-#         result = rcnn.analyse_image(resized)
+    while(True):
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+        print("Reading Frame")
+        resized = cv2.resize(frame, (640,480), interpolation = cv2.INTER_AREA) 
+        result = rcnn.analyse_image(resized)
 
-#         # Our operations on the frame come here
-#         # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # Our operations on the frame come here
+        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-#         # Display the resulting frame
-#         cv2.imshow('frame',result)
-#         if cv2.waitKey(1) & 0xFF == ord('q'):
-#             break
+        # Display the resulting frame
+        cv2.imshow('frame',result)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-# # When everything done, release the capture
-#     cap.release()
-#     cv2.destroyAllWindows()
+# When everything done, release the capture
+    cap.release()
+    cv2.destroyAllWindows()
 
