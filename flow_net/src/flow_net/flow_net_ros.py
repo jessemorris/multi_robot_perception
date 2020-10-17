@@ -17,7 +17,7 @@ from src.flow_net import python_models
 
 
 from src.flow_net.utils import flow_transforms
-from  src.flow_net.utils.util import flow2rgb
+from src.flow_net.utils.util import flow2rgb
 from flow_net.srv import FlowNet, FlowNetResponse
 
 import cv2

@@ -25,7 +25,7 @@ include_directories(
 
 add_service_files(
   FILES
-  #FlowNet.srv
+  MaskRcnn.srv
 )
 
 #add_message_files(
