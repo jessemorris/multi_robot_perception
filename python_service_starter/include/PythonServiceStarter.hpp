@@ -5,6 +5,8 @@
 #include <memory>
 
 #include "python_service_starter/StartFlowNet.h"
+#include "python_service_starter/StartMaskRcnn.h"
+
 #include "PipeCommsManager.hpp"
 
 
@@ -14,10 +16,9 @@ class PythonServiceStarter {
         PythonServiceStarter(ros::NodeHandle& _nh);
         ~PythonServiceStarter();
 
-        // bool init_flow_net(python_service_starter::StartFlowNet::Request& request, python_service_starter::StartFlowNet::Response& response);
-        bool init_flow_net();
-        bool init_mask_rcnn();
-        //TODO
+        bool init_flow_net(python_service_starter::StartFlowNet::Request& request, python_service_starter::StartFlowNet::Response& response);
+        bool init_mask_rcnn(python_service_starter::StartMaskRcnn::Request& request, python_service_starter::StartMaskRcnn::Response& response);
+
         bool shutdown_services();
 
   
@@ -29,7 +30,9 @@ class PythonServiceStarter {
         bool run_output_threads;
 
         ros::NodeHandle nh;
-        // ros::ServiceServer start_flow_net_service;
+        ros::ServiceServer start_flow_net_service;
+        ros::ServiceServer start_mask_rcnn_service;
+
 
         std::string python_flow_net_full_path;
         std::string python_mask_rcnn_full_path;

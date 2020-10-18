@@ -26,8 +26,6 @@ int main(int argc, char ** argv) {
 
     service_starter = std::make_unique<PythonServiceStarter>(nh);
 
-    service_starter->init_flow_net();
-    service_starter->init_mask_rcnn();
     ros::spin();
 
 }

@@ -16,7 +16,9 @@ PythonServiceStarter::PythonServiceStarter(ros::NodeHandle& _nh) :
     python_flow_net_full_path("/home/jesse/Code/src/ros/src/multi_robot_perception/flow_net/scripts/flow_net_interface.py"),
     python_mask_rcnn_full_path("/home/jesse/Code/src/ros/src/multi_robot_perception/mask_rcnn/scripts/mask_rcnn_interface.py")
 {
-    // start_flow_net_service = nh.advertiseService("start_flow_net", &PythonServiceStarter::init_flow_net, this);
+    start_flow_net_service = nh.advertiseService("start_flow_net", &PythonServiceStarter::init_flow_net, this);
+    start_mask_rcnn_service = nh.advertiseService("start_mask_rcnn", &PythonServiceStarter::init_mask_rcnn, this);
+
 }
 
 PythonServiceStarter::~PythonServiceStarter() {
@@ -37,9 +39,8 @@ PythonServiceStarter::~PythonServiceStarter() {
     // }
 }
 
-// bool PythonServiceStarter::init_flow_net(python_service_starter::StartFlowNet::Request& request, python_service_starter::StartFlowNet::Response& response) {
-bool PythonServiceStarter::init_flow_net() {
-    // if (request.start) {
+bool PythonServiceStarter::init_flow_net(python_service_starter::StartFlowNet::Request& request, python_service_starter::StartFlowNet::Response& response) {
+    if (request.start) {
 
         //TODO
         //change this to be the pipecommsmanager array for memory?
@@ -90,14 +91,14 @@ bool PythonServiceStarter::init_flow_net() {
                 
         }
 
-    // }
+    }
     return true;
 }
 
 
 
-bool PythonServiceStarter::init_mask_rcnn() {
-    // if (request.start) {
+bool PythonServiceStarter::init_mask_rcnn(python_service_starter::StartMaskRcnn::Request& request, python_service_starter::StartMaskRcnn::Response& response) {
+    if (request.start) {
 
         //TODO
         //change this to be the pipecommsmanager array for memory?
@@ -148,7 +149,7 @@ bool PythonServiceStarter::init_mask_rcnn() {
                 
         }
 
-    // }
+    }
     return true;
 }
 

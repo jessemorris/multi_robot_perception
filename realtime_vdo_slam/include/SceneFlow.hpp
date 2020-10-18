@@ -29,10 +29,16 @@ class SceneFlow {
 
 
         bool analyse_image(cv::Mat& current_image,cv::Mat& previous_image, cv::Mat& dst);
+        bool start_service();
 
     private:
         ros::NodeHandle nh;
+
+        //the actual call to the flownet
         ros::ServiceClient flow_net_client;
+
+        ros::ServiceClient flow_net_start;
+        bool service_started;
 
 
 

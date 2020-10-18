@@ -1,6 +1,8 @@
 <launch>
 
 	<arg name="config_file" default="realtime_vdo.yaml"/>
+  <include file="$(find python_service_starter)/launch/python_service_starter.launch"/>
+
 
   <node pkg="realtime_vdo_slam" type="realtime_vdo_slam_node" name="realtime_vdo_slam" output="screen">
     		<rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg config_file)"/>

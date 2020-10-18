@@ -15,9 +15,9 @@ find_package(catkin REQUIRED COMPONENTS
 	tf2_ros
 	tf2_sensor_msgs
 	image_transport
-	lidar_camera_projection
 	flow_net
 	mask_rcnn
+	python_service_starter
 	visualization_msgs
 	message_generation
 	darknet_ros_msgs
@@ -133,8 +133,7 @@ catkin_package(
 	rosbag
 	rosbag_storage
 	image_transport
-	lidar_camera_projection
-	darknet_ros_msgs
+	python_service_starter
 	std_msgs
 	tf2_ros
 	tf2_sensor_msgs

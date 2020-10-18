@@ -23,6 +23,15 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     handler.param<bool>("/realtime_vdo_slam/run_mask_rcnn", run_mask_rcnn, false);
     handler.param<bool>("/realtime_vdo_slam/run_flow_net", run_scene_flow, false);
 
+    if(run_mask_rcnn) {
+        ROS_INFO_STREAM("starting mask rcnn service");
+        mask_rcnn_interface.start_service();
+    }
+    if(run_scene_flow) {
+        ROS_INFO_STREAM("starting flow net service");
+        sceneflow.start_service();
+    }
+
     ROS_INFO_STREAM("camera selection " << camera_selection);
 
     // gmsl/<>/image_colour

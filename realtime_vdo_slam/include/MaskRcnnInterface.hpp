@@ -28,10 +28,14 @@ class MaskRcnnInterface {
 
 
         bool analyse_image(cv::Mat& current_image, cv::Mat& dst);
+        bool start_service();
 
     private:
         ros::NodeHandle nh;
         ros::ServiceClient mask_rcnn_client;
+
+        ros::ServiceClient mask_rcnn_start;
+        bool service_started;
 
 
 

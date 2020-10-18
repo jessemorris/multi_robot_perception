@@ -57,7 +57,7 @@
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>nav_msgs</depend>
-  <depend>lidar_camera_projection</depend>
+  <depend>python_service_starter</depend>
   <depend>visualization_msgs</depend>
   <depend>darknet_ros_msgs</depend>
   <depend>pcl_ros</depend>
