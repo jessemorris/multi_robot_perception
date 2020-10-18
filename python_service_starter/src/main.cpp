@@ -5,9 +5,9 @@
 #include <memory>
 #include <signal.h>
 
-#include "PythonServiceStarter.hpp"
+#include "PythonServiceController.hpp"
 
-PythonServiceStarterPtr service_starter;
+PythonServiceControllerPtr service_starter;
 
 void shutdown_signal_handler(int sig) {
     ROS_INFO_STREAM("shutting down python services");
@@ -24,7 +24,7 @@ int main(int argc, char ** argv) {
 
     signal(SIGINT, shutdown_signal_handler);
 
-    service_starter = std::make_unique<PythonServiceStarter>(nh);
+    service_starter = std::make_unique<PythonServiceController>(nh);
 
     ros::spin();
 

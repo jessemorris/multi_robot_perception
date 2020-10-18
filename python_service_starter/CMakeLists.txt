@@ -140,8 +140,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}
-	src/PythonServiceStarter.cpp
-	src/PipeCommsManager.cpp
+	src/PythonServiceController.cpp
+	src/ServiceStarter.cpp
 	src/main.cpp
 )
 

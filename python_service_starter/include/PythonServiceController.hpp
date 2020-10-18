@@ -7,14 +7,14 @@
 #include "python_service_starter/StartFlowNet.h"
 #include "python_service_starter/StartMaskRcnn.h"
 
-#include "PipeCommsManager.hpp"
+#include "ServiceStarter.hpp"
 
 
-class PythonServiceStarter {
+class PythonServiceController {
 
     public:
-        PythonServiceStarter(ros::NodeHandle& _nh);
-        ~PythonServiceStarter();
+        PythonServiceController(ros::NodeHandle& _nh);
+        ~PythonServiceController();
 
         bool init_flow_net(python_service_starter::StartFlowNet::Request& request, python_service_starter::StartFlowNet::Response& response);
         bool init_mask_rcnn(python_service_starter::StartMaskRcnn::Request& request, python_service_starter::StartMaskRcnn::Response& response);
@@ -37,10 +37,10 @@ class PythonServiceStarter {
         std::string python_flow_net_full_path;
         std::string python_mask_rcnn_full_path;
 
-        std::unique_ptr<PipeCommsManager> pipe_comms_manager_flow_net;
-        std::unique_ptr<PipeCommsManager> pipe_comms_manager_mask_rcnn;
+        std::unique_ptr<ServiceStarter> flow_net_service_starter;
+        std::unique_ptr<ServiceStarter> mask_rcnn_service_starter;
 
 };
 
-typedef std::unique_ptr<PythonServiceStarter> PythonServiceStarterPtr;
+typedef std::unique_ptr<PythonServiceController> PythonServiceControllerPtr;
 
