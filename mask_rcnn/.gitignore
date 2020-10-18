@@ -1,58 +1,37 @@
-# Data files and directories common in repo root
-datasets/
-logs/
-*.h5
-results/
-temp/
-test/
-
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Distribution / packaging
-.Python
-env/
+# compilation and distribution
+__pycache__
+_ext
+*.pyc
+*.so
+maskrcnn_benchmark.egg-info/
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# pytorch/python/numpy formats
+*.pth
+*.pkl
+*.npy
 
-# VS Studio Code
+# ipython/jupyter notebooks
+*.ipynb
+**/.ipynb_checkpoints/
+
+# Editor temporaries
+*.swn
+*.swo
+*.swp
+*~
+
+# Pycharm editor settings
+.idea
+
+# vscode editor settings
 .vscode
 
-# PyCharm
-.idea/
+# MacOS
+.DS_Store
 
-# Dropbox
-.dropbox.attr
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# pyenv
-.python-version
-
-# dotenv
-.env
-
-# virtualenv
-.venv
-venv/
-ENV/
+# project dirs
+/datasets
+/models
+/output

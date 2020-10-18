@@ -1,245 +1,280 @@
-must recompile everytime 
-run python3 install.py install (instead of the usual setup.py so it doesn't conflict with ROS)
+# Faster R-CNN and Mask R-CNN in PyTorch 1.0
 
+**maskrcnn-benchmark has been deprecated. Please see [detectron2](https://github.com/facebookresearch/detectron2), which includes implementations for all models in maskrcnn-benchmark**
 
-# Mask R-CNN for Object Detection and Segmentation
+This project aims at providing the necessary building blocks for easily
+creating detection and segmentation models using PyTorch 1.0.
 
-This is an implementation of [Mask R-CNN](https://arxiv.org/abs/1703.06870) on Python 3, Keras, and TensorFlow. The model generates bounding boxes and segmentation masks for each instance of an object in the image. It's based on Feature Pyramid Network (FPN) and a ResNet101 backbone.
+![alt text](demo/demo_e2e_mask_rcnn_X_101_32x8d_FPN_1x.png "from http://cocodataset.org/#explore?id=345434")
 
-![Instance Segmentation Sample](assets/street.png)
+## Highlights
+- **PyTorch 1.0:** RPN, Faster R-CNN and Mask R-CNN implementations that matches or exceeds Detectron accuracies
+- **Very fast**: up to **2x** faster than [Detectron](https://github.com/facebookresearch/Detectron) and **30%** faster than [mmdetection](https://github.com/open-mmlab/mmdetection) during training. See [MODEL_ZOO.md](MODEL_ZOO.md) for more details.
+- **Memory efficient:** uses roughly 500MB less GPU memory than mmdetection during training
+- **Multi-GPU training and inference**
+- **Mixed precision training:** trains faster with less GPU memory on [NVIDIA tensor cores](https://developer.nvidia.com/tensor-cores).
+- **Batched inference:** can perform inference using multiple images per batch per GPU
+- **CPU support for inference:** runs on CPU in inference time. See our [webcam demo](demo) for an example
+- Provides pre-trained models for almost all reference Mask R-CNN and Faster R-CNN configurations with 1x schedule.
 
-The repository includes:
-* Source code of Mask R-CNN built on FPN and ResNet101.
-* Training code for MS COCO
-* Pre-trained weights for MS COCO
-* Jupyter notebooks to visualize the detection pipeline at every step
-* ParallelModel class for multi-GPU training
-* Evaluation on MS COCO metrics (AP)
-* Example of training on your own dataset
+## Webcam and Jupyter notebook demo
 
-
-The code is documented and designed to be easy to extend. If you use it in your research, please consider citing this repository (bibtex below). If you work on 3D vision, you might find our recently released [Matterport3D](https://matterport.com/blog/2017/09/20/announcing-matterport3d-research-dataset/) dataset useful as well.
-This dataset was created from 3D-reconstructed spaces captured by our customers who agreed to make them publicly available for academic use. You can see more examples [here](https://matterport.com/gallery/).
-
-# Getting Started
-* [demo.ipynb](samples/demo.ipynb) Is the easiest way to start. It shows an example of using a model pre-trained on MS COCO to segment objects in your own images.
-It includes code to run object detection and instance segmentation on arbitrary images.
-
-* [train_shapes.ipynb](samples/shapes/train_shapes.ipynb) shows how to train Mask R-CNN on your own dataset. This notebook introduces a toy dataset (Shapes) to demonstrate training on a new dataset.
-
-* ([model.py](mrcnn/model.py), [utils.py](mrcnn/utils.py), [config.py](mrcnn/config.py)): These files contain the main Mask RCNN implementation. 
-
-
-* [inspect_data.ipynb](samples/coco/inspect_data.ipynb). This notebook visualizes the different pre-processing steps
-to prepare the training data.
-
-* [inspect_model.ipynb](samples/coco/inspect_model.ipynb) This notebook goes in depth into the steps performed to detect and segment objects. It provides visualizations of every step of the pipeline.
-
-* [inspect_weights.ipynb](samples/coco/inspect_weights.ipynb)
-This notebooks inspects the weights of a trained model and looks for anomalies and odd patterns.
-
-
-# Step by Step Detection
-To help with debugging and understanding the model, there are 3 notebooks 
-([inspect_data.ipynb](samples/coco/inspect_data.ipynb), [inspect_model.ipynb](samples/coco/inspect_model.ipynb),
-[inspect_weights.ipynb](samples/coco/inspect_weights.ipynb)) that provide a lot of visualizations and allow running the model step by step to inspect the output at each point. Here are a few examples:
-
-
-
-## 1. Anchor sorting and filtering
-Visualizes every step of the first stage Region Proposal Network and displays positive and negative anchors along with anchor box refinement.
-![](assets/detection_anchors.png)
-
-## 2. Bounding Box Refinement
-This is an example of final detection boxes (dotted lines) and the refinement applied to them (solid lines) in the second stage.
-![](assets/detection_refinement.png)
-
-## 3. Mask Generation
-Examples of generated masks. These then get scaled and placed on the image in the right location.
-
-![](assets/detection_masks.png)
-
-## 4.Layer activations
-Often it's useful to inspect the activations at different layers to look for signs of trouble (all zeros or random noise).
-
-![](assets/detection_activations.png)
-
-## 5. Weight Histograms
-Another useful debugging tool is to inspect the weight histograms. These are included in the inspect_weights.ipynb notebook.
-
-![](assets/detection_histograms.png)
-
-## 6. Logging to TensorBoard
-TensorBoard is another great debugging and visualization tool. The model is configured to log losses and save weights at the end of every epoch.
-
-![](assets/detection_tensorboard.png)
-
-## 6. Composing the different pieces into a final result
-
-![](assets/detection_final.png)
-
-
-# Training on MS COCO
-We're providing pre-trained weights for MS COCO to make it easier to start. You can
-use those weights as a starting point to train your own variation on the network.
-Training and evaluation code is in `samples/coco/coco.py`. You can import this
-module in Jupyter notebook (see the provided notebooks for examples) or you
-can run it directly from the command line as such:
-
-```
-# Train a new model starting from pre-trained COCO weights
-python3 samples/coco/coco.py train --dataset=/path/to/coco/ --model=coco
-
-# Train a new model starting from ImageNet weights
-python3 samples/coco/coco.py train --dataset=/path/to/coco/ --model=imagenet
-
-# Continue training a model that you had trained earlier
-python3 samples/coco/coco.py train --dataset=/path/to/coco/ --model=/path/to/weights.h5
-
-# Continue training the last model you trained. This will find
-# the last trained weights in the model directory.
-python3 samples/coco/coco.py train --dataset=/path/to/coco/ --model=last
+We provide a simple webcam demo that illustrates how you can use `maskrcnn_benchmark` for inference:
+```bash
+cd demo
+# by default, it runs on the GPU
+# for best results, use min-image-size 800
+python webcam.py --min-image-size 800
+# can also run it on the CPU
+python webcam.py --min-image-size 300 MODEL.DEVICE cpu
+# or change the model that you want to use
+python webcam.py --config-file ../configs/caffe2/e2e_mask_rcnn_R_101_FPN_1x_caffe2.yaml --min-image-size 300 MODEL.DEVICE cpu
+# in order to see the probability heatmaps, pass --show-mask-heatmaps
+python webcam.py --min-image-size 300 --show-mask-heatmaps MODEL.DEVICE cpu
+# for the keypoint demo
+python webcam.py --config-file ../configs/caffe2/e2e_keypoint_rcnn_R_50_FPN_1x_caffe2.yaml --min-image-size 300 MODEL.DEVICE cpu
 ```
 
-You can also run the COCO evaluation code with:
+A notebook with the demo can be found in [demo/Mask_R-CNN_demo.ipynb](demo/Mask_R-CNN_demo.ipynb).
+
+## Installation
+
+Check [INSTALL.md](INSTALL.md) for installation instructions.
+
+
+## Model Zoo and Baselines
+
+Pre-trained models, baselines and comparison with Detectron and mmdetection
+can be found in [MODEL_ZOO.md](MODEL_ZOO.md)
+
+## Inference in a few lines
+We provide a helper class to simplify writing inference pipelines using pre-trained models.
+Here is how we would do it. Run this from the `demo` folder:
+```python
+from maskrcnn_benchmark.config import cfg
+from predictor import COCODemo
+
+config_file = "../configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"
+
+# update the config options with the config file
+cfg.merge_from_file(config_file)
+# manual override some options
+cfg.merge_from_list(["MODEL.DEVICE", "cpu"])
+
+coco_demo = COCODemo(
+    cfg,
+    min_image_size=800,
+    confidence_threshold=0.7,
+)
+# load image and then run prediction
+image = ...
+predictions = coco_demo.run_on_opencv_image(image)
 ```
-# Run COCO evaluation on the last trained model
-python3 samples/coco/coco.py evaluate --dataset=/path/to/coco/ --model=last
+
+## Perform training on COCO dataset
+
+For the following examples to work, you need to first install `maskrcnn_benchmark`.
+
+You will also need to download the COCO dataset.
+We recommend to symlink the path to the coco dataset to `datasets/` as follows
+
+We use `minival` and `valminusminival` sets from [Detectron](https://github.com/facebookresearch/Detectron/blob/master/detectron/datasets/data/README.md#coco-minival-annotations)
+
+```bash
+# symlink the coco dataset
+cd ~/github/maskrcnn-benchmark
+mkdir -p datasets/coco
+ln -s /path_to_coco_dataset/annotations datasets/coco/annotations
+ln -s /path_to_coco_dataset/train2014 datasets/coco/train2014
+ln -s /path_to_coco_dataset/test2014 datasets/coco/test2014
+ln -s /path_to_coco_dataset/val2014 datasets/coco/val2014
+# or use COCO 2017 version
+ln -s /path_to_coco_dataset/annotations datasets/coco/annotations
+ln -s /path_to_coco_dataset/train2017 datasets/coco/train2017
+ln -s /path_to_coco_dataset/test2017 datasets/coco/test2017
+ln -s /path_to_coco_dataset/val2017 datasets/coco/val2017
+
+# for pascal voc dataset:
+ln -s /path_to_VOCdevkit_dir datasets/voc
 ```
 
-The training schedule, learning rate, and other parameters should be set in `samples/coco/coco.py`.
+P.S. `COCO_2017_train` = `COCO_2014_train` + `valminusminival` , `COCO_2017_val` = `minival`
+      
 
+You can also configure your own paths to the datasets.
+For that, all you need to do is to modify `maskrcnn_benchmark/config/paths_catalog.py` to
+point to the location where your dataset is stored.
+You can also create a new `paths_catalog.py` file which implements the same two classes,
+and pass it as a config argument `PATHS_CATALOG` during training.
 
-# Training on Your Own Dataset
+### Single GPU training
 
-Start by reading this [blog post about the balloon color splash sample](https://engineering.matterport.com/splash-of-color-instance-segmentation-with-mask-r-cnn-and-tensorflow-7c761e238b46). It covers the process starting from annotating images to training to using the results in a sample application.
+Most of the configuration files that we provide assume that we are running on 8 GPUs.
+In order to be able to run it on fewer GPUs, there are a few possibilities:
 
-In summary, to train the model on your own dataset you'll need to extend two classes:
+**1. Run the following without modifications**
 
-```Config```
-This class contains the default configuration. Subclass it and modify the attributes you need to change.
-
-```Dataset```
-This class provides a consistent way to work with any dataset. 
-It allows you to use new datasets for training without having to change 
-the code of the model. It also supports loading multiple datasets at the
-same time, which is useful if the objects you want to detect are not 
-all available in one dataset. 
-
-See examples in `samples/shapes/train_shapes.ipynb`, `samples/coco/coco.py`, `samples/balloon/balloon.py`, and `samples/nucleus/nucleus.py`.
-
-## Differences from the Official Paper
-This implementation follows the Mask RCNN paper for the most part, but there are a few cases where we deviated in favor of code simplicity and generalization. These are some of the differences we're aware of. If you encounter other differences, please do let us know.
-
-* **Image Resizing:** To support training multiple images per batch we resize all images to the same size. For example, 1024x1024px on MS COCO. We preserve the aspect ratio, so if an image is not square we pad it with zeros. In the paper the resizing is done such that the smallest side is 800px and the largest is trimmed at 1000px.
-* **Bounding Boxes**: Some datasets provide bounding boxes and some provide masks only. To support training on multiple datasets we opted to ignore the bounding boxes that come with the dataset and generate them on the fly instead. We pick the smallest box that encapsulates all the pixels of the mask as the bounding box. This simplifies the implementation and also makes it easy to apply image augmentations that would otherwise be harder to apply to bounding boxes, such as image rotation.
-
-    To validate this approach, we compared our computed bounding boxes to those provided by the COCO dataset.
-We found that ~2% of bounding boxes differed by 1px or more, ~0.05% differed by 5px or more, 
-and only 0.01% differed by 10px or more.
-
-* **Learning Rate:** The paper uses a learning rate of 0.02, but we found that to be
-too high, and often causes the weights to explode, especially when using a small batch
-size. It might be related to differences between how Caffe and TensorFlow compute 
-gradients (sum vs mean across batches and GPUs). Or, maybe the official model uses gradient
-clipping to avoid this issue. We do use gradient clipping, but don't set it too aggressively.
-We found that smaller learning rates converge faster anyway so we go with that.
-
-## Citation
-Use this bibtex to cite this repository:
+```bash
+python /path_to_maskrcnn_benchmark/tools/train_net.py --config-file "/path/to/config/file.yaml"
 ```
-@misc{matterport_maskrcnn_2017,
-  title={Mask R-CNN for object detection and instance segmentation on Keras and TensorFlow},
-  author={Waleed Abdulla},
-  year={2017},
-  publisher={Github},
-  journal={GitHub repository},
-  howpublished={\url{https://github.com/matterport/Mask_RCNN}},
+This should work out of the box and is very similar to what we should do for multi-GPU training.
+But the drawback is that it will use much more GPU memory. The reason is that we set in the
+configuration files a global batch size that is divided over the number of GPUs. So if we only
+have a single GPU, this means that the batch size for that GPU will be 8x larger, which might lead
+to out-of-memory errors.
+
+If you have a lot of memory available, this is the easiest solution.
+
+**2. Modify the cfg parameters**
+
+If you experience out-of-memory errors, you can reduce the global batch size. But this means that
+you'll also need to change the learning rate, the number of iterations and the learning rate schedule.
+
+Here is an example for Mask R-CNN R-50 FPN with the 1x schedule:
+```bash
+python tools/train_net.py --config-file "configs/e2e_mask_rcnn_R_50_FPN_1x.yaml" SOLVER.IMS_PER_BATCH 2 SOLVER.BASE_LR 0.0025 SOLVER.MAX_ITER 720000 SOLVER.STEPS "(480000, 640000)" TEST.IMS_PER_BATCH 1 MODEL.RPN.FPN_POST_NMS_TOP_N_TRAIN 2000
+```
+This follows the [scheduling rules from Detectron.](https://github.com/facebookresearch/Detectron/blob/master/configs/getting_started/tutorial_1gpu_e2e_faster_rcnn_R-50-FPN.yaml#L14-L30)
+Note that we have multiplied the number of iterations by 8x (as well as the learning rate schedules),
+and we have divided the learning rate by 8x.
+
+We also changed the batch size during testing, but that is generally not necessary because testing
+requires much less memory than training.
+
+Furthermore, we set `MODEL.RPN.FPN_POST_NMS_TOP_N_TRAIN 2000` as the proposals are selected for per the batch rather than per image in the default training. The value is calculated by **1000 x images-per-gpu**. Here we have 2 images per GPU, therefore we set the number as 1000 x 2 = 2000. If we have 8 images per GPU, the value should be set as 8000. Note that this does not apply if `MODEL.RPN.FPN_POST_NMS_PER_BATCH` is set to `False` during training. See [#672](https://github.com/facebookresearch/maskrcnn-benchmark/issues/672) for more details.
+
+### Multi-GPU training
+We use internally `torch.distributed.launch` in order to launch
+multi-gpu training. This utility function from PyTorch spawns as many
+Python processes as the number of GPUs we want to use, and each Python
+process will only use a single GPU.
+
+```bash
+export NGPUS=8
+python -m torch.distributed.launch --nproc_per_node=$NGPUS /path_to_maskrcnn_benchmark/tools/train_net.py --config-file "path/to/config/file.yaml" MODEL.RPN.FPN_POST_NMS_TOP_N_TRAIN images_per_gpu x 1000
+```
+Note we should set `MODEL.RPN.FPN_POST_NMS_TOP_N_TRAIN` follow the rule in Single-GPU training.
+
+### Mixed precision training
+We currently use [APEX](https://github.com/NVIDIA/apex) to add [Automatic Mixed Precision](https://developer.nvidia.com/automatic-mixed-precision) support. To enable, just do Single-GPU or Multi-GPU training and set `DTYPE "float16"`.
+
+```bash
+export NGPUS=8
+python -m torch.distributed.launch --nproc_per_node=$NGPUS /path_to_maskrcnn_benchmark/tools/train_net.py --config-file "path/to/config/file.yaml" MODEL.RPN.FPN_POST_NMS_TOP_N_TRAIN images_per_gpu x 1000 DTYPE "float16"
+```
+If you want more verbose logging, set `AMP_VERBOSE True`. See [Mixed Precision Training guide](https://docs.nvidia.com/deeplearning/sdk/mixed-precision-training/index.html) for more details.
+
+## Evaluation
+You can test your model directly on single or multiple gpus. Here is an example for Mask R-CNN R-50 FPN with the 1x schedule on 8 GPUS:
+```bash
+export NGPUS=8
+python -m torch.distributed.launch --nproc_per_node=$NGPUS /path_to_maskrcnn_benchmark/tools/test_net.py --config-file "configs/e2e_mask_rcnn_R_50_FPN_1x.yaml" TEST.IMS_PER_BATCH 16
+```
+To calculate mAP for each class, you can simply modify a few lines in [coco_eval.py](https://github.com/facebookresearch/maskrcnn-benchmark/blob/master/maskrcnn_benchmark/data/datasets/evaluation/coco/coco_eval.py). See [#524](https://github.com/facebookresearch/maskrcnn-benchmark/issues/524#issuecomment-475118810) for more details.
+
+## Abstractions
+For more information on some of the main abstractions in our implementation, see [ABSTRACTIONS.md](ABSTRACTIONS.md).
+
+## Adding your own dataset
+
+This implementation adds support for COCO-style datasets.
+But adding support for training on a new dataset can be done as follows:
+```python
+from maskrcnn_benchmark.structures.bounding_box import BoxList
+
+class MyDataset(object):
+    def __init__(self, ...):
+        # as you would do normally
+
+    def __getitem__(self, idx):
+        # load the image as a PIL Image
+        image = ...
+
+        # load the bounding boxes as a list of list of boxes
+        # in this case, for illustrative purposes, we use
+        # x1, y1, x2, y2 order.
+        boxes = [[0, 0, 10, 10], [10, 20, 50, 50]]
+        # and labels
+        labels = torch.tensor([10, 20])
+
+        # create a BoxList from the boxes
+        boxlist = BoxList(boxes, image.size, mode="xyxy")
+        # add the labels to the boxlist
+        boxlist.add_field("labels", labels)
+
+        if self.transforms:
+            image, boxlist = self.transforms(image, boxlist)
+
+        # return the image, the boxlist and the idx in your dataset
+        return image, boxlist, idx
+
+    def get_img_info(self, idx):
+        # get img_height and img_width. This is used if
+        # we want to split the batches according to the aspect ratio
+        # of the image, as it can be more efficient than loading the
+        # image from disk
+        return {"height": img_height, "width": img_width}
+```
+That's it. You can also add extra fields to the boxlist, such as segmentation masks
+(using `structures.segmentation_mask.SegmentationMask`), or even your own instance type.
+
+For a full example of how the `COCODataset` is implemented, check [`maskrcnn_benchmark/data/datasets/coco.py`](maskrcnn_benchmark/data/datasets/coco.py).
+
+Once you have created your dataset, it needs to be added in a couple of places:
+- [`maskrcnn_benchmark/data/datasets/__init__.py`](maskrcnn_benchmark/data/datasets/__init__.py): add it to `__all__`
+- [`maskrcnn_benchmark/config/paths_catalog.py`](maskrcnn_benchmark/config/paths_catalog.py): `DatasetCatalog.DATASETS` and corresponding `if` clause in `DatasetCatalog.get()`
+
+### Testing
+While the aforementioned example should work for training, we leverage the
+cocoApi for computing the accuracies during testing. Thus, test datasets
+should currently follow the cocoApi for now.
+
+To enable your dataset for testing, add a corresponding if statement in [`maskrcnn_benchmark/data/datasets/evaluation/__init__.py`](maskrcnn_benchmark/data/datasets/evaluation/__init__.py):
+```python
+if isinstance(dataset, datasets.MyDataset):
+        return coco_evaluation(**args)
+```
+
+## Finetuning from Detectron weights on custom datasets
+Create a script `tools/trim_detectron_model.py` like [here](https://gist.github.com/wangg12/aea194aa6ab6a4de088f14ee193fd968).
+You can decide which keys to be removed and which keys to be kept by modifying the script.
+
+Then you can simply point the converted model path in the config file by changing `MODEL.WEIGHT`.
+
+For further information, please refer to [#15](https://github.com/facebookresearch/maskrcnn-benchmark/issues/15).
+
+## Troubleshooting
+If you have issues running or compiling this code, we have compiled a list of common issues in
+[TROUBLESHOOTING.md](TROUBLESHOOTING.md). If your issue is not present there, please feel
+free to open a new issue.
+
+## Citations
+Please consider citing this project in your publications if it helps your research. The following is a BibTeX reference. The BibTeX entry requires the `url` LaTeX package.
+```
+@misc{massa2018mrcnn,
+author = {Massa, Francisco and Girshick, Ross},
+title = {{maskrcnn-benchmark: Fast, modular reference implementation of Instance Segmentation and Object Detection algorithms in PyTorch}},
+year = {2018},
+howpublished = {\url{https://github.com/facebookresearch/maskrcnn-benchmark}},
+note = {Accessed: [Insert date here]}
 }
 ```
 
-## Contributing
-Contributions to this repository are welcome. Examples of things you can contribute:
-* Speed Improvements. Like re-writing some Python code in TensorFlow or Cython.
-* Training on other datasets.
-* Accuracy Improvements.
-* Visualizations and examples.
+## Projects using maskrcnn-benchmark
 
-You can also [join our team](https://matterport.com/careers/) and help us build even more projects like this one.
+- [RetinaMask: Learning to predict masks improves state-of-the-art single-shot detection for free](https://arxiv.org/abs/1901.03353). 
+  Cheng-Yang Fu, Mykhailo Shvets, and Alexander C. Berg.
+  Tech report, arXiv,1901.03353.
+- [FCOS: Fully Convolutional One-Stage Object Detection](https://arxiv.org/abs/1904.01355).
+  Zhi Tian, Chunhua Shen, Hao Chen and Tong He.
+  Tech report, arXiv,1904.01355. [[code](https://github.com/tianzhi0549/FCOS)]
+- [MULAN: Multitask Universal Lesion Analysis Network for Joint Lesion Detection, Tagging, and Segmentation](https://arxiv.org/abs/1908.04373).
+  Ke Yan, Youbao Tang, Yifan Peng, Veit Sandfort, Mohammadhadi Bagheri, Zhiyong Lu, and Ronald M. Summers.
+  MICCAI 2019. [[code](https://github.com/rsummers11/CADLab/tree/master/MULAN_universal_lesion_analysis)]
+- [Is Sampling Heuristics Necessary in Training Deep Object Detectors?](https://arxiv.org/abs/1909.04868)
+  Joya Chen, Dong Liu, Tong Xu, Shilong Zhang, Shiwei Wu, Bin Luo, Xuezheng Peng, Enhong Chen.
+  Tech report, arXiv,1909.04868. [[code](https://github.com/ChenJoya/sampling-free)]
+  
+## License
 
-## Requirements
-Python 3.4, TensorFlow 1.3, Keras 2.0.8 and other common packages listed in `requirements.txt`.
-
-### MS COCO Requirements:
-To train or test on MS COCO, you'll also need:
-* pycocotools (installation instructions below)
-* [MS COCO Dataset](http://cocodataset.org/#home)
-* Download the 5K [minival](https://dl.dropboxusercontent.com/s/o43o90bna78omob/instances_minival2014.json.zip?dl=0)
-  and the 35K [validation-minus-minival](https://dl.dropboxusercontent.com/s/s3tw5zcg7395368/instances_valminusminival2014.json.zip?dl=0)
-  subsets. More details in the original [Faster R-CNN implementation](https://github.com/rbgirshick/py-faster-rcnn/blob/master/data/README.md).
-
-If you use Docker, the code has been verified to work on
-[this Docker container](https://hub.docker.com/r/waleedka/modern-deep-learning/).
-
-
-## Installation
-1. Clone this repository
-2. Install dependencies
-   ```bash
-   pip3 install -r requirements.txt
-   ```
-3. Run setup from the repository root directory
-    ```bash
-    python3 setup.py install
-    ``` 
-3. Download pre-trained COCO weights (mask_rcnn_coco.h5) from the [releases page](https://github.com/matterport/Mask_RCNN/releases).
-4. (Optional) To train or test on MS COCO install `pycocotools` from one of these repos. They are forks of the original pycocotools with fixes for Python3 and Windows (the official repo doesn't seem to be active anymore).
-
-    * Linux: https://github.com/waleedka/coco
-    * Windows: https://github.com/philferriere/cocoapi.
-    You must have the Visual C++ 2015 build tools on your path (see the repo for additional details)
-
-# Projects Using this Model
-If you extend this model to other datasets or build projects that use it, we'd love to hear from you.
-
-### [4K Video Demo](https://www.youtube.com/watch?v=OOT3UIXZztE) by Karol Majek.
-[![Mask RCNN on 4K Video](assets/4k_video.gif)](https://www.youtube.com/watch?v=OOT3UIXZztE)
-
-### [Images to OSM](https://github.com/jremillard/images-to-osm): Improve OpenStreetMap by adding baseball, soccer, tennis, football, and basketball fields.
-
-![Identify sport fields in satellite images](assets/images_to_osm.png)
-
-### [Splash of Color](https://engineering.matterport.com/splash-of-color-instance-segmentation-with-mask-r-cnn-and-tensorflow-7c761e238b46). A blog post explaining how to train this model from scratch and use it to implement a color splash effect.
-![Balloon Color Splash](assets/balloon_color_splash.gif)
-
-
-### [Segmenting Nuclei in Microscopy Images](samples/nucleus). Built for the [2018 Data Science Bowl](https://www.kaggle.com/c/data-science-bowl-2018)
-Code is in the `samples/nucleus` directory.
-
-![Nucleus Segmentation](assets/nucleus_segmentation.png)
-
-### [Detection and Segmentation for Surgery Robots](https://github.com/SUYEgit/Surgery-Robot-Detection-Segmentation) by the NUS Control & Mechatronics Lab.
-![Surgery Robot Detection and Segmentation](https://github.com/SUYEgit/Surgery-Robot-Detection-Segmentation/raw/master/assets/video.gif)
-
-### [Reconstructing 3D buildings from aerial LiDAR](https://medium.com/geoai/reconstructing-3d-buildings-from-aerial-lidar-with-ai-details-6a81cb3079c0)
-A proof of concept project by [Esri](https://www.esri.com/), in collaboration with Nvidia and Miami-Dade County. Along with a great write up and code by Dmitry Kudinov, Daniel Hedges, and Omar Maher.
-![3D Building Reconstruction](assets/project_3dbuildings.png)
-
-### [Usiigaci: Label-free Cell Tracking in Phase Contrast Microscopy](https://github.com/oist/usiigaci)
-A project from Japan to automatically track cells in a microfluidics platform. Paper is pending, but the source code is released.
-
-![](assets/project_usiigaci1.gif) ![](assets/project_usiigaci2.gif)
-
-### [Characterization of Arctic Ice-Wedge Polygons in Very High Spatial Resolution Aerial Imagery](http://www.mdpi.com/2072-4292/10/9/1487)
-Research project to understand the complex processes between degradations in the Arctic and climate change. By Weixing Zhang, Chandi Witharana, Anna Liljedahl, and Mikhail Kanevskiy.
-![image](assets/project_ice_wedge_polygons.png)
-
-### [Mask-RCNN Shiny](https://github.com/huuuuusy/Mask-RCNN-Shiny)
-A computer vision class project by HU Shiyu to apply the color pop effect on people with beautiful results.
-![](assets/project_shiny1.jpg)
-
-### [Mapping Challenge](https://github.com/crowdAI/crowdai-mapping-challenge-mask-rcnn): Convert satellite imagery to maps for use by humanitarian organisations.
-![Mapping Challenge](assets/mapping_challenge.png)
-
-### [GRASS GIS Addon](https://github.com/ctu-geoforall-lab/i.ann.maskrcnn) to generate vector masks from geospatial imagery. Based on a [Master's thesis](https://github.com/ctu-geoforall-lab-projects/dp-pesek-2018) by Ondřej Pešek.
-![GRASS GIS Image](assets/project_grass_gis.png)
+maskrcnn-benchmark is released under the MIT license. See [LICENSE](LICENSE) for additional details.
