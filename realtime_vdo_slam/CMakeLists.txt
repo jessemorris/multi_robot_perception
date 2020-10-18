@@ -156,6 +156,7 @@ catkin_package(
 include_directories(
     include
     ${catkin_INCLUDE_DIRS}
+	${OpenCV_INCLUDE_DIRS}
 	#${PROJECT_SOURCE_DIR}/../VDO_SLAM/include/
 )
 

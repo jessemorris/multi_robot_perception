@@ -11,7 +11,6 @@ SceneFlow::SceneFlow(ros::NodeHandle& n) :
         service_started(false)
     {
       
-    flow_net_client  = nh.serviceClient<flow_net::FlowNet>("flow_net_service");
     flow_net_start = nh.serviceClient<python_service_starter::StartFlowNet>("start_flow_net");
 
     }
@@ -22,6 +21,8 @@ bool SceneFlow::start_service() {
 
     service_started = flow_net_start.call(srv);
     ROS_INFO_STREAM("Start flow net service returned " << service_started);
+    flow_net_client  = nh.serviceClient<flow_net::FlowNet>("flow_net_service");
+
     return service_started;
     
 }

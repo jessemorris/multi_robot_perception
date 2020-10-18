@@ -163,19 +163,25 @@ class MaskRcnnRos:
 
     def mask_rcnn_service_callback(self, req):
         response = MaskRcnnResponse()
+        self.log_to_ros("Inside callback")
         try: 
+            self.mask_rcnn_test_publisher.publish(req.input_image)
+
             input_image = ros_numpy.numpify(req.input_image)
+
             response_image = self.analyse_image(input_image)
 
             output_image_msg = ros_numpy.msgify(Image, response_image, encoding='rgb8')
-            self.mask_rcnn_test_publisher.publish(output_image_msg)
 
             response.success = True
+            # response.output_image = output_image_msg
             response.output_image = output_image_msg
             return response
 
 
+
         except Exception as e:
+            print("here")
             self.log_to_ros(str(e))
             response.success = False
             return response
