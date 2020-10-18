@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  rostk_pyutils
   python_service_starter
   sensor_msgs
 )

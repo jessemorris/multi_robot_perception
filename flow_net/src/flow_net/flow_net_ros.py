@@ -19,6 +19,8 @@ from src.flow_net import python_models
 from src.flow_net.utils import flow_transforms
 from src.flow_net.utils.util import flow2rgb
 from flow_net.srv import FlowNet, FlowNetResponse
+from rostk_pyutils.ros_cpp_communicator import RosCppCommunicator
+
 
 import cv2
 from std_msgs.msg import String
@@ -29,20 +31,12 @@ from sensor_msgs.msg import Image
 package_path = "/home/jesse/Code/src/ros/src/multi_robot_perception/flow_net/"
 
 
-class FlowNetRos():
+class FlowNetRos(RosCppCommunicator):
 
     def __init__(self, model_path= package_path + "src/flow_net/models/flownetc_EPE1.766.tar"):
+        RosCppCommunicator.__init__(self)
         self.model_path = model_path
-        self._write_fd = int(os.getenv("flow_net_PY_WRITE_FD"))
-        self.write_pipe = os.fdopen(self._write_fd, 'wb', 0)
-
-        # self.bridge = CvBridge()
-
-
-        if self.write_pipe == None:
-            #do stuff
-            pass
-
+       
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.log_to_ros("Devis is {}".format(self.device))
 
@@ -73,12 +67,6 @@ class FlowNetRos():
         self.flow_net_service = rospy.Service("flow_net_service",FlowNet, self.flow_net_service_callback)
         self.flow_net_test_publisher = rospy.Publisher('flow_net/test', Image, queue_size=10)
         self.log_to_ros("Service call ready")
-
-    def log_to_ros(self, msg):
-        #TODO: try catch on BrokPipeError and move into python utils (unwritten)
-        msg_size = struct.pack('<I', len(msg))
-        self.write_pipe.write(msg_size)
-        self.write_pipe.write(msg.encode("utf-8"))
 
 
     @torch.no_grad()

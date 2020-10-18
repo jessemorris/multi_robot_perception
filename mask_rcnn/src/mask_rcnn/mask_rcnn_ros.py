@@ -13,6 +13,7 @@ import os
 
 from mask_rcnn.predictor import COCODemo
 from mask_rcnn.srv import MaskRcnn, MaskRcnnResponse
+from rostk_pyutils.ros_cpp_communicator import RosCppCommunicator
 
 from sensor_msgs.msg import Image
 import struct
@@ -21,9 +22,10 @@ import rospy
 
 import time
 
-class MaskRcnnRos():
+class MaskRcnnRos(RosCppCommunicator):
 
     def __init__(self, config_path = package_path + "src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"):
+        RosCppCommunicator.__init__(self)
         self.model_config_path = config_path
         cfg.merge_from_file(self.model_config_path)
         cfg.merge_from_list([])
@@ -38,29 +40,11 @@ class MaskRcnnRos():
             min_image_size=800
         )
 
-        try:
-            self._write_fd = int(os.getenv("mask_rcnn_PY_WRITE_FD"))
-            self.write_pipe = os.fdopen(self._write_fd, 'wb', 0)
-        except:
-            self.write_pipe = None
-
-
-        if self.write_pipe == None:
-            #do stuff
-            #TODO if not constructed just print
-            pass
 
         self.mask_rcnn_service = rospy.Service("mask_rcnn_service",MaskRcnn, self.mask_rcnn_service_callback)
         self.mask_rcnn_test_publisher = rospy.Publisher('mask_rcnn/test', Image, queue_size=10)
         self.log_to_ros("Service call ready")
 
-    def log_to_ros(self, msg):
-        if self.write_pipe is None:
-            print(msg)
-        else:
-            msg_size = struct.pack('<I', len(msg))
-            self.write_pipe.write(msg_size)
-            self.write_pipe.write(msg.encode("utf-8"))
 
     def mask_rcnn_service_callback(self, req):
         response = MaskRcnnResponse()

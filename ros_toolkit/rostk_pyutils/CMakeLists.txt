@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(rostk_plotting)
+project(rostk_pyutils)
 
 find_package(catkin REQUIRED COMPONENTS
   actionlib
@@ -42,12 +42,12 @@ catkin_package(
 install(DIRECTORY
     #controller
     #launch
-    rostk_plotting
+    rostk_pyutils
  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
+
 install(PROGRAMS
-    scripts/rostk_plotting.py
-  
+    #scripts/rostk_plotting.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
