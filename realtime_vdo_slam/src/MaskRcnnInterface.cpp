@@ -43,7 +43,7 @@ bool MaskRcnnInterface::analyse_image(cv::Mat& current_image, cv::Mat& dst) {
     if(mask_rcnn_client.call(srv)) {
 
         if (srv.response.success) {
-            // ROS_INFO_STREAM("success");
+            ROS_INFO_STREAM("success");
             cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(srv.response.output_image, sensor_msgs::image_encodings::RGB8);
             cv::Mat image = cv_ptr->image;
 

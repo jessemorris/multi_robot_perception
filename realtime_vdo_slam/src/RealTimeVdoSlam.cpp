@@ -118,7 +118,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 // header.frame_id = "base_link";
                 // header.stamp = ros::Time::now();
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "rgb8", segmentation_mask).toImageMsg();
-                // results.publish(img_msg);
+                results.publish(img_msg);
             }
             else {
                 ROS_WARN_STREAM("Could not analyse mask rcnn images");
