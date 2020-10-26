@@ -4,6 +4,7 @@ import struct
 import rospy
 import numpy as np
 import ros_numpy
+import math
 
 from path import Path
 
@@ -13,11 +14,11 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 
 from imageio import imread, imwrite
-from src.flow_net import python_models
 
 
-from src.flow_net.utils import flow_transforms
-from src.flow_net.utils.util import flow2rgb
+
+from src.flow_net.layers import Network
+
 from flow_net.srv import FlowNet, FlowNetResponse
 from rostk_pyutils.ros_cpp_communicator import RosCppCommunicator
 
@@ -33,35 +34,14 @@ package_path = "/home/jesse/Code/src/ros/src/multi_robot_perception/flow_net/"
 
 class FlowNetRos(RosCppCommunicator):
 
-    def __init__(self, model_path= package_path + "src/flow_net/models/flownetc_EPE1.766.tar"):
+    def __init__(self, model_path= package_path + "src/flow_net/models/network-default.pytorch"):
         RosCppCommunicator.__init__(self)
         self.model_path = model_path
        
-        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.log_to_ros("Devis is {}".format(self.device))
+        torch.set_grad_enabled(False)  # make sure to not compute gradients for computational performance
+        cudnn.enabled = True # make sure to use cudnn for computational performance
 
-        self.input_transform = transforms.Compose([
-            flow_transforms.ArrayToTensor(),
-            transforms.Normalize(mean=[0,0,0], std=[255,255,255]),
-            transforms.Normalize(mean=[0.411,0.432,0.45], std=[1,1,1])
-        ])
-
-        self.network_data = torch.load(self.model_path)
-        # print(self.network_data)
-        self.log_to_ros("=> using pre-trained model '{}'".format(self.network_data['arch']))
-        self.model = python_models.__dict__[self.network_data['arch']](self.network_data).to(self.device)
-        self.model.eval()
-
-        cudnn.benchmark = True
-
-        #params
-        #default
-        self.div_flow = 20
-        self.max_flow = None
-
-        if 'div_flow' in self.network_data.keys():
-            self.log_to_ros("flow is {}".format(self.network_data['div_flow']))
-            self.div_flow = self.network_data['div_flow']
+        self.network = Network(self.model_path).cuda().eval()
 
         #set up service calls
         self.flow_net_service = rospy.Service("flow_net_service",FlowNet, self.flow_net_service_callback)
@@ -88,31 +68,63 @@ class FlowNetRos(RosCppCommunicator):
             return response
 
 
-        previous_image_tensor = self.input_transform(previous_image)
-        current_image_tensor = self.input_transform(current_image)
-        input_tensor = torch.cat([previous_image_tensor, current_image_tensor]).unsqueeze(0)
+        output_tensor = self.analyse_flow(previous_image, current_image)
 
-        input_tensor = input_tensor.to(self.device)
-        # compute output
-        output_tensor = self.model(input_tensor)
-
-        #choices=['nearest', 'bilinear']
-        output_tensor = F.interpolate(output_tensor, size=previous_image_tensor.size()[-2:], mode='bilinear', align_corners=False)
-        rgb_flow = flow2rgb(self.div_flow * output_tensor, max_value=self.max_flow)
+        rgb_flow = self.flow2rgb(output_tensor)
         output_image = (rgb_flow * 255).astype(np.uint8).transpose(1,2,0)
-
-        # print(output_image.shape)
-
-        # bgr_flow = flow2bgr(self.div_flow * output_tensor, max_value=self.max_flow)
-        # output_image = (bgr_flow * 255).astype(np.uint8).transpose(1,2,0)
-
-        # self.log_to_ros(str(output_image.shape))
-
-        #note this is RGB!
-        # output_image_msg = self.bridge.cv2_to_imgmsg(output_image, "rgb8")
 
         output_image_msg = ros_numpy.msgify(Image, output_image, encoding='rgb8')
         response.success = True
         response.output_image = output_image_msg
 
         return response
+
+    #inputs should be a numpy array
+    #returns the output of the nerual network as a tensor 2 x N x M tensor
+    def analyse_flow(self, previous_image, current_image):
+
+        #convert to tensor array
+        tenFirst = torch.FloatTensor(np.ascontiguousarray(np.array(previous_image)[:, :, ::-1].transpose(2, 0, 1).astype(np.float32) * (1.0 / 255.0)))
+        tenSecond = torch.FloatTensor(np.ascontiguousarray(np.array(current_image)[:, :, ::-1].transpose(2, 0, 1).astype(np.float32) * (1.0 / 255.0)))
+
+        assert(tenFirst.shape[1] == tenSecond.shape[1])
+        assert(tenFirst.shape[2] == tenSecond.shape[2])
+
+        intWidth = tenFirst.shape[2]
+        intHeight = tenFirst.shape[1]
+
+        # assert(intWidth == 1024) # remember that there is no guarantee for correctness, comment this line out if you acknowledge this and want to continue
+        # assert(intHeight == 436) # remember that there is no guarantee for correctness, comment this line out if you acknowledge this and want to continue
+
+        tenPreprocessedFirst = tenFirst.cuda().view(1, 3, intHeight, intWidth)
+        tenPreprocessedSecond = tenSecond.cuda().view(1, 3, intHeight, intWidth)
+
+        intPreprocessedWidth = int(math.floor(math.ceil(intWidth / 32.0) * 32.0))
+        intPreprocessedHeight = int(math.floor(math.ceil(intHeight / 32.0) * 32.0))
+
+        tenPreprocessedFirst = torch.nn.functional.interpolate(input=tenPreprocessedFirst, size=(intPreprocessedHeight, intPreprocessedWidth), mode='bilinear', align_corners=False)
+        tenPreprocessedSecond = torch.nn.functional.interpolate(input=tenPreprocessedSecond, size=(intPreprocessedHeight, intPreprocessedWidth), mode='bilinear', align_corners=False)
+
+        tenFlow = torch.nn.functional.interpolate(input=self.network(tenPreprocessedFirst, tenPreprocessedSecond), size=(intHeight, intWidth), mode='bilinear', align_corners=False)
+
+        tenFlow[:, 0, :, :] *= float(intWidth) / float(intPreprocessedWidth)
+        tenFlow[:, 1, :, :] *= float(intHeight) / float(intPreprocessedHeight)
+
+        return tenFlow[0, :, :, :].cpu()
+
+    def flow2rgb(self, flow_map):
+        flow_map = flow_map.squeeze(0)
+        flow_map_np = flow_map.detach().cpu().numpy()
+        _, h, w = flow_map_np.shape
+        flow_map_np[:,(flow_map_np[0] == 0) & (flow_map_np[1] == 0)] = float('nan')
+
+        rgb_map = np.ones((3,h,w)).astype(np.float32)
+        # if max_value is not None:
+        #     normalized_flow_map = flow_map_np / max_value
+        # else:
+        normalized_flow_map = flow_map_np / (np.abs(flow_map_np).max())
+        rgb_map[0] += normalized_flow_map[0]
+        rgb_map[1] -= 0.5*(normalized_flow_map[0] + normalized_flow_map[1])
+        rgb_map[2] += normalized_flow_map[1]
+        return rgb_map.clip(0,1)
+

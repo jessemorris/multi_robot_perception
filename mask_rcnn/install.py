@@ -24,6 +24,7 @@ def get_extensions():
 
     sources = main_file + source_cpu
     extension = CppExtension
+    print("cuda home " + CUDA_HOME)
 
     extra_compile_args = {"cxx": []}
     define_macros = []

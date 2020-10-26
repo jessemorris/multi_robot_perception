@@ -80,21 +80,21 @@ class MaskRcnnRos(RosCppCommunicator):
 
 
 
-# def main():
+def main():
     
-#     maskrcnn = MaskRcnnRos()
+    maskrcnn = MaskRcnnRos()
 
-#     cam = cv2.VideoCapture(0)
-#     while True:
-#         start_time = time.time()
-#         ret_val, img = cam.read()
-#         composite = maskrcnn.analyse_image(img)
-#         print("Time: {:.2f} s / img".format(time.time() - start_time))
-#         cv2.imshow("COCO detections", composite)
-#         if cv2.waitKey(1) == 27:
-#             break  # esc to quit
-#     cv2.destroyAllWindows()
+    cam = cv2.VideoCapture(0)
+    while True:
+        start_time = time.time()
+        ret_val, img = cam.read()
+        composite = maskrcnn.analyse_image(img)
+        print("Time: {:.2f} s / img".format(time.time() - start_time))
+        cv2.imshow("COCO detections", composite)
+        if cv2.waitKey(1) == 27:
+            break  # esc to quit
+    cv2.destroyAllWindows()
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()

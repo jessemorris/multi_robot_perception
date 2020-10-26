@@ -43,19 +43,23 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
 
     camera_information.topic = output_video_topic;
 
+    if (undistord_images) {
+        auto info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camea_info_topic, handler, ros::Duration(3));
+        ROS_INFO_STREAM("Received camera info");
+
+        camera_information.intrinsic = (cv::Mat_<double>(3,3) << info->K[0], info->K[1], info->K[2], 
+                                                                info->K[3], info->K[4], info->K[5], 
+                                                                info->K[6], info->K[7], info->K[8]);
+        ROS_INFO_STREAM("Set camera intrinsics");
+
+        camera_information.distortion = cv::Mat_<double>(1,info->D.size());
+        memcpy(camera_information.distortion.data, info->D.data(), info->D.size()*sizeof(double));
+        ROS_INFO_STREAM("Set camera distortion");
+        ROS_INFO_STREAM("Un-distorting images " << undistord_images);
+
+    }
+
         
-    auto info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camea_info_topic, handler, ros::Duration(3));
-    ROS_INFO_STREAM("Received camera info");
-
-    camera_information.intrinsic = (cv::Mat_<double>(3,3) << info->K[0], info->K[1], info->K[2], 
-                                                             info->K[3], info->K[4], info->K[5], 
-                                                             info->K[6], info->K[7], info->K[8]);
-    ROS_INFO_STREAM("Set camera intrinsics");
-
-    camera_information.distortion = cv::Mat_<double>(1,info->D.size());
-    memcpy(camera_information.distortion.data, info->D.data(), info->D.size()*sizeof(double));
-    ROS_INFO_STREAM("Set camera distortion");
-    ROS_INFO_STREAM("Un-distorting images " << undistord_images);
 
     
 
