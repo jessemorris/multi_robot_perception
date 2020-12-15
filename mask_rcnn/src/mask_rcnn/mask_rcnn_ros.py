@@ -31,6 +31,7 @@ class MaskRcnnRos(RosCppCommunicator):
         cfg.merge_from_list([])
         cfg.freeze()
 
+
         # prepare object that handles inference plus adds predictions on top of image
         self.coco_demo = COCODemo(
             cfg,
@@ -75,6 +76,7 @@ class MaskRcnnRos(RosCppCommunicator):
 
     def analyse_image(self, image):
         return self.coco_demo.run_on_opencv_image(image)
+
 
 
 

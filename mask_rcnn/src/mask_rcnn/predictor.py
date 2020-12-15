@@ -212,6 +212,8 @@ class COCODemo(object):
         predictions = self.compute_prediction(image)
         top_predictions = self.select_top_predictions(predictions)
 
+        # print(top_predictions.extra_fields["mask"])
+
         result = image.copy()
         if self.show_mask_heatmaps:
             return self.create_mask_montage(result, top_predictions)

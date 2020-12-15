@@ -1,6 +1,10 @@
+#! /usr/bin/env python
+
+
 from pynput.keyboard import Listener, Key
 
 from rostk_plotting.keypress_listener import KeypressListener
+from rostk_pyutils.observer import Observer
 
 
 

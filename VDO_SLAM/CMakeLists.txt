@@ -49,10 +49,10 @@ find_package(Eigen3 3.1.0 REQUIRED)
 find_package(CSparse REQUIRED)
 
 include_directories(
-${PROJECT_SOURCE_DIR}
-${PROJECT_SOURCE_DIR}/include
-${EIGEN3_INCLUDE_DIR}
-${CSPARSE_INCLUDE_DIR}
+   ${PROJECT_SOURCE_DIR}
+   ${PROJECT_SOURCE_DIR}/include
+   ${EIGEN3_INCLUDE_DIR}
+   ${CSPARSE_INCLUDE_DIR}
 )
 
 set(PUBLIC_HEADER_FILES
@@ -90,14 +90,14 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 target_link_libraries(
-${PROJECT_NAME}
-${OpenCV_LIBS}
-${EIGEN3_LIBS}
-${CSPARSE_LIBRARY}
-# for mac os (default)
-#${PROJECT_SOURCE_DIR}/dependencies/g2o/lib/libg2o.dylib
-# for linux (ubuntu)
-${PROJECT_SOURCE_DIR}/dependencies/g2o/lib/libg2o.so
+   ${PROJECT_NAME}
+   ${OpenCV_LIBS}
+   ${EIGEN3_LIBS}
+   ${CSPARSE_LIBRARY}
+   # for mac os (default)
+   #${PROJECT_SOURCE_DIR}/dependencies/g2o/lib/libg2o.dylib
+   # for linux (ubuntu)
+   ${PROJECT_SOURCE_DIR}/dependencies/g2o/lib/libg2o.so
 )
 
 # Configure target warnings (PRIVATE doesn't pass on options to targets linking to target)
@@ -108,7 +108,9 @@ target_compile_options(${LIB_NAME} PRIVATE -Wno-psabi)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example)
 
 add_executable(vdo_slam
-example/vdo_slam.cc)
+   example/vdo_slam.cc
+)
+
 target_link_libraries(vdo_slam ${PROJECT_NAME})
 
 

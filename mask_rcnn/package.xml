@@ -4,7 +4,7 @@
   <version>0.0.0</version>
   <description>The mask_rcnn package</description>
 
-  <maintainer email="jmor6670@uni.sydney.edu.au">Jesse MOrrus</maintainer>
+  <maintainer email="jmor6670@uni.sydney.edu.au">Jesse Morris</maintainer>
   <license>BSD</license>
 
   <buildtool_depend>catkin</buildtool_depend>
