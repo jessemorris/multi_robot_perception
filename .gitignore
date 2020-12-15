@@ -47,6 +47,9 @@ qtcreator-*
 **/mask_rcnn/*.egg-info
 **/mask_rcnn/data/*
 
+
+**/mono_depth_2/**/models/
+
 /planning/cfg
 /planning/docs
 /planning/src
