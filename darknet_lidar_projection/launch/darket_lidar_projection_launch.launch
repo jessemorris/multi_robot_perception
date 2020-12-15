@@ -1,8 +1,0 @@
-<launch>
-<node pkg="darknet_lidar_projection" type="darknet_lidar_projection_node" name="darknet_lidar_projection" output="screen">
-  <!-- set a private parameter for the node -->
-  <param name="image_depth_topic" value="/gmsl/A0/image_color/image_pixel_depth" />
-  <param name="darknet_bounding_box_topic" value="/darknet_ros/bounding_boxes" />
-  
-</node>
-</launch>

@@ -157,7 +157,8 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS}
-	#${PROJECT_SOURCE_DIR}/../VDO_SLAM/include/
+	${PROJECT_SOURCE_DIR}/../VDO_SLAM/include/
+	${PROJECT_SOURCE_DIR}/../VDO_SLAM/
 )
 
 
@@ -172,7 +173,7 @@ add_executable(${PROJECT_NAME}_node
 target_link_libraries(${PROJECT_NAME}_node
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
-		#${PROJECT_SOURCE_DIR}/../VDO_SLAM/lib/
+		${PROJECT_SOURCE_DIR}/../VDO_SLAM/lib/libObjSLAM.so
 		)
 
 if(catkin_EXPORTED_LIBRARIES)

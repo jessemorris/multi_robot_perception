@@ -1,7 +1,7 @@
 #include "RealTimeVdoSlam.hpp"
 
 #include <sensor_msgs/CameraInfo.h>
-
+#include <vdo_slam.hpp>
 
 RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
         handler(n),
