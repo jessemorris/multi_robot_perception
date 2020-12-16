@@ -24,6 +24,7 @@
 
 #include "SceneFlow.hpp"
 #include "MaskRcnnInterface.hpp"
+#include "MonoDepth.hpp"
 
 #include <string>
 #include <vector>
@@ -55,9 +56,15 @@ class RealTimeVdoSLAM {
         ros::NodeHandle handler;
         SceneFlow sceneflow;
         MaskRcnnInterface mask_rcnn_interface;
+        MonoDepth mono_depth;
 
         bool run_scene_flow;
         bool run_mask_rcnn;
+        bool run_mono_depth;
+
+        cv::Mat scene_flow_mat;
+        cv::Mat mask_rcnn_mat;
+        cv::Mat mono_depth_mat;
 
 
         //evnetually become list when i have more than one camera

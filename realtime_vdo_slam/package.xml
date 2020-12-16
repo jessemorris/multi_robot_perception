@@ -63,6 +63,7 @@
   <depend>pcl_ros</depend>
   <depend>flow_net</depend>
   <depend>mask_rcnn</depend>
+  <depend>mono_depth_2</depend>
 
 
   <depend>sensor_msgs</depend>

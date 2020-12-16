@@ -48,7 +48,7 @@ def sec_to_hm_str(t):
     return "{:02d}h{:02d}m{:02d}s".format(h, m, s)
 
 
-def download_model_if_doesnt_exist(model_name):
+def download_model_if_doesnt_exist(model_name, model_path):
     """If pretrained kitti model doesn't exist, download and unzip it
     """
     # values are tuples of (<google cloud URL>, <md5 checksum>)
@@ -82,10 +82,10 @@ def download_model_if_doesnt_exist(model_name):
              "cdc5fc9b23513c07d5b19235d9ef08f7"),
         }
 
-    if not os.path.exists("models"):
-        os.makedirs("models")
+    # if not os.path.exists("models"):
+    #     os.makedirs("models")
 
-    model_path = os.path.join("models", model_name)
+    # model_path = os.path.join(model_path, model_name)
 
     def check_file_matches_md5(checksum, fpath):
         if not os.path.exists(fpath):

@@ -1,11 +1,14 @@
 import os
 import struct
 import sys
+import rospkg
 
 
 class RosCppCommunicator():
 
     def __init__(self):
+
+        self.rospack = rospkg.RosPack()
        
         #this is the path of the file that called this constructor.
         #we will use the name of this path to find the correct fd
@@ -26,9 +29,14 @@ class RosCppCommunicator():
 
 
     def log_to_ros(self, msg):
+        msg = str(msg)
         if self.write_pipe is None:
             print(msg)
         else:
             msg_size = struct.pack('<I', len(msg))
             self.write_pipe.write(msg_size)
             self.write_pipe.write(msg.encode("utf-8"))
+
+
+    def get_package_path(self, packag_name):
+        return self.rospack.get_path(packag_name)

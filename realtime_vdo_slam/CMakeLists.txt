@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 	image_transport
 	flow_net
 	mask_rcnn
+	mono_depth_2
 	python_service_starter
 	visualization_msgs
 	message_generation
@@ -142,6 +143,7 @@ catkin_package(
 	cv_bridge
 	flow_net
 	mask_rcnn
+	mono_depth_2
 	message_runtime
 	DEPENDS system_lib
 )
@@ -165,6 +167,7 @@ include_directories(
 add_executable(${PROJECT_NAME}_node
 		src/main.cpp
 		src/SceneFlow.cpp
+		src/MonoDepth.cpp
 		src/MaskRcnnInterface.cpp
 		src/RealTimeVdoSlam.cpp)
 

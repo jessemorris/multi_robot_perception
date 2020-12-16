@@ -6,6 +6,7 @@
 
 #include "python_service_starter/StartFlowNet.h"
 #include "python_service_starter/StartMaskRcnn.h"
+#include "python_service_starter/StartMonoDepth.h"
 
 #include "ServiceStarter.hpp"
 
@@ -18,6 +19,7 @@ class PythonServiceController {
 
         bool init_flow_net(python_service_starter::StartFlowNet::Request& request, python_service_starter::StartFlowNet::Response& response);
         bool init_mask_rcnn(python_service_starter::StartMaskRcnn::Request& request, python_service_starter::StartMaskRcnn::Response& response);
+        bool init_mono_depth(python_service_starter::StartMonoDepth::Request& request, python_service_starter::StartMonoDepth::Response& response);
 
         bool shutdown_services();
 
@@ -32,13 +34,16 @@ class PythonServiceController {
         ros::NodeHandle nh;
         ros::ServiceServer start_flow_net_service;
         ros::ServiceServer start_mask_rcnn_service;
+        ros::ServiceServer start_mono_depth_service;
 
 
         std::string python_flow_net_full_path;
         std::string python_mask_rcnn_full_path;
+        std::string python_mono_depth_full_path;
 
         std::unique_ptr<ServiceStarter> flow_net_service_starter;
         std::unique_ptr<ServiceStarter> mask_rcnn_service_starter;
+        std::unique_ptr<ServiceStarter> mono_depth_service_starter;
 
 };
 

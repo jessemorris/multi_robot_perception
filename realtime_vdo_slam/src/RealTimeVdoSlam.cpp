@@ -7,6 +7,7 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
         handler(n),
         sceneflow(n),
         mask_rcnn_interface(n),
+        mono_depth(n),
         image_transport(n),
         is_first(true)
 {
@@ -22,6 +23,7 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     handler.param<bool>("/realtime_vdo_slam/apply_undistortion", undistord_images, false);
     handler.param<bool>("/realtime_vdo_slam/run_mask_rcnn", run_mask_rcnn, false);
     handler.param<bool>("/realtime_vdo_slam/run_flow_net", run_scene_flow, false);
+    handler.param<bool>("/realtime_vdo_slam/run_mono_depth", run_mono_depth, false);
 
     if(run_mask_rcnn) {
         ROS_INFO_STREAM("starting mask rcnn service");
@@ -30,6 +32,11 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     if(run_scene_flow) {
         ROS_INFO_STREAM("starting flow net service");
         sceneflow.start_service();
+    }
+
+    if(run_mono_depth) {
+        ROS_INFO_STREAM("starting mono_depth service");
+        mono_depth.start_service();
     }
 
     ROS_INFO_STREAM("camera selection " << camera_selection);
@@ -43,21 +50,21 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
 
     camera_information.topic = output_video_topic;
 
-    if (undistord_images) {
-        auto info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camea_info_topic, handler, ros::Duration(3));
-        ROS_INFO_STREAM("Received camera info");
+    // if (undistord_images) {
+    //     auto info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camea_info_topic, handler, ros::Duration(3));
+    //     ROS_INFO_STREAM("Received camera info");
 
-        camera_information.intrinsic = (cv::Mat_<double>(3,3) << info->K[0], info->K[1], info->K[2], 
-                                                                info->K[3], info->K[4], info->K[5], 
-                                                                info->K[6], info->K[7], info->K[8]);
-        ROS_INFO_STREAM("Set camera intrinsics");
+    //     camera_information.intrinsic = (cv::Mat_<double>(3,3) << info->K[0], info->K[1], info->K[2], 
+    //                                                             info->K[3], info->K[4], info->K[5], 
+    //                                                             info->K[6], info->K[7], info->K[8]);
+    //     ROS_INFO_STREAM("Set camera intrinsics");
 
-        camera_information.distortion = cv::Mat_<double>(1,info->D.size());
-        memcpy(camera_information.distortion.data, info->D.data(), info->D.size()*sizeof(double));
-        ROS_INFO_STREAM("Set camera distortion");
-        ROS_INFO_STREAM("Un-distorting images " << undistord_images);
+    //     camera_information.distortion = cv::Mat_<double>(1,info->D.size());
+    //     memcpy(camera_information.distortion.data, info->D.data(), info->D.size()*sizeof(double));
+    //     ROS_INFO_STREAM("Set camera distortion");
+    //     ROS_INFO_STREAM("Un-distorting images " << undistord_images);
 
-    }
+    // }
 
         
 
@@ -80,12 +87,12 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     cv::Mat image;
 
 
-    if (undistord_images) {
-        cv::undistort(distored, image, camera_information.intrinsic, camera_information.distortion);
-    }
-    else {
-        image = distored;
-    }
+    // if (undistord_images) {
+    //     cv::undistort(distored, image, camera_information.intrinsic, camera_information.distortion);
+    // }
+    // else {
+    //     image = distored;
+    // }
     cv::Mat flow_matrix, segmentation_mask;
 
     if (is_first) {
@@ -126,6 +133,23 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             }
             else {
                 ROS_WARN_STREAM("Could not analyse mask rcnn images");
+            }
+        }
+
+        if (run_mono_depth) {
+            bool result = mono_depth.analyse_image(current_image, mono_depth_mat);
+
+            if (result) {
+                std_msgs::Header header = std_msgs::Header();
+
+                // //TODO: proper headers
+                // header.frame_id = "base_link";
+                // header.stamp = ros::Time::now();
+                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono8", mono_depth_mat).toImageMsg();
+                results.publish(img_msg);
+            }
+            else {
+                ROS_WARN_STREAM("Could not analyse mono depthimages");
             }
         }
 

@@ -12,8 +12,7 @@
 #include <opencv2/core/core.hpp>
 
 #include<Eigen/Dense>
-#include "/home/jesse/Code/src/ros/src/multi_robot_perception/VDO_SLAM/dependencies/g2o/g2o/types/types_six_dof_expmap.h"
-// #include "dependencies/g2o/g2o/types/types_six_dof_expmap.h"
+#include "dependencies/g2o/g2o/types/types_six_dof_expmap.h"
 #include "dependencies/g2o/g2o/types/types_seven_dof_expmap.h"
 
 namespace VDO_SLAM
