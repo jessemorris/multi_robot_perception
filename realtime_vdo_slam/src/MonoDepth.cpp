@@ -42,7 +42,7 @@ bool MonoDepth::analyse_image(cv::Mat& current_image, cv::Mat& dst) {
     if(mono_depth_client.call(srv)) {
 
         if (srv.response.success) {
-            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(srv.response.output_image, sensor_msgs::image_encodings::MONO8);
+            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(srv.response.output_image, sensor_msgs::image_encodings::MONO16);
             cv::Mat image = cv_ptr->image;
 
             //do i need to copy here?

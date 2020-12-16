@@ -91,10 +91,6 @@ class MonoDepth2Ros(RosCppCommunicator):
         try:
             current_image = ros_numpy.numpify(req.current_image)
             self.log_to_ros((current_image.shape))
-            # self.flow_net_test_publisher.publish(image)
-
-            # previous_image = self.bridge.imgmsg_to_cv2(req.previous_image, "bgr8")
-            # current_image = self.bridge.imgmsg_to_cv2(req.current_image, "bgr8")
         except Exception as e:
             self.log_to_ros(str(e))
             response.success = False
@@ -103,7 +99,7 @@ class MonoDepth2Ros(RosCppCommunicator):
 
         depth_image = self.analyse_depth(current_image)
 
-        output_image_msg = ros_numpy.msgify(Image, depth_image, encoding='mono8')
+        output_image_msg = ros_numpy.msgify(Image, depth_image, encoding='mono16')
         response.success = True
         response.output_image = output_image_msg
 
@@ -123,13 +119,13 @@ class MonoDepth2Ros(RosCppCommunicator):
     
         original_width, original_height = image.size
         image = image.resize((self.feed_width, self.feed_height), pilImage.LANCZOS)
-        self.log_to_ros(image)
-        self.log_to_ros("Input image type {}".format(type(image)))
+        # self.log_to_ros(image)
+        # self.log_to_ros("Input image type {}".format(type(image)))
         image = transforms.ToTensor()(image).unsqueeze(0)
-        self.log_to_ros(image.size())
-        self.log_to_ros("Input image type {}".format(type(image)))
+        # self.log_to_ros(image.size())
+        # self.log_to_ros("Input image type {}".format(type(image)))
         #size is eventually torch.Size([1, 3, 192, 640]) we can give it cv image and then convert to torch
-        self.log_to_ros(image.size())
+        # self.log_to_ros(image.size())
 
         # PREDICTION
         image = image.to(self.device)
@@ -140,8 +136,16 @@ class MonoDepth2Ros(RosCppCommunicator):
         disp_resized = torch.nn.functional.interpolate(
             disp, (original_height, original_width), mode="bilinear", align_corners=False)
 
-        # Saving colormapped depth image
-        depth_image = disp_resized.squeeze().cpu().numpy()
+        #output is a np.float64. We must cast down to a np.float8 so that ROS encodings can handles this
+        #apparently float16 is super slow becuase most intel processors dont support FP16 ops so we're going with np.uint16
+        depth_image_float = disp_resized.squeeze().cpu().numpy()
+        depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
+        self.log_to_ros(depth_image.shape)
+
+        del image
+        del features
+        del outputs
+
         return depth_image
 
     def depth_image_to_colourmap(self, depth_image):
@@ -159,150 +163,3 @@ class MonoDepth2Ros(RosCppCommunicator):
         return (mapper.to_rgba(depth_image)[:, :, :3] * 255).astype(np.uint8)
 
 
-
-# def test_simple(args):
-#     """Function to predict for a single image or folder of images
-#     """
-#     # assert args.model_name is not None, \
-#     #     "You must specify the --model_name parameter; see README.md for an example"
-
-#     # if torch.cuda.is_available() and not args.no_cuda:
-#     #     device = torch.device("cuda")
-#     # else:
-#     #     device = torch.device("cpu")
-
-#     if torch.cuda.is_available():
-#         device = torch.device("cuda")
-#     else:
-#         device = torch.device("cpu")
-
-#     model_name = "mono_640x192"
-#     download_model_if_doesnt_exist(model_name)
-#     model_path = os.path.join("models", model_name)
-#     print("-> Loading model from ", model_path)
-#     encoder_path = os.path.join(model_path, "encoder.pth")
-#     depth_decoder_path = os.path.join(model_path, "depth.pth")
-
-    # # LOADING PRETRAINED MODEL
-    # print("   Loading pretrained encoder")
-    # encoder = networks.ResnetEncoder(18, False)
-    # loaded_dict_enc = torch.load(encoder_path, map_location=device)
-
-    # # extract the height and width of image that this model was trained with
-    # feed_height = loaded_dict_enc['height']
-    # feed_width = loaded_dict_enc['width']
-    # filtered_dict_enc = {k: v for k, v in loaded_dict_enc.items() if k in encoder.state_dict()}
-    # encoder.load_state_dict(filtered_dict_enc)
-    # encoder.to(device)
-    # encoder.eval()
-
-    
-
-    # FINDING INPUT IMAGES
-    # if os.path.isfile(args.image_path):
-    #     # Only testing on a single image
-    #     paths = [args.image_path]
-    #     output_directory = os.path.dirname(args.image_path)
-    # elif os.path.isdir(args.image_path):
-    #     # Searching folder for images
-    #     paths = glob.glob(os.path.join(args.image_path, '*.{}'.format(args.ext)))
-    #     output_directory = args.image_path
-    # else:
-    #     raise Exception("Can not find args.image_path: {}".format(args.image_path))
-
-    # print("-> Predicting on {:d} test images".format(len(paths)))
-
-    # cam = cv2.VideoCapture(0)
-
-    # img = cv2.imread("/home/jesse/Code/src/ros/src/multi_robot_perception/mono_depth_2/src/test_image.jpg")
-    # PREDICTING ON EACH IMAGE IN TURN
-#     with torch.no_grad():
-#         while True:
-#         # while True:
-#         #     start_time = time.time()
-#         #     ret_val, img = cam.read()
-#         #     composite = maskrcnn.analyse_image(img)
-#         #     print("Time: {:.2f} s / img".format(time.time() - start_time))
-#         #     cv2.imshow("COCO detections", composite)
-#         #     if cv2.waitKey(1) == 27:
-#         #         break  # esc to quit
-#         # cv2.destroyAllWindows()
-
-#             # for idx, image_path in enumerate(paths):
-
-#             # if image_path.endswith("_disp.jpg"):
-#                 # don't try to predict disparity for a disparity image!
-
-            
-#             # ret_val, img = cam.read()
-#             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-#             input_image = Image.fromarray(img)
-#             # # img_numpy = np.ascontiguousarray(np.array(img)[:, :, ::-1].astype(np.float32) * (1.0 / 255.0))
-#             # img_numpy = np.ascontiguousarray(np.array(img)[:, :, ::-1].astype(np.float32))
-
-#             # img_numpy = cv2.resize(img_numpy, (feed_width,feed_height), interpolation = cv2.INTER_AREA)
-#             # original_height, original_width, channels = img_numpy.shape
-
-
-
-#             # print(img_numpy.shape)
-
-
-#             # Load image and preprocess
-#             # input_image = pil.open("assets/test_image.jpg").convert('RGB')
-#             # print("Input image type {}".format(type(input_image)))
-#             original_width, original_height = input_image.size
-#             input_image = input_image.resize((feed_width, feed_height), pil.LANCZOS)
-#             print(input_image)
-#             print("Input image type {}".format(type(input_image)))
-#             input_image = transforms.ToTensor()(input_image).unsqueeze(0)
-#             print(input_image.size())
-#             print("Input image type {}".format(type(input_image)))
-#             #size is eventually torch.Size([1, 3, 192, 640]) we can give it cv image and then convert to torch
-#             print(input_image.size())
-
-#             # PREDICTION
-#             start_time = time.time()
-#             input_image = input_image.to(device)
-#             features = encoder(input_image)
-#             outputs = depth_decoder(features)
-
-#             disp = outputs[("disp", 0)]
-#             disp_resized = torch.nn.functional.interpolate(
-#                 disp, (original_height, original_width), mode="bilinear", align_corners=False)
-
-#             # Saving numpy file
-#             # output_name = os.path.splitext(os.path.basename(image_path))[0]
-#             # name_dest_npy = os.path.join(output_directory, "{}_disp.npy".format(output_name))
-#             # scaled_disp, _ = disp_to_depth(disp, 0.1, 100)
-#             # np.save(name_dest_npy, scaled_disp.cpu().numpy())
-
-#             # Saving colormapped depth image
-#             disp_resized_np = disp_resized.squeeze().cpu().numpy()
-#             vmax = np.percentile(disp_resized_np, 95)
-#             normalizer = mpl.colors.Normalize(vmin=disp_resized_np.min(), vmax=vmax)
-#             mapper = cm.ScalarMappable(norm=normalizer, cmap='magma')
-#             colormapped_im = (mapper.to_rgba(disp_resized_np)[:, :, :3] * 255).astype(np.uint8)
-#             print("Time: {:.2f} s / img".format(time.time() - start_time))
-
-#             print(type(colormapped_im))
-#             cv2.imshow("Depth detections", colormapped_im)
-#             if cv2.waitKey(1) == 27:
-#                 break  # esc to quit
-#             # im = pil.fromarray(colormapped_im)
-
-#             # name_dest_im = os.path.join(output_directory, "{}_disp.jpeg".format(output_name))
-#             # im.save(name_dest_im)
-
-#             # print("   Processed {:d} of {:d} images - saved prediction to {}".format(
-#             #     idx + 1, len(paths), name_dest_im))
-#         cv2.destroyAllWindows()
-
-#     print('-> Done!')
-
-
-# if __name__ == '__main__':
-#     # args = parse_args()
-#     args = None
-#     test_simple(args)

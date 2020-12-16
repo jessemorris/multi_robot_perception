@@ -84,7 +84,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGB8);
     cv::Mat distored = cv_ptr->image;
     // cv::cvtColor(distored, distored, CV_RGB2BGR);
-    cv::Mat image;
+    cv::Mat image = distored;
 
 
     // if (undistord_images) {
@@ -145,7 +145,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 // //TODO: proper headers
                 // header.frame_id = "base_link";
                 // header.stamp = ros::Time::now();
-                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono8", mono_depth_mat).toImageMsg();
+                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono16", mono_depth_mat).toImageMsg();
                 results.publish(img_msg);
             }
             else {

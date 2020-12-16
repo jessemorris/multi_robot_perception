@@ -110,7 +110,15 @@ class FlowNetRos(RosCppCommunicator):
         tenFlow[:, 0, :, :] *= float(intWidth) / float(intPreprocessedWidth)
         tenFlow[:, 1, :, :] *= float(intHeight) / float(intPreprocessedHeight)
 
-        return tenFlow[0, :, :, :].cpu()
+        flow = tenFlow[0, :, :, :].cpu()
+
+        del tenFlow
+        del tenPreprocessedFirst
+        del tenPreprocessedSecond
+        del tenFirst
+        del tenSecond
+        
+        return flow
 
     def flow2rgb(self, flow_map):
         flow_map = flow_map.squeeze(0)
