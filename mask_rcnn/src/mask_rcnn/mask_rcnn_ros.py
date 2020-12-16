@@ -10,6 +10,9 @@ sys.path.insert(0, package_path)
 from maskrcnn_benchmark.config import cfg
 import ros_numpy
 import os
+import numpy as np
+import math
+import matplotlib.path
 
 from mask_rcnn.predictor import COCODemo
 from mask_rcnn.srv import MaskRcnn, MaskRcnnResponse
@@ -74,29 +77,69 @@ class MaskRcnnRos(RosCppCommunicator):
             response.success = False
             return response
 
+    # def analyse_image(self, image):
+    #     return self.coco_demo.run_on_opencv_image(image)
+
     def analyse_image(self, image):
-        return self.coco_demo.run_on_opencv_image(image)
+        predictions = self.coco_demo.compute_prediction(image)
+        top_predictions = self.coco_demo.select_top_predictions(predictions)
+        return self.create_pixel_masks(image, top_predictions)
+
+        # result = image.copy()
+
+    def create_pixel_masks(self, image, predictions):
+        masks = predictions.get_field("mask").numpy()
+        labels = predictions.get_field("labels")
+
+        colors = self.coco_demo.compute_colors_for_labels(labels).tolist()
+
+        for mask, color in zip(masks, colors):
+            thresh = mask[0, :, :, None].astype(np.uint8)
+            #contours are like my polygon
+            contours, hierarchy = cv2.findContours(
+                thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+            )
+            self.log_to_ros(type(contours))
+            self.log_to_ros(len(contours))
+            self.log_to_ros(type(contours[0]))
+
+            # left = np.min(polygon, axis=0)
+            # right = np.max(polygon, axis=0)
+            # x = np.arange(math.ceil(left[0]), math.floor(right[0])+1)
+            # y = np.arange(math.ceil(left[1]), math.floor(right[1])+1)
+            # xv, yv = np.meshgrid(x, y, indexing='xy')
+            # points = np.hstack((xv.reshape((-1,1)), yv.reshape((-1,1))))
+
+            # path = matplotlib.path.Path(polygon)
+            # mask = path.contains_points(points)
+            # mask.shape = xv.shape
+
+            image = cv2.drawContours(image, contours, -1, color, 3)
+
+        composite = image
+
+        return composite
 
 
 
 
 
 
-# def main():
+def main():
     
-#     maskrcnn = MaskRcnnRos()
+    maskrcnn = MaskRcnnRos()
 
-#     cam = cv2.VideoCapture(0)
-#     while True:
-#         start_time = time.time()
-#         ret_val, img = cam.read()
-#         composite = maskrcnn.analyse_image(img)
-#         print("Time: {:.2f} s / img".format(time.time() - start_time))
-#         cv2.imshow("COCO detections", composite)
-#         if cv2.waitKey(1) == 27:
-#             break  # esc to quit
-#     cv2.destroyAllWindows()
+    cam = cv2.VideoCapture(0)
+    while True:
+        start_time = time.time()
+        ret_val, img = cam.read()
+        composite = maskrcnn.analyse_image(img)
+        print("Time: {:.2f} s / img".format(time.time() - start_time))
+        cv2.imshow("COCO detections", composite)
+        if cv2.waitKey(1) == 27:
+            break  # esc to quit
+    cv2.destroyAllWindows()
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
