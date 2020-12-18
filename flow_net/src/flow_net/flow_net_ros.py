@@ -136,3 +136,5 @@ class FlowNetRos(RosCppCommunicator):
         rgb_map[2] += normalized_flow_map[1]
         return rgb_map.clip(0,1)
 
+
+

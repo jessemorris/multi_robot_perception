@@ -35,6 +35,8 @@ import rospkg
 import rospy
 import ros_numpy
 
+package_path = "/home/jesse/Code/src/ros/src/multi_robot_perception/mono_depth_2/"
+sys.path.insert(0, package_path)
 
 rospack = rospkg.RosPack()
 
@@ -90,7 +92,6 @@ class MonoDepth2Ros(RosCppCommunicator):
         response = MonoDepthResponse()
         try:
             current_image = ros_numpy.numpify(req.current_image)
-            self.log_to_ros((current_image.shape))
         except Exception as e:
             self.log_to_ros(str(e))
             response.success = False
@@ -140,7 +141,7 @@ class MonoDepth2Ros(RosCppCommunicator):
         #apparently float16 is super slow becuase most intel processors dont support FP16 ops so we're going with np.uint16
         depth_image_float = disp_resized.squeeze().cpu().numpy()
         depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
-        self.log_to_ros(depth_image.shape)
+        # self.log_to_ros(depth_image.shape)
 
         del image
         del features
@@ -163,3 +164,21 @@ class MonoDepth2Ros(RosCppCommunicator):
         return (mapper.to_rgba(depth_image)[:, :, :3] * 255).astype(np.uint8)
 
 
+# def main():
+    
+#     monodepth = MonoDepth2Ros()
+
+#     cam = cv2.VideoCapture(0)
+#     while True:
+#         start_time = time.time()
+#         ret_val, img = cam.read()
+#         composite = monodepth.analyse_depth(img)
+#         print("Time: {:.2f} s / img".format(time.time() - start_time))
+#         cv2.imshow("COCO detections", composite)
+#         if cv2.waitKey(1) == 27:
+#             break  # esc to quit
+#     cv2.destroyAllWindows()
+
+
+# if __name__ == "__main__":
+#     main()
