@@ -369,6 +369,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
         // }
         for (int i = 0; i < TemperalMatch_subset.size(); i=i+1)
         {
+            //  cout << " TemperalMatch_subset size " << TemperalMatch_subset.size() << endl;
             if (TemperalMatch_subset[i]>=mCurrentFrame.mvStatKeys.size())
                 continue;
             KeyPoints_tmp[0] = mCurrentFrame.mvStatKeys[TemperalMatch_subset[i]];
@@ -381,6 +382,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
         // static and dynamic objects
         for (int i = 0; i < mCurrentFrame.vObjLabel.size(); ++i)
         {
+            //  cout << " mCurrentFrame vObjLabel size " << mCurrentFrame.vObjLabel.size() << endl;
             if(mCurrentFrame.vObjLabel[i]==-1 || mCurrentFrame.vObjLabel[i]==-2)
                 continue;
             int l = mCurrentFrame.vObjLabel[i];
@@ -484,7 +486,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
             cv::waitKey(1);
 
     }
-
+    cout << "Showing bb with speed" << endl;
     // ************** show bounding box with speed ***************
     if(timestamp!=0 && bFrame2Frame == true && mTestData==KITTI)
     {
@@ -494,7 +496,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
         {
             if (mCurrentFrame.vSpeed[i].x==0)
                 continue;
-            // cout << "ID: " << mCurrentFrame.vObjBoxID[i] << endl;
+            cout << "ID: " << mCurrentFrame.vObjBoxID[i] << endl;
             cv::Point pt1(vObjPose_gt[mCurrentFrame.vObjBoxID[i]][2], vObjPose_gt[mCurrentFrame.vObjBoxID[i]][3]);
             cv::Point pt2(vObjPose_gt[mCurrentFrame.vObjBoxID[i]][4], vObjPose_gt[mCurrentFrame.vObjBoxID[i]][5]);
             // cout << pt1.x << " " << pt1.y << " " << pt2.x << " " << pt2.y << endl;
@@ -513,10 +515,12 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
     }
 
     // // ************** show trajectory results ***************
-    if (mTestData==KITTI)
+    if (mTestData==KITTI && !mCurrentFrame.mTcw.empty())
     {
+        cout << "Showing trajectory results on KITTi" << endl;
         int sta_x = 300, sta_y = 100, radi = 2, thic = 5;  // (160/120/2/5)
         float scale = 6; // 6
+        cout << "mTcw shape: rows " << mCurrentFrame.mTcw.rows << " cols " <<mCurrentFrame.mTcw.cols << endl;
         cv::Mat CamPos = Converter::toInvMatrix(mCurrentFrame.mTcw);
         int x = int(CamPos.at<float>(0,3)*scale) + sta_x;
         int y = int(CamPos.at<float>(2,3)*scale) + sta_y;
@@ -589,11 +593,11 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
     }
 
 
-    if(timestamp!=0 && bFrame2Frame == true && mTestData==OMD)
-    {
-        PlotMetricError(mpMap->vmCameraPose,mpMap->vmRigidMotion, mpMap->vmObjPosePre,
-                       mpMap->vmCameraPose_GT,mpMap->vmRigidMotion_GT, mpMap->vbObjStat);
-    }
+    // if(timestamp!=0 && bFrame2Frame == true && mTestData==OMD)
+    // {
+    //     PlotMetricError(mpMap->vmCameraPose,mpMap->vmRigidMotion, mpMap->vmObjPosePre,
+    //                    mpMap->vmCameraPose_GT,mpMap->vmRigidMotion_GT, mpMap->vbObjStat);
+    // }
 
 
     // // // ************** display temperal matching ***************
@@ -676,6 +680,13 @@ void Tracking::Track()
         }
         // // ********************************************
 
+        if (TemperalMatch.size() < 2) {
+            cout << "Temperal Match size is < 2" << endl;
+            return;
+        }
+
+        cout << "Temperal Match size is " << TemperalMatch.size() << endl;
+
         clock_t s_1_1, s_1_2, e_1_1, e_1_2;
         double cam_pos_time;
         s_1_1 = clock();
@@ -685,19 +696,19 @@ void Tracking::Track()
 
 
         s_1_2 = clock();
-        // cout << "the ground truth pose: " << endl << mCurrentFrame.mTcw_gt << endl;
-        // cout << "initial pose: " << endl << iniTcw << endl;
+        cout << "the ground truth pose: " << endl << mCurrentFrame.mTcw_gt << endl;
+        cout << "initial pose: " << endl << iniTcw << endl;
         // // compute the pose with new matching
         mCurrentFrame.SetPose(iniTcw);
         if (bJoint)
             Optimizer::PoseOptimizationFlow2Cam(&mCurrentFrame, &mLastFrame, TemperalMatch_subset);
         else
             Optimizer::PoseOptimizationNew(&mCurrentFrame, &mLastFrame, TemperalMatch_subset);
-        // cout << "pose after update: " << endl << mCurrentFrame.mTcw << endl;
+        cout << "pose after update: " << endl << mCurrentFrame.mTcw << endl;
         e_1_2 = clock();
         cam_pos_time = (double)(e_1_1-s_1_1)/CLOCKS_PER_SEC*1000 + (double)(e_1_2-s_1_2)/CLOCKS_PER_SEC*1000;
         all_timing[1] = cam_pos_time;
-        // cout << "camera pose estimation time: " << cam_pos_time << endl;
+        cout << "camera pose estimation time: " << cam_pos_time << endl;
 
         // Update motion model
         if(!mLastFrame.mTcw.empty())
@@ -1184,8 +1195,11 @@ void Tracking::Track()
     if (f_id==StopFrame) // bFrame2Frame f_id>=2
     {
         // Metric Error BEFORE Optimization
-        GetMetricError(mpMap->vmCameraPose,mpMap->vmRigidMotion, mpMap->vmObjPosePre,
-                       mpMap->vmCameraPose_GT,mpMap->vmRigidMotion_GT, mpMap->vbObjStat);
+        //comment these becuase we have no ground truth
+        // GetMetricError(mpMap->vmCameraPose,mpMap->vmRigidMotion, mpMap->vmObjPosePre,
+        //                mpMap->vmCameraPose_GT,mpMap->vmRigidMotion_GT, mpMap->vbObjStat);
+
+
         // GetVelocityError(mpMap->vmRigidMotion, mpMap->vp3DPointDyn, mpMap->vnFeatLabel,
         //                  mpMap->vnRMLabel, mpMap->vfAllSpeed_GT, mpMap->vnAssoDyn, mpMap->vbObjStat);
 
@@ -1195,8 +1209,9 @@ void Tracking::Track()
             Optimizer::FullBatchOptimization(mpMap,mK);
 
             // Metric Error AFTER Optimization
-            GetMetricError(mpMap->vmCameraPose_RF,mpMap->vmRigidMotion_RF, mpMap->vmObjPosePre,
-                           mpMap->vmCameraPose_GT,mpMap->vmRigidMotion_GT, mpMap->vbObjStat);
+            // GetMetricError(mpMap->vmCameraPose_RF,mpMap->vmRigidMotion_RF, mpMap->vmObjPosePre,
+            //                mpMap->vmCameraPose_GT,mpMap->vmRigidMotion_GT, mpMap->vbObjStat);
+            
             // GetVelocityError(mpMap->vmRigidMotion_RF, mpMap->vp3DPointDyn, mpMap->vnFeatLabel,
             //                  mpMap->vnRMLabel, mpMap->vfAllSpeed_GT, mpMap->vnAssoDyn, mpMap->vbObjStat);
         }
@@ -1609,6 +1624,7 @@ cv::Mat Tracking::GetInitModelCam(const std::vector<int> &MatchId, std::vector<i
 {
     cv::Mat Mod = cv::Mat::eye(4,4,CV_32F);
     int N = MatchId.size();
+    cout << "Mat Id " << N << endl;
 
     // construct input
     std::vector<cv::Point2f> cur_2d(N);

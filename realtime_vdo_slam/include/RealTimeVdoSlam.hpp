@@ -37,8 +37,8 @@
 //wrapper for camera information
 struct CameraInformation {
     std::string topic;
-    cv::Mat intrinsic;
-    cv::Mat distortion;
+    sensor_msgs::CameraInfo camera_info;
+
 };
 
 

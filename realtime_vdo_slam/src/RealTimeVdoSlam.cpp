@@ -54,6 +54,10 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     ROS_INFO_STREAM("camera info topic " << camea_info_topic);
 
     camera_information.topic = output_video_topic;
+    ROS_INFO_STREAM("Waiting for camera info msg");
+    sensor_msgs::CameraInfoConstPtr camera_info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camea_info_topic);
+    camera_information.camera_info = *camera_info;
+    ROS_INFO_STREAM("Got camera info msg");
 
 
     image_subscriber = image_transport.subscribe(output_video_topic, 10,
@@ -104,13 +108,12 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             scene_flow_success = sceneflow.analyse_image(current_image, previous_image, scene_flow_mat);
 
             if (scene_flow_success) {
-                std_msgs::Header header = std_msgs::Header();
+                //#TODO: cannot fisplay until convert from scene flow to rgb
+                // std_msgs::Header header = std_msgs::Header();
 
-                // //TODO: proper headers
-                // header.frame_id = "base_link";
-                // header.stamp = ros::Time::now();
-                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "rgb8", scene_flow_mat).toImageMsg();
-                flownet_results.publish(img_msg);
+               
+                // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "rgb8", scene_flow_mat).toImageMsg();
+                // flownet_results.publish(img_msg);
             }
             else {
                 ROS_WARN_STREAM("Could not analyse scene flow images");
@@ -163,7 +166,8 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             ros::Duration diff = current_time - previous_time;
             double time_difference = diff.toSec();
 
-            cv::Mat depth_image_float, ground_truth;
+            cv::Mat depth_image_float;
+            cv::Mat ground_truth = cv::Mat::eye(4,4,CV_32F);
             std::vector<std::vector<float> > object_pose_gt;
             mono_depth_mat.convertTo(depth_image_float, CV_32SC1);
 

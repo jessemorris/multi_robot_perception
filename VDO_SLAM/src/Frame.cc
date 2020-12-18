@@ -135,6 +135,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
         double fea_det_time;
         s_1 = clock();
         std::vector<cv::KeyPoint> mvKeysSamp = SampleKeyPoints(imGray.rows, imGray.cols);
+        cout << "number key points: " << mvKeysSamp.size() << endl;
         e_1 = clock();
         fea_det_time = (double)(e_1-s_1)/CLOCKS_PER_SEC*1000;
         std::cout << "feature detection time: " << fea_det_time << std::endl;
@@ -171,12 +172,12 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
     // ---------------------------------------------------------------------------------------
 
     // cv::Mat img_show;
-    // cv::drawKeypoints(imGray, mvKeysSamp, img_show, cv::Scalar::all(-1), cv::DrawMatchesFlags::DEFAULT);
+    // cv::drawKeypoints(imGray, mvKeys, img_show, cv::Scalar::all(-1), cv::DrawMatchesFlags::DEFAULT);
     // cv::imshow("KeyPoints on Background", img_show);
     // cv::waitKey(0);
 
     N_s_tmp = mvCorres.size();
-    // cout << "number of random sample points: " << mvCorres.size() << endl;
+    cout << "number of random sample points: " << mvCorres.size() << endl;
 
     // assign the depth value to each keypoint
     mvStatDepthTmp = vector<float>(N_s_tmp,-1);

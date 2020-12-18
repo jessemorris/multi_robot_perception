@@ -44,7 +44,7 @@ bool SceneFlow::analyse_image(cv::Mat& current_image,cv::Mat& previous_image, cv
     if(flow_net_client.call(srv)) {
 
         if (srv.response.success) {
-            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(srv.response.output_image, sensor_msgs::image_encodings::RGB8);
+            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(srv.response.output_image, sensor_msgs::image_encodings::TYPE_32FC2);
             cv::Mat image = cv_ptr->image;
 
             //do i need to copy here?

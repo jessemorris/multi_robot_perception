@@ -70,10 +70,15 @@ class FlowNetRos(RosCppCommunicator):
 
         output_tensor = self.analyse_flow(previous_image, current_image)
 
-        rgb_flow = self.flow2rgb(output_tensor)
-        output_image = (rgb_flow * 255).astype(np.uint8).transpose(1,2,0)
+        self.log_to_ros(output_tensor.shape)
 
-        output_image_msg = ros_numpy.msgify(Image, output_image, encoding='rgb8')
+        # rgb_flow = self.flow2rgb(output_tensor)
+        # output_image = (rgb_flow * 255).astype(np.uint8).transpose(1,2,0)
+        output_image = output_tensor.numpy().astype(np.float32).transpose(1,2,0)
+        print(output_image.shape)
+
+        # output_image_msg = ros_numpy.msgify(Image, output_image, encoding='rgb8')
+        output_image_msg = ros_numpy.msgify(Image, output_image, encoding='32FC2')
         response.success = True
         response.output_image = output_image_msg
 

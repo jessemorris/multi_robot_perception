@@ -130,6 +130,7 @@ public:
         OMD=1,
         KITTI=2,
         VirtualKITTI=3,
+        REAL=4
     };
 
     eDataState mTestData;
