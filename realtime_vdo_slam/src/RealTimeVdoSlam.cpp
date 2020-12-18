@@ -75,7 +75,9 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     image_subscriber = image_transport.subscribe(output_video_topic, 10,
                                                &RealTimeVdoSLAM::image_callback, this);
 
-    results = image_transport.advertise("vdoslam/results", 10);
+    maskrcnn_results = image_transport.advertise("vdoslam/results/maskrcnn", 10);
+    flownet_results = image_transport.advertise("vdoslam/results/flownet", 10);
+    monodepth_results = image_transport.advertise("vdoslam/results/monodepth", 10);
 }
 
 RealTimeVdoSLAM::~RealTimeVdoSLAM() {}
@@ -115,7 +117,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 // header.frame_id = "base_link";
                 // header.stamp = ros::Time::now();
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "rgb8", flow_matrix).toImageMsg();
-                results.publish(img_msg);
+                flownet_results.publish(img_msg);
             }
             else {
                 ROS_WARN_STREAM("Could not analyse scene flow images");
@@ -132,7 +134,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 // header.frame_id = "base_link";
                 // header.stamp = ros::Time::now();
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono8", segmentation_mask).toImageMsg();
-                results.publish(img_msg);
+                maskrcnn_results.publish(img_msg);
             }
             else {
                 ROS_WARN_STREAM("Could not analyse mask rcnn images");
@@ -149,7 +151,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 // header.frame_id = "base_link";
                 // header.stamp = ros::Time::now();
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono16", mono_depth_mat).toImageMsg();
-                results.publish(img_msg);
+                monodepth_results.publish(img_msg);
             }
             else {
                 ROS_WARN_STREAM("Could not analyse mono depthimages");

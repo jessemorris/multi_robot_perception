@@ -75,7 +75,9 @@ class RealTimeVdoSLAM {
 
         image_transport::ImageTransport image_transport;
         image_transport::Subscriber image_subscriber;
-        image_transport::Publisher results;
+        image_transport::Publisher maskrcnn_results;
+        image_transport::Publisher flownet_results;
+        image_transport::Publisher monodepth_results;
 
         bool is_first;
         cv::Mat previous_image;

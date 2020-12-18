@@ -59,7 +59,7 @@ class MaskRcnnRos(RosCppCommunicator):
 
 
     def mask_rcnn_service_callback(self, req):
-        response = MaskRcnnResponse()
+        response = MaskRcnnVdoSlamResponse()
         self.log_to_ros("Inside callback")
         try: 
             self.mask_rcnn_test_publisher.publish(req.input_image)
@@ -111,26 +111,29 @@ class MaskRcnnRos(RosCppCommunicator):
         """        
         masks = predictions.get_field("mask").numpy()
         label_indexs = predictions.get_field("labels")
+        label_indexs_numpy = label_indexs.numpy()
         labels = self.convert_label_index_to_string(label_indexs)
-        print(masks.shape)
 
         
 
         number_of_masks = masks.shape[0]
 
-        # colors = self.generate_grayscale_values(label_indexs)
+        colors = self.generate_grayscale_values(label_indexs)
 
         width = image.shape[0]
         height = image.shape[1]
         blank_mask = np.zeros((width, height),np.uint8)
 
         for i in range(number_of_masks):
-            print(masks.shape)
-            pixel_mask = masks[i, 0, :, :].astype(np.uint8) * label_indexs[i]
-            print(pixel_mask[np.nonzero(pixel_mask)])
+            # print(masks.shape)
+            # pixel_mask = masks[i, 0, :, :].astype(np.uint8) * label_indexs_numpy[i]
+            pixel_mask = masks[i, 0, :, :].astype(np.uint8) * colors[i]
 
             blank_mask += pixel_mask
-           
+        # self.log_to_ros(type(blank_mask))
+        # self.log_to_ros(type(labels))
+        # self.log_to_ros(type(label_indexs))
+        
 
         return blank_mask, labels, label_indexs
 

@@ -46,7 +46,6 @@ bool MaskRcnnInterface::analyse_image(cv::Mat& current_image, cv::Mat& dst,
     if(mask_rcnn_client.call(srv)) {
 
         if (srv.response.success) {
-            ROS_INFO_STREAM("success");
             cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(srv.response.output_mask, sensor_msgs::image_encodings::MONO8);
             cv::Mat image = cv_ptr->image;
 
@@ -58,7 +57,6 @@ bool MaskRcnnInterface::analyse_image(cv::Mat& current_image, cv::Mat& dst,
                 label_indexs.push_back(*it);
             }
                 
-
             // labels.assign(std::begin(*srv.response.labels.data()), std::end(*srv.response.labels.data()));
             // label_indexs.assign(std::begin(*srv.response.label_indexs.data()), std::end(*srv.response.label_indexs.data()));
 
