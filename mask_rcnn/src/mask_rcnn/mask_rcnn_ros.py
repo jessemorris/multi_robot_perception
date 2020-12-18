@@ -13,14 +13,20 @@ import os
 import numpy as np
 import math
 import matplotlib.path
+import torch
 
 from mask_rcnn.predictor import COCODemo
+
+from mask_rcnn.srv import MaskRcnnVdoSlam, MaskRcnnVdoSlamResponse
+
+from mask_rcnn.srv import MaskRcnnVisualise, MaskRcnnVisualiseResponse
 from mask_rcnn.srv import MaskRcnn, MaskRcnnResponse
 from rostk_pyutils.ros_cpp_communicator import RosCppCommunicator
 
 from sensor_msgs.msg import Image
 import struct
 import rospy
+import random
 
 
 import time
@@ -34,6 +40,8 @@ class MaskRcnnRos(RosCppCommunicator):
         cfg.merge_from_list([])
         cfg.freeze()
 
+        self.greyscale_palette = torch.tensor([2 ** 25 - 1])
+
 
         # prepare object that handles inference plus adds predictions on top of image
         self.coco_demo = COCODemo(
@@ -45,7 +53,7 @@ class MaskRcnnRos(RosCppCommunicator):
         )
 
 
-        self.mask_rcnn_service = rospy.Service("mask_rcnn_service",MaskRcnn, self.mask_rcnn_service_callback)
+        self.mask_rcnn_service = rospy.Service("mask_rcnn_service",MaskRcnnVdoSlam, self.mask_rcnn_service_callback)
         self.mask_rcnn_test_publisher = rospy.Publisher('mask_rcnn/test', Image, queue_size=10)
         self.log_to_ros("Service call ready")
 
@@ -59,14 +67,16 @@ class MaskRcnnRos(RosCppCommunicator):
             input_image = ros_numpy.numpify(req.input_image)
 
 
-            response_image = self.analyse_image(input_image)
+            response_image, labels, label_indexs = self.analyse_image(input_image)
             self.log_to_ros(str(response_image.shape))
 
-            output_image_msg = ros_numpy.msgify(Image, response_image, encoding='rgb8')
+            output_image_msg = ros_numpy.msgify(Image, response_image, encoding='mono8')
 
             response.success = True
             # response.output_image = output_image_msg
-            response.output_image = output_image_msg
+            response.output_mask = output_image_msg
+            response.labels = labels
+            response.label_indexs = label_indexs
             return response
 
 
@@ -84,42 +94,65 @@ class MaskRcnnRos(RosCppCommunicator):
         predictions = self.coco_demo.compute_prediction(image)
         top_predictions = self.coco_demo.select_top_predictions(predictions)
         return self.create_pixel_masks(image, top_predictions)
-
+       
         # result = image.copy()
 
     def create_pixel_masks(self, image, predictions):
+        """[Creates a mask using the original image and the set of predictions. The masks
+        is a greyscale image where each instance object is non-zero and is used as the input
+        for VDOSLAm]
+
+        Args:
+            image ([type]): [description]
+            predictions ([type]): [description]
+
+        Returns:
+            [np.array, list, list]: [masked image, labels, label indexs]
+        """        
         masks = predictions.get_field("mask").numpy()
-        labels = predictions.get_field("labels")
+        label_indexs = predictions.get_field("labels")
+        labels = self.convert_label_index_to_string(label_indexs)
+        print(masks.shape)
 
-        colors = self.coco_demo.compute_colors_for_labels(labels).tolist()
+        
 
-        for mask, color in zip(masks, colors):
-            thresh = mask[0, :, :, None].astype(np.uint8)
-            #contours are like my polygon
-            contours, hierarchy = cv2.findContours(
-                thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
-            )
-            self.log_to_ros(type(contours))
-            self.log_to_ros(len(contours))
-            self.log_to_ros(type(contours[0]))
+        number_of_masks = masks.shape[0]
 
-            # left = np.min(polygon, axis=0)
-            # right = np.max(polygon, axis=0)
-            # x = np.arange(math.ceil(left[0]), math.floor(right[0])+1)
-            # y = np.arange(math.ceil(left[1]), math.floor(right[1])+1)
-            # xv, yv = np.meshgrid(x, y, indexing='xy')
-            # points = np.hstack((xv.reshape((-1,1)), yv.reshape((-1,1))))
+        # colors = self.generate_grayscale_values(label_indexs)
 
-            # path = matplotlib.path.Path(polygon)
-            # mask = path.contains_points(points)
-            # mask.shape = xv.shape
+        width = image.shape[0]
+        height = image.shape[1]
+        blank_mask = np.zeros((width, height),np.uint8)
 
-            image = cv2.drawContours(image, contours, -1, color, 3)
+        for i in range(number_of_masks):
+            print(masks.shape)
+            pixel_mask = masks[i, 0, :, :].astype(np.uint8) * label_indexs[i]
+            print(pixel_mask[np.nonzero(pixel_mask)])
 
-        composite = image
+            blank_mask += pixel_mask
+           
 
-        return composite
+        return blank_mask, labels, label_indexs
 
+    def convert_label_index_to_string(self, labels):
+        return [self.coco_demo.CATEGORIES[i] for i in labels]
+
+    def get_single_label_from_index(self, label):
+        return self.coco_demo.CATEGORIES[label]
+
+    def generate_grayscale_values(self, label_indexs):
+        """[Generates n number of distinct values between 1 and 255 for each label. This should be 
+        used for visualisation purposes only as VDOSLAM just needs a distinct value]
+
+        Args:
+            label_index ([List]): [List of label indexs generated from the predictor]
+
+        Returns:
+            [List]: [List of values]
+        """  
+        colors = label_indexs[:, None] * self.greyscale_palette
+        colors = (colors % 255).numpy().astype("uint8")
+        return colors
 
 
 

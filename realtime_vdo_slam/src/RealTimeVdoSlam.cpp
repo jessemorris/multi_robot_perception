@@ -94,6 +94,9 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     //     image = distored;
     // }
     cv::Mat flow_matrix, segmentation_mask;
+    std::vector<std::string> mask_rcnn_labels;
+    std::vector<int> mask_rcnn_label_indexs;
+
 
     if (is_first) {
         previous_image = image;
@@ -120,7 +123,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         }
 
         if (run_mask_rcnn) {
-            bool result = mask_rcnn_interface.analyse_image(current_image, segmentation_mask);
+            bool result = mask_rcnn_interface.analyse_image(current_image, segmentation_mask, mask_rcnn_labels, mask_rcnn_label_indexs);
 
             if (result) {
                 std_msgs::Header header = std_msgs::Header();
@@ -128,7 +131,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 // //TODO: proper headers
                 // header.frame_id = "base_link";
                 // header.stamp = ros::Time::now();
-                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "rgb8", segmentation_mask).toImageMsg();
+                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono8", segmentation_mask).toImageMsg();
                 results.publish(img_msg);
             }
             else {
