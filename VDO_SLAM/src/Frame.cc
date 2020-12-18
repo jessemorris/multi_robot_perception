@@ -12,8 +12,8 @@
 
 #include <opencv2/flann.hpp>
 
-#include "obj_slam/Frame.h"
-#include "obj_slam/Converter.h"
+#include "vdo_slam/Frame.h"
+#include "vdo_slam/Converter.h"
 #include <thread>
 #include<time.h>
 #include<chrono>

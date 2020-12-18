@@ -1,6 +1,6 @@
-#include "obj_slam/cvplot/figure.h"
-#include "obj_slam/cvplot/window.h"
-#include "obj_slame/cvplot/internal.h"
+#include "vdo_slam/cvplot/figure.h"
+#include "vdo_slam/cvplot/window.h"
+#include "vdo_slam/cvplot/internal.h"
 
 #include <opencv2/imgproc/imgproc.hpp>
 

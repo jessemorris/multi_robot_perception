@@ -1,7 +1,9 @@
 #include "RealTimeVdoSlam.hpp"
-
+#include <ros/package.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <vdo_slam.hpp>
+
+#include <memory>
 
 RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
         handler(n),
@@ -9,7 +11,10 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
         mask_rcnn_interface(n),
         mono_depth(n),
         image_transport(n),
-        is_first(true)
+        is_first(true),
+        scene_flow_success(false),
+        mask_rcnn_success(false),
+        mono_depth_success(false)
 {
     //set up config
     //TODO: param not working?
@@ -50,27 +55,6 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
 
     camera_information.topic = output_video_topic;
 
-    // if (undistord_images) {
-    //     auto info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camea_info_topic, handler, ros::Duration(3));
-    //     ROS_INFO_STREAM("Received camera info");
-
-    //     camera_information.intrinsic = (cv::Mat_<double>(3,3) << info->K[0], info->K[1], info->K[2], 
-    //                                                             info->K[3], info->K[4], info->K[5], 
-    //                                                             info->K[6], info->K[7], info->K[8]);
-    //     ROS_INFO_STREAM("Set camera intrinsics");
-
-    //     camera_information.distortion = cv::Mat_<double>(1,info->D.size());
-    //     memcpy(camera_information.distortion.data, info->D.data(), info->D.size()*sizeof(double));
-    //     ROS_INFO_STREAM("Set camera distortion");
-    //     ROS_INFO_STREAM("Un-distorting images " << undistord_images);
-
-    // }
-
-        
-
-    
-
-    // handler.param<int>("realtime_vdo_slam/scene_flow_delay_count", scene_flow_count_max, 5);
 
     image_subscriber = image_transport.subscribe(output_video_topic, 10,
                                                &RealTimeVdoSLAM::image_callback, this);
@@ -78,6 +62,13 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     maskrcnn_results = image_transport.advertise("vdoslam/results/maskrcnn", 10);
     flownet_results = image_transport.advertise("vdoslam/results/flownet", 10);
     monodepth_results = image_transport.advertise("vdoslam/results/monodepth", 10);
+
+
+    std::string path = ros::package::getPath("realtime_vdo_slam");
+    std::string vdo_slam_config_path = path + "/config/vdo_config.yaml";
+    // VDO_SLAM::System SLAM(vdo_slam_config_path,VDO_SLAM::System::RGBD);
+    slam_system = std::make_unique< VDO_SLAM::System>(vdo_slam_config_path,VDO_SLAM::System::RGBD);
+    image_trajectory = cv::Mat::zeros(800, 600, CV_8UC3);
 }
 
 RealTimeVdoSLAM::~RealTimeVdoSLAM() {}
@@ -95,28 +86,30 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     // else {
     //     image = distored;
     // }
-    cv::Mat flow_matrix, segmentation_mask;
+    // cv::Mat flow_matrix, segmentation_mask;
     std::vector<std::string> mask_rcnn_labels;
     std::vector<int> mask_rcnn_label_indexs;
 
 
     if (is_first) {
         previous_image = image;
+        previous_time = msg->header.stamp;
         is_first = false;
         return;
     }
     else {
         cv::Mat current_image = image;
+        current_time = msg->header.stamp;
         if (run_scene_flow) {
-            bool result = sceneflow.analyse_image(current_image, previous_image, flow_matrix);
+            scene_flow_success = sceneflow.analyse_image(current_image, previous_image, scene_flow_mat);
 
-            if (result) {
+            if (scene_flow_success) {
                 std_msgs::Header header = std_msgs::Header();
 
                 // //TODO: proper headers
                 // header.frame_id = "base_link";
                 // header.stamp = ros::Time::now();
-                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "rgb8", flow_matrix).toImageMsg();
+                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "rgb8", scene_flow_mat).toImageMsg();
                 flownet_results.publish(img_msg);
             }
             else {
@@ -125,15 +118,15 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         }
 
         if (run_mask_rcnn) {
-            bool result = mask_rcnn_interface.analyse_image(current_image, segmentation_mask, mask_rcnn_labels, mask_rcnn_label_indexs);
+            mask_rcnn_success = mask_rcnn_interface.analyse_image(current_image, mask_rcnn_mat, mask_rcnn_labels, mask_rcnn_label_indexs);
 
-            if (result) {
+            if (mask_rcnn_success) {
                 std_msgs::Header header = std_msgs::Header();
 
                 // //TODO: proper headers
                 // header.frame_id = "base_link";
                 // header.stamp = ros::Time::now();
-                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono8", segmentation_mask).toImageMsg();
+                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono8", mask_rcnn_mat).toImageMsg();
                 maskrcnn_results.publish(img_msg);
             }
             else {
@@ -142,9 +135,9 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         }
 
         if (run_mono_depth) {
-            bool result = mono_depth.analyse_image(current_image, mono_depth_mat);
+            mono_depth_success = mono_depth.analyse_image(current_image, mono_depth_mat);
 
-            if (result) {
+            if (mono_depth_success) {
                 std_msgs::Header header = std_msgs::Header();
 
                 // //TODO: proper headers
@@ -160,6 +153,28 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 
 
         previous_image = current_image.clone();
+        previous_time = previous_time;
+
+
+        //run slam algorithm
+        //not we have no ground truth
+        //times are just relative to each other so we can just record rostim between each callback
+        if (scene_flow_success && mask_rcnn_success && mono_depth_success) {
+            ros::Duration diff = current_time - previous_time;
+            double time_difference = diff.toSec();
+
+            cv::Mat depth_image_float, ground_truth;
+            std::vector<std::vector<float> > object_pose_gt;
+            mono_depth_mat.convertTo(depth_image_float, CV_32SC1);
+
+            slam_system->TrackRGBD(image,depth_image_float,
+                scene_flow_mat,
+                mask_rcnn_mat,
+                ground_truth,
+                object_pose_gt,
+                time_difference,
+                image_trajectory,1);
+        }
 
 
     }

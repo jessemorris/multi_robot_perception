@@ -21,6 +21,8 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <vdo_slam.hpp>
+
 
 #include "SceneFlow.hpp"
 #include "MaskRcnnInterface.hpp"
@@ -30,6 +32,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <memory>
 
 //wrapper for camera information
 struct CameraInformation {
@@ -62,6 +65,10 @@ class RealTimeVdoSLAM {
         bool run_mask_rcnn;
         bool run_mono_depth;
 
+        bool scene_flow_success;
+        bool mask_rcnn_success;
+        bool mono_depth_success;
+
         cv::Mat scene_flow_mat;
         cv::Mat mask_rcnn_mat;
         cv::Mat mono_depth_mat;
@@ -87,6 +94,15 @@ class RealTimeVdoSLAM {
         bool undistord_images;
 
         void image_callback(const sensor_msgs::ImageConstPtr& msg);
+
+        //trajectory image for display
+        cv::Mat image_trajectory;
+
+
+        //VdoSlam
+        std::unique_ptr<VDO_SLAM::System> slam_system;
+        ros::Time previous_time;
+        ros::Time current_time;
 
 
 

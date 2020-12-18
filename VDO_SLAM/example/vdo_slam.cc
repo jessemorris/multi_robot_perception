@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     }
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    VDO_SLAM::System SLAM(argv[1],VDO_SLAM::System::RGBD);
+    VDO_SLAM::System SLAM(,VDO_SLAM::System::RGBD);
 
     cout << endl << "--------------------------------------------------------------------------" << endl;
     cout << "Start processing sequence ..." << endl;

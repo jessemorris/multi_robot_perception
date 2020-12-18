@@ -6,7 +6,7 @@
 *
 **/
 
-#include "obj_slam/Optimizer.h"
+#include "vdo_slam/Optimizer.h"
 
 #include "dependencies/g2o/g2o/core/block_solver.h"
 #include "dependencies/g2o/g2o/core/optimization_algorithm_levenberg.h"
@@ -30,7 +30,7 @@
 
 #include<Eigen/StdVector>
 
-#include "obj_slam/Converter.h"
+#include "vdo_slam/Converter.h"
 
 #include<mutex>
 

@@ -7,7 +7,7 @@
 **/
 
 
-#include "obj_slam.hpp"
+#include "vdo_slam.hpp"
 
 #include <Eigen/Core>
 
@@ -319,9 +319,10 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
     }
     else
     {
+         cout << "After assign pose ground truth" << endl;
         mCurrentFrame.mTcw_gt = Converter::toInvMatrix(mTcw_gt)*mOriginInv;
     }
-
+    cout << "After assign pose ground truth" << endl;
 
     // Assign object pose ground truth
     mCurrentFrame.nSemPosi_gt.resize(vObjPose_gt.size());
