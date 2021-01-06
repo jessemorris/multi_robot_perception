@@ -18,7 +18,6 @@ from mask_rcnn.predictor import COCODemo
 from mask_rcnn.srv import MaskRcnnVdoSlam, MaskRcnnVdoSlamResponse
 
 from mask_rcnn.srv import MaskRcnnVisualise, MaskRcnnVisualiseResponse
-from mask_rcnn.srv import MaskRcnn, MaskRcnnResponse
 from rostk_pyutils.ros_cpp_communicator import RosCppCommunicator
 
 from sensor_msgs.msg import Image

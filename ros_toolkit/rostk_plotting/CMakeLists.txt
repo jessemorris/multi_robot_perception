@@ -6,17 +6,18 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   geometry_msgs
   visualization_msgs
-  message_generation
-  rostk_pyutils
   roscpp
   rospy
   std_msgs
+  rostk_pyutils
+  cv_bridge
   sensor_msgs
 )
 catkin_python_setup()
 
 
 include_directories(
+# include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -34,19 +35,20 @@ include_directories(
 
 catkin_package(
 #  INCLUDE_DIRS include
-  #LIBRARIES plotting
-  #CATKIN_DEPENDS rospy std_msgs message_runtime
+  #LIBRARIES flow_net
+  CATKIN_DEPENDS rospy std_msgs message_runtime
 #  DEPENDS system_lib
 )
 
-#install(DIRECTORY
-  #controller
-  #launch
-  #rostk_plotting
- #DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-#)
+install(DIRECTORY
+    #controller
+    #launch
+    #flow_net
+ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 catkin_install_python(PROGRAMS
-    scripts/rostk_plotting.py
+    scripts/plotting_main.py
+  
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

@@ -137,7 +137,7 @@ class MonoDepth2Ros(RosCppCommunicator):
         #output is a np.float64. We must cast down to a np.float8 so that ROS encodings can handles this
         #apparently float16 is super slow becuase most intel processors dont support FP16 ops so we're going with np.uint16
         depth_image_float = disp_resized.squeeze().cpu().numpy()
-        depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=65536, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
         # self.log_to_ros(depth_image.shape)
 
         del image

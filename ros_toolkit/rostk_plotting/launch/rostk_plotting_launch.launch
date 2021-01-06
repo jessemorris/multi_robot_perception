@@ -4,7 +4,7 @@
     <group ns="ros_toolkit/plotting">
         <rosparam file="$(find rostk_plotting)/config/rostk_plotting_config.yaml" command="load" />
 
-        <node pkg="rostk_plotting" type="rostk_plotting.py" name="rostk_plotting" output="screen">
+        <node pkg="rostk_plotting" type="plotting_main.py" name="rostk_plotting" output="screen">
         </node>
 
     </group>

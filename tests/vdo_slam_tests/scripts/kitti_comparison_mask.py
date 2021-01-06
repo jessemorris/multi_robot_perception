@@ -1,5 +1,5 @@
 from mask_rcnn.mask_rcnn_ros import MaskRcnnRos
-from src.vdo_slam_tests.utils import *
+from vdo_slam_tests.utils import *
 
 import rospy
 import rospkg
@@ -19,15 +19,7 @@ def convert_txtfile_numpy(file_path):
 if __name__ == "__main__":
     rospy.init_node("kitti_comparison_mask")
 
-    if len(sys.argv) > 1:
-        image_name = sys.argv[1]
-        if len(image_name) != 6:
-            print("Provide image name without suffix. Eg '000001'")
-            sys.exit(0)
-    else:
-        image_name = "000001"
-
-    print("Using image: {}".format(image_name))
+    image_name = parse_image_name(sys.argv)
 
     semantic_data_path = package_path + "/kitti_data/semantic/" + image_name + ".txt"
     image_data_path = package_path + "/kitti_data/images/" + image_name + ".png"
@@ -64,7 +56,7 @@ if __name__ == "__main__":
 
     print("Comparing results from txt files at\n{}\n{}".format(results_data_path, semantic_data_path))
     result = mse(kitti_resut, inferred_resut)
-    print("MSE: {}", format(result))
+    print("MSE: {}". format(result))
 
 
 
