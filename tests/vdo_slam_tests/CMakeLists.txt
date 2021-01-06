@@ -1,15 +1,20 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(rostk_pyutils)
+project(vdo_slam_tests)
 
 find_package(catkin REQUIRED COMPONENTS
   actionlib
   actionlib_msgs
   geometry_msgs
   visualization_msgs
-  message_generation
   roscpp
   rospy
   std_msgs
+  rostk_pyutils
+  python_service_starter
+  cv_bridge
+  flow_net
+  mask_rcnn
+  mono_depth_2
   sensor_msgs
 )
 catkin_python_setup()
@@ -34,20 +39,22 @@ include_directories(
 
 catkin_package(
 #  INCLUDE_DIRS include
-  #LIBRARIES plotting
+  #LIBRARIES flow_net
   CATKIN_DEPENDS rospy std_msgs message_runtime
 #  DEPENDS system_lib
 )
 
-#install(DIRECTORY
+install(DIRECTORY
     #controller
     #launch
- #   src/rostk_pyutils
- #DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-#)
+    #flow_net
+ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
-
-#catkin_install_python(PROGRAMS
-    #scripts/rostk_plotting.py
-#  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#)
+catkin_install_python(PROGRAMS
+    scripts/kitti_comparison_mono.py
+    scripts/kitti_comparison_flow.py
+    scripts/kitti_comparison_mask.py
+  
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

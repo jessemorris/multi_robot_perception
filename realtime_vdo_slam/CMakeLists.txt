@@ -21,9 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 	python_service_starter
 	visualization_msgs
 	message_generation
-	darknet_ros_msgs
 	std_msgs
-	pcl_ros
 	cv_bridge
 	nav_msgs
 	sensor_msgs)

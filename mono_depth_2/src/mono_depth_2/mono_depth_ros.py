@@ -19,10 +19,11 @@ import matplotlib.cm as cm
 import torch
 from torchvision import transforms, datasets
 
-from src.mono_depth_2.networks import DepthDecoder
-from src.mono_depth_2.networks import ResnetEncoder
-from src.mono_depth_2.layers import disp_to_depth
-from src.mono_depth_2.utils import download_model_if_doesnt_exist
+
+from mono_depth_2.networks import DepthDecoder
+from mono_depth_2.networks import ResnetEncoder
+from mono_depth_2.layers import disp_to_depth
+from mono_depth_2.utils import download_model_if_doesnt_exist
 
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
@@ -106,7 +107,7 @@ class MonoDepth2Ros(RosCppCommunicator):
 
         return response
 
-
+    @torch.no_grad()
     def analyse_depth(self, input_image):
         """[Estimates depth of monocular image]
 
@@ -123,10 +124,6 @@ class MonoDepth2Ros(RosCppCommunicator):
         # self.log_to_ros(image)
         # self.log_to_ros("Input image type {}".format(type(image)))
         image = transforms.ToTensor()(image).unsqueeze(0)
-        # self.log_to_ros(image.size())
-        # self.log_to_ros("Input image type {}".format(type(image)))
-        #size is eventually torch.Size([1, 3, 192, 640]) we can give it cv image and then convert to torch
-        # self.log_to_ros(image.size())
 
         # PREDICTION
         image = image.to(self.device)
@@ -140,7 +137,7 @@ class MonoDepth2Ros(RosCppCommunicator):
         #output is a np.float64. We must cast down to a np.float8 so that ROS encodings can handles this
         #apparently float16 is super slow becuase most intel processors dont support FP16 ops so we're going with np.uint16
         depth_image_float = disp_resized.squeeze().cpu().numpy()
-        depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
+        depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
         # self.log_to_ros(depth_image.shape)
 
         del image

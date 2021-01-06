@@ -17,7 +17,7 @@ from imageio import imread, imwrite
 
 
 
-from src.flow_net.layers import Network
+from flow_net.layers import Network
 
 from flow_net.srv import FlowNet, FlowNetResponse
 from rostk_pyutils.ros_cpp_communicator import RosCppCommunicator
@@ -86,6 +86,7 @@ class FlowNetRos(RosCppCommunicator):
 
     #inputs should be a numpy array
     #returns the output of the nerual network as a tensor 2 x N x M tensor
+    @torch.no_grad()
     def analyse_flow(self, previous_image, current_image):
 
         #convert to tensor array

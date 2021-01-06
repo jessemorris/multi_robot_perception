@@ -1,6 +1,5 @@
 #include "MaskRcnnInterface.hpp"
 
-#include <mask_rcnn/MaskRcnn.h>
 #include <mask_rcnn/MaskRcnnVisualise.h>
 #include <mask_rcnn/MaskRcnnVdoSlam.h>
 #include <python_service_starter/StartMaskRcnn.h>
