@@ -37,7 +37,7 @@ bool MaskRcnnInterface::analyse_image(cv::Mat& current_image, cv::Mat& dst,
     if (!service_started) {
         return false;
     }
-    sensor_msgs::ImagePtr current_image_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", current_image).toImageMsg();
+    sensor_msgs::ImagePtr current_image_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", current_image).toImageMsg();
 
     mask_rcnn::MaskRcnnVdoSlam srv;
     srv.request.input_image = *current_image_msg;

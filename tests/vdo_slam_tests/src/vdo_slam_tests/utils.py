@@ -1,9 +1,16 @@
 import numpy as np
 import sys
 
+# def rmse(kitti_image, inferred_image):
+#     return np.sqrt(np.mean((kitti_image-inferred_image)**2))
+
+# def mse(kitti_image, inferred_image):
+#     err = np.sum((kitti_image.astype("float") - inferred_image.astype("float")) ** 2)
+#     err /= float(kitti_image.shape[0] * kitti_image.shape[1])
+#     return err
+
 def mse(kitti_image, inferred_image):
-    # err = np.sum((kitti_image.astype("float") - inferred_image.astype("float")) ** 2)
-    err = np.sum((kitti_image - inferred_image) ** 2)
+    err = np.sqrt(np.mean((kitti_image.astype("float") - inferred_image.astype("float")) ** 2))
     err /= float(kitti_image.shape[0] * kitti_image.shape[1])
     return err
 

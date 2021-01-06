@@ -44,7 +44,7 @@ rospack = rospkg.RosPack()
 package_path = rospack.get_path("mono_depth_2")
 
 class MonoDepth2Ros(RosCppCommunicator):
-    def __init__(self, model_path= package_path + "/src/mono_depth_2/models/", model_name = "mono_640x192"):
+    def __init__(self, model_path= package_path + "/src/mono_depth_2/models/", model_name = "stereo_640x192"):
         RosCppCommunicator.__init__(self)
         self.model_name = model_name
 
@@ -102,6 +102,8 @@ class MonoDepth2Ros(RosCppCommunicator):
         depth_image = self.analyse_depth(current_image)
 
         output_image_msg = ros_numpy.msgify(Image, depth_image, encoding='mono16')
+        self.flow_net_test_publisher.publish(output_image_msg)
+
         response.success = True
         response.output_image = output_image_msg
 

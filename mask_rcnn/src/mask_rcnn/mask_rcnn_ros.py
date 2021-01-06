@@ -59,8 +59,6 @@ class MaskRcnnRos(RosCppCommunicator):
         response = MaskRcnnVdoSlamResponse()
         self.log_to_ros("Inside callback")
         try: 
-            self.mask_rcnn_test_publisher.publish(req.input_image)
-
             input_image = ros_numpy.numpify(req.input_image)
 
 
@@ -68,6 +66,7 @@ class MaskRcnnRos(RosCppCommunicator):
             self.log_to_ros(str(response_image.shape))
 
             output_image_msg = ros_numpy.msgify(Image, response_image, encoding='mono8')
+            self.mask_rcnn_test_publisher.publish(output_image_msg)
 
             response.success = True
             # response.output_image = output_image_msg
@@ -79,7 +78,6 @@ class MaskRcnnRos(RosCppCommunicator):
 
 
         except Exception as e:
-            print("here")
             self.log_to_ros(str(e))
             response.success = False
             return response
@@ -158,21 +156,21 @@ class MaskRcnnRos(RosCppCommunicator):
 
 
 
-def main():
+# def main():
     
-    maskrcnn = MaskRcnnRos()
+#     maskrcnn = MaskRcnnRos()
 
-    cam = cv2.VideoCapture(0)
-    while True:
-        start_time = time.time()
-        ret_val, img = cam.read()
-        composite = maskrcnn.analyse_image(img)
-        print("Time: {:.2f} s / img".format(time.time() - start_time))
-        cv2.imshow("COCO detections", composite)
-        if cv2.waitKey(1) == 27:
-            break  # esc to quit
-    cv2.destroyAllWindows()
+#     cam = cv2.VideoCapture(0)
+#     while True:
+#         start_time = time.time()
+#         ret_val, img = cam.read()
+#         composite = maskrcnn.analyse_image(img)
+#         print("Time: {:.2f} s / img".format(time.time() - start_time))
+#         cv2.imshow("COCO detections", composite)
+#         if cv2.waitKey(1) == 27:
+#             break  # esc to quit
+#     cv2.destroyAllWindows()
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

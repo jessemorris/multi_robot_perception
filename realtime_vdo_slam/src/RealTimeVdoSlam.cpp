@@ -169,7 +169,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             cv::Mat depth_image_float;
             cv::Mat ground_truth = cv::Mat::eye(4,4,CV_32F);
             std::vector<std::vector<float> > object_pose_gt;
-            mono_depth_mat.convertTo(depth_image_float, CV_32SC1);
+            mono_depth_mat.convertTo(depth_image_float, CV_32F);
 
             slam_system->TrackRGBD(image,depth_image_float,
                 scene_flow_mat,

@@ -39,7 +39,8 @@ ChooseData: 2
 DepthMapFactor: 256.0
 
 # Close/Far Depth threshold
-ThDepthBG: 40.0
+#ThDepthBG: 40.0
+ThDepthBG: 6000
 ThDepthOBJ: 25.0
 
 # Max Tracking Points on Background and Object in each frame
