@@ -50,6 +50,9 @@ if __name__ == "__main__":
     cv2.imwrite(results_image_path, rgb_flow)
     cv2.writeOpticalFlow(results_flo_path, flow_map)
 
+    print(flow_map)
+    print(optical_flow_gt)
+
     print("Comparing results from flo files at\n{}\n{}".format(flow_data_path, results_flo_path))
     result = mse(optical_flow_gt, flow_map)
     print("MSE: {}". format(result))

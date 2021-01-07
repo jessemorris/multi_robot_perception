@@ -238,6 +238,8 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
         // cout << "mask updating time: " << mask_upd_time << endl;
     }
 
+    // cv::imshow("Input seg mask", maskSEM);
+    // cv::waitKey(0);
     mCurrentFrame = Frame(mImGray,imDepth,imFlow,maskSEM,timestamp,mpORBextractorLeft,mK,mDistCoef,mbf,mThDepth,mThDepthObj,nUseSampleFea);
 
     // ---------------------------------------------------------------------------------------
@@ -654,6 +656,7 @@ void Tracking::Track()
         mState = NOT_INITIALIZED;
 
     mLastProcessedState=mState;
+    std::cout << "last processed state " << mLastProcessedState << std::endl;
 
 
     if(mState==NOT_INITIALIZED)
@@ -1323,7 +1326,7 @@ void Tracking::GetSceneFlowObj()
 
         pts_p3d[i] << x3D_p.at<float>(0), x3D_p.at<float>(1), x3D_p.at<float>(2);
 
-        // cout << "3d points: " << x3D_p << " " << x3D_c << endl;
+        cout << "3d points: " << x3D_p << " " << x3D_c << endl;
 
         cv::Point3f flow3d;
         flow3d.x = x3D_c.at<float>(0) - x3D_p.at<float>(0);
@@ -1384,10 +1387,10 @@ std::vector<std::vector<int> > Tracking::DynObjTracking()
     std::sort(UniLab.begin(), UniLab.end());
     UniLab.erase(std::unique( UniLab.begin(), UniLab.end() ), UniLab.end() );
 
-    // cout << "Unique Semantic Label: ";
-    // for (int i = 0; i < UniLab.size(); ++i)
-    //     cout  << UniLab[i] << " ";
-    // cout << endl;
+    cout << "Unique Semantic Label: ";
+    for (int i = 0; i < UniLab.size(); ++i)
+        cout  << UniLab[i] << " ";
+    cout << endl;
 
     // Collect the predicted labels and semantic labels in vector
     std::vector<std::vector<int> > Posi(UniLab.size());
@@ -1485,10 +1488,10 @@ std::vector<std::vector<int> > Tracking::DynObjTracking()
             }
         }
 
-        // cout << "scene flow distribution:"  << endl;
-        // for (int j = 0; j < sf_range.size(); ++j)
-        //     cout << sf_range[j] << " ";
-        // cout << endl;
+        cout << "scene flow distribution:"  << endl;
+        for (int j = 0; j < sf_range.size(); ++j)
+            cout << sf_range[j] << " ";
+        cout << endl;
 
         if (sf_count/ObjId[i].size()>fSFDsThres)
         {

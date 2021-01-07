@@ -106,8 +106,8 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
             int x = mvKeys[i].pt.x;
             int y = mvKeys[i].pt.y;
 
-            // if (maskSEM.at<int>(y,x)!=0)  // new added in Jun 13 2019
-            //     continue;
+            if (maskSEM.at<int>(y,x)!=0)  // new added in Jun 13 2019
+                continue;
 
             if (imDepth.at<float>(y,x)>mThDepth || imDepth.at<float>(y,x)<=0)  // new added in Aug 21 2019
                 std::cout << "Depth was bad " << imDepth.at<float>(y,x) << std::endl;
@@ -144,15 +144,22 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
         fea_det_time = (double)(e_1-s_1)/CLOCKS_PER_SEC*1000;
         std::cout << "feature detection time: " << fea_det_time << std::endl;
 
+        std::map<int, bool> mask_id_map;
+
         for (int i = 0; i < mvKeysSamp.size(); ++i)
         {
             int x = mvKeysSamp[i].pt.x;
             int y = mvKeysSamp[i].pt.y;
 
             if (maskSEM.at<int>(y,x)!=0) {  // new added in Jun 13 2019
-                std::cout << "mask sem not 0" << std::endl;
+                if (mask_id_map.find(maskSEM.at<int>(y,x)) == mask_id_map.end()) {
+                    mask_id_map[maskSEM.at<int>(y,x)] = true;
+                    std::cout << "Found id " <<   maskSEM.at<int>(y,x) << std::endl;
+                }
                 continue;
             }
+
+
             // std::cout << "im depth int " << imDepth.at<int>(y,x) << std::endl;
             // std::cout << "im depth float " << imDepth.at<int>(y,x) << std::endl;
             if (imDepth.at<float>(y,x)>mThDepth || imDepth.at<float>(y,x)<=0) { // new added in Aug 21 2019
@@ -239,6 +246,10 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
     // ---------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------
 
+    std::cout << "Result of semi dense object flow" << std::endl;
+    std::cout << "mvObjFlowNext size: " << mvObjFlowNext.size() << std::endl;
+    std::cout << "mvObjCorres size: " << mvObjCorres.size() << std::endl;
+    std::cout << "vSemObjLabel size: " << vSemObjLabel.size() << std::endl;
     UndistortKeyPoints();
 
     ComputeStereoFromRGBD(imDepth);
