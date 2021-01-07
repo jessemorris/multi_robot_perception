@@ -486,10 +486,10 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
             cv::waitKey(1);
 
     }
-    cout << "Showing bb with speed" << endl;
     // ************** show bounding box with speed ***************
     if(timestamp!=0 && bFrame2Frame == true && mTestData==KITTI)
     {
+        cout << "Showing bb with speed" << endl;
         cv::Mat mImBGR(mImGray.size(), CV_8UC3);
         cvtColor(mImGray, mImBGR, CV_GRAY2RGB);
         for (int i = 0; i < mCurrentFrame.vObjBoxID.size(); ++i)
@@ -522,6 +522,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
         float scale = 6; // 6
         cout << "mTcw shape: rows " << mCurrentFrame.mTcw.rows << " cols " <<mCurrentFrame.mTcw.cols << endl;
         cv::Mat CamPos = Converter::toInvMatrix(mCurrentFrame.mTcw);
+        cout << "Made cam pos" << endl;
         int x = int(CamPos.at<float>(0,3)*scale) + sta_x;
         int y = int(CamPos.at<float>(2,3)*scale) + sta_y;
         // cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(255,0,0), thic);
@@ -532,7 +533,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
         sprintf(text, "x = %02fm y = %02fm z = %02fm", CamPos.at<float>(0,3), CamPos.at<float>(1,3), CamPos.at<float>(2,3));
         cv::putText(imTraj, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
         cv::putText(imTraj, "Object Trajectories (COLORED CIRCLES)", cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
-
+        cout << "v obj center" << mCurrentFrame.vObjCentre3D.size() << endl;
         for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
         {
             if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0)
@@ -2719,7 +2720,7 @@ void Tracking::RenewFrameInfo(const std::vector<int> &TM_sta)
             break;
     }
 
-    // cout << "accumulate static inlier number in: " << mvKeysTmp.size() << endl;
+    cout << "accumulate static inlier number in: " << mvKeysTmp.size() << endl;
 
     // (2) Save extra key points to make it a fixed number (max = 1000, 1600)
     int tot_num = mvKeysTmp.size(), start_id = 0, step = 20;

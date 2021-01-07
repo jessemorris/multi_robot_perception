@@ -5,6 +5,7 @@
 
 #include <memory>
 
+
 RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
         handler(n),
         sceneflow(n),
@@ -33,15 +34,18 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     if(run_mask_rcnn) {
         ROS_INFO_STREAM("starting mask rcnn service");
         mask_rcnn_interface.start_service();
+        ros::service::waitForService("mask_rcnn_service");
     }
     if(run_scene_flow) {
         ROS_INFO_STREAM("starting flow net service");
         sceneflow.start_service();
+        ros::service::waitForService("flow_net_service");
     }
 
     if(run_mono_depth) {
         ROS_INFO_STREAM("starting mono_depth service");
         mono_depth.start_service();
+        ros::service::waitForService("mono_depth_service");
     }
 
     ROS_INFO_STREAM("camera selection " << camera_selection);
@@ -143,9 +147,6 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             if (mono_depth_success) {
                 std_msgs::Header header = std_msgs::Header();
 
-                // //TODO: proper headers
-                // header.frame_id = "base_link";
-                // header.stamp = ros::Time::now();
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono16", mono_depth_mat).toImageMsg();
                 monodepth_results.publish(img_msg);
             }
@@ -170,6 +171,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             cv::Mat ground_truth = cv::Mat::eye(4,4,CV_32F);
             std::vector<std::vector<float> > object_pose_gt;
             mono_depth_mat.convertTo(depth_image_float, CV_32F);
+            mask_rcnn_mat.convertTo(mask_rcnn_mat, CV_32SC1);
 
             slam_system->TrackRGBD(image,depth_image_float,
                 scene_flow_mat,
@@ -177,7 +179,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 ground_truth,
                 object_pose_gt,
                 time_difference,
-                image_trajectory,1);
+                image_trajectory,30);
         }
 
 

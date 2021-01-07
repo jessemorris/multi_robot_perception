@@ -116,8 +116,8 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
             float flow_xe = imFlow.at<cv::Vec2f>(y,x)[0];
             float flow_ye = imFlow.at<cv::Vec2f>(y,x)[1];
 
-            std::cout << "flow xe " << flow_xe << std::endl;
-            std::cout << "flow ye " << flow_ye << std::endl;
+            // std::cout << "flow xe " << flow_xe << std::endl;
+            // std::cout << "flow ye " << flow_ye << std::endl;
 
 
             if(flow_xe!=0 && flow_ye!=0)
@@ -149,9 +149,10 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
             int x = mvKeysSamp[i].pt.x;
             int y = mvKeysSamp[i].pt.y;
 
-            // if (maskSEM.at<int>(y,x)!=0)  // new added in Jun 13 2019
-            //     std::cout << "mask sem not 0" << std::endl;
-            //     continue;
+            if (maskSEM.at<int>(y,x)!=0) {  // new added in Jun 13 2019
+                std::cout << "mask sem not 0" << std::endl;
+                continue;
+            }
             // std::cout << "im depth int " << imDepth.at<int>(y,x) << std::endl;
             // std::cout << "im depth float " << imDepth.at<int>(y,x) << std::endl;
             if (imDepth.at<float>(y,x)>mThDepth || imDepth.at<float>(y,x)<=0) { // new added in Aug 21 2019
@@ -161,10 +162,6 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
 
             float flow_xe = imFlow.at<cv::Vec2f>(y,x)[0];
             float flow_ye = imFlow.at<cv::Vec2f>(y,x)[1];
-
-            std::cout << "flow xe " << flow_xe << std::endl;
-            std::cout << "flow ye " << flow_ye << std::endl;
-
 
             if(flow_xe!=0 && flow_ye!=0)
             {
