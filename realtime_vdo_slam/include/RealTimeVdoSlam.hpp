@@ -66,6 +66,8 @@ class RealTimeVdoSLAM {
         bool mask_rcnn_success;
         bool mono_depth_success;
 
+        int global_optim_trigger;
+
         cv::Mat scene_flow_mat;
         cv::Mat mask_rcnn_mat;
         cv::Mat mono_depth_mat;

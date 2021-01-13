@@ -1074,6 +1074,10 @@ void Tracking::Track()
         mpMap->vnAssoDyn.push_back(mCurrentFrame.nDynInlierID);        // (new added Nov 20 2019)
         mpMap->vnFeatLabel.push_back(mCurrentFrame.vObjLabel);         // (new added Nov 20 2019)
 
+        cout << "mpMap vpFfeatSta size " << mpMap->vpFeatSta.size() << endl;
+        cout << "mpMap vfDepSta size " << mpMap->vfDepSta.size() << endl;
+        cout << "mpMap vmCameraPose_GT size " << mpMap->vmCameraPose_GT.size() << endl;
+
         if (f_id==StopFrame || bLocalBatch)
         {
             // (3) save static feature tracklets
@@ -1081,6 +1085,9 @@ void Tracking::Track()
             // (4) save dynamic feature tracklets
             mpMap->TrackletDyn = GetDynamicTrackNew();  // (new added Nov 20 2019)
         }
+
+        cout << "mpMap TrackletSta size " << mpMap->TrackletSta.size() << endl;
+        cout << "mpMap TrackletDyn size " << mpMap->TrackletDyn.size() << endl;
 
         // (5) camera pose
         cv::Mat CameraPoseTmp = Converter::toInvMatrix(mCurrentFrame.mTcw);
@@ -1264,6 +1271,10 @@ void Tracking::Initialization()
     mpMap->vmCameraPose.push_back(cv::Mat::eye(4,4,CV_32F));
     mpMap->vmCameraPose_RF.push_back(cv::Mat::eye(4,4,CV_32F));
     mpMap->vmCameraPose_GT.push_back(cv::Mat::eye(4,4,CV_32F));
+
+    cout << "mpMap vpFfeatSta size " << mpMap->vpFeatSta.size() << endl;
+    cout << "mpMap vfDepSta size " << mpMap->vfDepSta.size() << endl;
+    cout << "mpMap vmCameraPose_GT size " << mpMap->vmCameraPose_GT.size() << endl;
 
     // cout << "mCurrentFrame.N: " << mCurrentFrame.N << endl;
 

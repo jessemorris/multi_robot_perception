@@ -13,6 +13,8 @@ run_mono_depth: True
 #for now so I can just select one camera
 camera_selection: "A1"
 
+global_optim_trigger: 5
+
 
 camera_topics_prefixes:
   gmsl_left_side_link: B0
@@ -25,3 +27,5 @@ camera_topics_prefixes:
 
 #options for images
 apply_undistortion: False
+
+#launch-prefix="valgrind --tool=memcheck --xtree-memory=full --xml=yes --xml-file='memcheck.realtime_vdo_slam.%p'"

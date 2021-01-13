@@ -2,14 +2,8 @@
 
 	<arg name="config_file" default="realtime_vdo.yaml"/>
   <!-- <include file="$(find python_service_starter)/launch/python_service_starter.launch"/> -->
+  <rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg config_file)"/>
 
 
-  <node pkg="realtime_vdo_slam" type="realtime_vdo_slam_node" name="realtime_vdo_slam" output="screen">
-    		<rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg config_file)"/>
-
-  <!-- set a private parameter for the node -->
-  <!-- <param name="image_topic" value="/gmsl/A0/image_color" /> -->
-  <!-- <param name="darknet_bounding_box_topic" value="/darknet_ros/bounding_boxes" /> -->
-  
-</node>
+  <node pkg="realtime_vdo_slam" type="realtime_vdo_slam_node" name="realtime_vdo_slam" output="screen" />
 </launch>

@@ -19,17 +19,21 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
 {
     //set up config
     //TODO: param not working?
-    handler.param<std::string>("/realtime_vdo_slam/topic_prefix", topic_prefix, "/gmsl/");
-    handler.param<std::string>("/realtime_vdo_slam/camera_suffix", camera_suffix, "/image_color");
-    handler.param<std::string>("/realtime_vdo_slam/info_msg_suffix", info_msg_suffix, "/camera_info");
+    handler.param<std::string>("/topic_prefix", topic_prefix, "/gmsl/");
+    handler.param<std::string>("/camera_suffix", camera_suffix, "/image_color");
+    handler.param<std::string>("/info_msg_suffix", info_msg_suffix, "/camera_info");
 
-    handler.param<std::string>("/realtime_vdo_slam/camera_selection", camera_selection, "A0");
+    handler.param<std::string>("/camera_selection", camera_selection, "A0");
 
 
-    handler.param<bool>("/realtime_vdo_slam/apply_undistortion", undistord_images, false);
-    handler.param<bool>("/realtime_vdo_slam/run_mask_rcnn", run_mask_rcnn, false);
-    handler.param<bool>("/realtime_vdo_slam/run_flow_net", run_scene_flow, false);
-    handler.param<bool>("/realtime_vdo_slam/run_mono_depth", run_mono_depth, false);
+    handler.param<bool>("/apply_undistortion", undistord_images, false);
+    handler.param<bool>("/run_mask_rcnn", run_mask_rcnn, false);
+    handler.param<bool>("/run_flow_net", run_scene_flow, false);
+    handler.param<bool>("/run_mono_depth", run_mono_depth, false);
+
+    //after how many images full batch oprtimisation should be run
+    handler.param<int>("/global_optim_trigger", global_optim_trigger, 10);
+    ROS_INFO_STREAM("global optim trigger " << global_optim_trigger);
 
     if(run_mask_rcnn) {
         ROS_INFO_STREAM("starting mask rcnn service");
@@ -179,7 +183,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 ground_truth,
                 object_pose_gt,
                 time_difference,
-                image_trajectory,10);
+                image_trajectory,global_optim_trigger);
         }
 
 
