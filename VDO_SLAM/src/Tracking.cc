@@ -1326,7 +1326,7 @@ void Tracking::GetSceneFlowObj()
 
         pts_p3d[i] << x3D_p.at<float>(0), x3D_p.at<float>(1), x3D_p.at<float>(2);
 
-        cout << "3d points: " << x3D_p << " " << x3D_c << endl;
+        // cout << "3d points: " << x3D_p << " " << x3D_c << endl;
 
         cv::Point3f flow3d;
         flow3d.x = x3D_c.at<float>(0) - x3D_p.at<float>(0);

@@ -64,7 +64,7 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     ROS_INFO_STREAM("Got camera info msg");
 
 
-    image_subscriber = image_transport.subscribe(output_video_topic, 10,
+    image_subscriber = image_transport.subscribe(output_video_topic, 1,
                                                &RealTimeVdoSLAM::image_callback, this);
 
     maskrcnn_results = image_transport.advertise("vdoslam/results/maskrcnn", 10);
@@ -179,7 +179,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 ground_truth,
                 object_pose_gt,
                 time_difference,
-                image_trajectory,30);
+                image_trajectory,10);
         }
 
 

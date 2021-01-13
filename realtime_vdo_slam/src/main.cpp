@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "realtime_vdo_slam");
     ros::NodeHandle n;
 
-    ros::Rate r(10);
+    ros::Rate r(2);
 
     RealTimeVdoSLAM real_time_vdom(n);
 
