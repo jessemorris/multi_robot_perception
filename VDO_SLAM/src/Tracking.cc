@@ -1205,9 +1205,12 @@ void Tracking::Track()
     // ============== Full batch optimize on all the measurements (global optimization) ================
     // =================================================================================================
 
+    cout << "Fid: " << f_id << endl;
+    cout << "StopFrame: " << StopFrame << endl;
     bGlobalBatch = true;
     if (f_id==StopFrame) // bFrame2Frame f_id>=2
     {
+        cout << "Fid is stop frame: " << f_id << endl;
         // Metric Error BEFORE Optimization
         //comment these becuase we have no ground truth
         // GetMetricError(mpMap->vmCameraPose,mpMap->vmRigidMotion, mpMap->vmObjPosePre,
@@ -1228,10 +1231,20 @@ void Tracking::Track()
             
             // GetVelocityError(mpMap->vmRigidMotion_RF, mpMap->vp3DPointDyn, mpMap->vnFeatLabel,
             //                  mpMap->vnRMLabel, mpMap->vfAllSpeed_GT, mpMap->vnAssoDyn, mpMap->vbObjStat);
+            f_id = 0; //14.1.2020 Jesse add -> need to reset fid so we optimize again for streaming
+            mpMap->reset();
+            mState = NO_IMAGES_YET;
         }
+        else {
+            mState = OK;
+        }
+
+    }
+    else {
+        mState = OK;
+
     }
 
-    mState = OK;
 }
 
 

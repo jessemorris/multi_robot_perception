@@ -6,13 +6,53 @@
 *
 **/
 
+#include <iostream>
+
 #include "vdo_slam/Map.h"
 
 namespace VDO_SLAM
 {
 
-Map::Map():mnMaxKFid(0),mnBigChangeIdx(0)
-{
-}
+    Map::Map():mnMaxKFid(0),mnBigChangeIdx(0)
+    {
+    }
+
+    void Map::reset() {
+        std::cout << "Resetting map" << std::endl;
+        vpFeatSta.clear();
+        vfDepSta.clear();
+        vp3DPointSta.clear();
+        vnAssoSta.clear();
+        TrackletSta.clear();
+        vpFeatDyn.clear();
+        vfDepDyn.clear();
+        vp3DPointDyn.clear();
+        vnAssoDyn.clear();
+        vnFeatLabel.clear();
+        TrackletDyn.clear();
+        nObjID.clear();
+        vmCameraPose.clear();
+        vmCameraPose_RF.clear();
+        vmCameraPose_GT.clear();
+        vmRigidCentre.clear();
+        vmRigidMotion.clear();
+        vmObjPosePre.clear();
+        vmRigidMotion_RF.clear();
+        vmRigidMotion_GT.clear();
+        vfAllSpeed_GT.clear();
+        vnRMLabel.clear();
+        vnSMLabel.clear();
+        vnSMLabelGT.clear();
+        vbObjStat.clear();
+        vnObjTraTime.clear();
+        nObjTraCount.clear();
+        nObjTraCountGT.clear();
+        nObjTraSemLab.clear();
+        fLBA_time.clear();
+        vfAll_time.clear();
+
+        mnMaxKFid = 0;
+        mnBigChangeIdx = 0;
+    }
 
 } //namespace VDO_SLAM

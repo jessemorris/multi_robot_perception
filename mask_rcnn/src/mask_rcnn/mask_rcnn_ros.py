@@ -59,6 +59,7 @@ class MaskRcnnRos(RosCppCommunicator):
         self.log_to_ros("Service call ready")
 
 
+    @torch.no_grad()
     def mask_rcnn_service_callback(self, req):
         response = MaskRcnnVdoSlamResponse()
         self.log_to_ros("Inside callback")
@@ -77,6 +78,12 @@ class MaskRcnnRos(RosCppCommunicator):
             response.output_mask = output_image_msg
             response.labels = labels
             response.label_indexs = label_indexs
+
+            del response_image
+            del labels
+            del label_indexs
+
+
             return response
 
 
@@ -86,9 +93,11 @@ class MaskRcnnRos(RosCppCommunicator):
             response.success = False
             return response
 
+    @torch.no_grad()
     def display_predictions(self, image):
         return self.coco_demo.run_on_opencv_image(image)
 
+    @torch.no_grad()
     def analyse_image(self, image):
         predictions = self.coco_demo.compute_prediction(image)
         top_predictions = self.coco_demo.select_top_predictions(predictions)
@@ -132,50 +141,6 @@ class MaskRcnnRos(RosCppCommunicator):
 
         return composite, labels, label_indexs
 
-    # def create_pixel_masks(self, image, predictions):
-    #     """[Creates a mask using the original image and the set of predictions. The masks
-    #     is a greyscale image where each instance object is non-zero and is used as the input
-    #     for VDOSLAm]
-
-    #     Args:
-    #         image ([type]): [description]
-    #         predictions ([type]): [description]
-
-    #     Returns:
-    #         [np.array, list, list]: [masked image, labels, label indexs]
-    #     """        
-    #     masks = predictions.get_field("mask").numpy()
-    #     label_indexs = predictions.get_field("labels")
-    #     label_indexs_numpy = label_indexs.numpy()
-    #     labels = self.convert_label_index_to_string(label_indexs)
-    #     self.log_to_ros(labels)
-
-        
-
-    #     number_of_masks = masks.shape[0]
-    #     self.log_to_ros("Number of masks {}".format(number_of_masks))
-
-    #     colors = self.generate_grayscale_values(label_indexs)
-
-    #     width = image.shape[0]
-    #     height = image.shape[1]
-    #     blank_mask = np.zeros((width, height, 1),np.uint8)
-
-    #     for i in range(number_of_masks):
-    #         # print(masks.shape)
-    #         # pixel_mask = masks[i, 0, :, :].astype(np.uint8) * label_indexs_numpy[i]
-    #         print( masks[i, 0, :, :].astype(np.uint8))
-    #         pixel_mask = masks[i, 0, :, :].astype(np.uint8) * colors[i]
-
-    #         # blank_mask += pixel_mask
-    #         blank_mask = cv2.add(blank_mask, pixel_mask)
-    #     # self.log_to_ros(type(blank_mask))
-    #     # self.log_to_ros(type(labels))
-    #     # self.log_to_ros(type(label_indexs))
-        
-
-    #     return blank_mask, labels, label_indexs
-
     def convert_label_index_to_string(self, labels):
         return [self.coco_demo.CATEGORIES[i] for i in labels]
 
@@ -203,24 +168,24 @@ class MaskRcnnRos(RosCppCommunicator):
 
 
 
-def main():
+# def main():
     
-    maskrcnn = MaskRcnnRos()
+#     maskrcnn = MaskRcnnRos()
 
-    cam = cv2.VideoCapture(0)
-    while True:
-        start_time = time.time()
-        ret_val, img = cam.read()
-        # response_image, labels, label_indexs = maskrcnn.analyse_image(img)
-        response_image = maskrcnn.analyse_image(img)
-        # test_image = maskrcnn.display_predictions(img)
-        print("Time: {:.2f} s / img".format(time.time() - start_time))
-        cv2.imshow("COCO detections", response_image)
-        # cv2.imshow("Preds", test_image)
-        if cv2.waitKey(1) == 27:
-            break  # esc to quit
-    cv2.destroyAllWindows()
+#     cam = cv2.VideoCapture(0)
+#     while True:
+#         start_time = time.time()
+#         ret_val, img = cam.read()
+#         # response_image, labels, label_indexs = maskrcnn.analyse_image(img)
+#         response_image = maskrcnn.analyse_image(img)
+#         # test_image = maskrcnn.display_predictions(img)
+#         print("Time: {:.2f} s / img".format(time.time() - start_time))
+#         cv2.imshow("COCO detections", response_image)
+#         # cv2.imshow("Preds", test_image)
+#         if cv2.waitKey(1) == 27:
+#             break  # esc to quit
+#     cv2.destroyAllWindows()
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

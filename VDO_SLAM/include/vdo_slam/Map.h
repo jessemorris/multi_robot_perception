@@ -22,6 +22,9 @@ class Map
 public:
     Map();
 
+    //clears all vectors and resets protected variables
+    void reset();
+
     // ==========================================================
     // ============= output for evaluating results ==============
 
