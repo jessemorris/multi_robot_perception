@@ -10,6 +10,8 @@ from maskrcnn_benchmark.modeling.roi_heads.mask_head.inference import Masker
 from maskrcnn_benchmark import layers as L
 from maskrcnn_benchmark.utils import cv2_util
 
+from memory_profiler import profile
+
 class Resize(object):
     def __init__(self, min_size, max_size):
         self.min_size = min_size
@@ -41,6 +43,39 @@ class Resize(object):
     def __call__(self, image):
         size = self.get_size(image.size)
         image = F.resize(image, size)
+        return image
+
+class NumpyResize(object):
+    def __init__(self, min_size, max_size):
+        self.min_size = min_size
+        self.max_size = max_size
+
+    # modified from torchvision to add support for max size
+    def get_size(self, image_shape):
+        h, w, _ = image_shape
+        size = self.min_size
+        max_size = self.max_size
+        if max_size is not None:
+            min_original_size = float(min((w, h)))
+            max_original_size = float(max((w, h)))
+            if max_original_size / min_original_size * size > max_size:
+                size = int(round(max_size * min_original_size / max_original_size))
+
+        if (w <= h and w == size) or (h <= w and h == size):
+            return (h, w)
+
+        if w < h:
+            ow = size
+            oh = int(size * h / w)
+        else:
+            oh = size
+            ow = int(size * w / h)
+
+        return (ow, oh)
+
+    def __call__(self, image):
+        size = self.get_size(image.shape)
+        image = cv2.resize(image, size, interpolation = cv2.INTER_AREA)
         return image
 
 
@@ -180,8 +215,10 @@ class COCODemo(object):
         # if we want it to be in RGB in [0-1] range.
         if cfg.INPUT.TO_BGR255:
             to_bgr_transform = T.Lambda(lambda x: x * 255)
+            print("here")
         else:
             to_bgr_transform = T.Lambda(lambda x: x[[2, 1, 0]])
+            print("here1")
 
         normalize_transform = T.Normalize(
             mean=cfg.INPUT.PIXEL_MEAN, std=cfg.INPUT.PIXEL_STD
@@ -190,11 +227,11 @@ class COCODemo(object):
         max_size = cfg.INPUT.MAX_SIZE_TEST
         transform = T.Compose(
             [
-                T.ToPILImage(),
-                Resize(min_size, max_size),
+                # T.ToPILImage(),
+                NumpyResize(min_size, max_size),
                 T.ToTensor(),
-                to_bgr_transform,
-                normalize_transform,
+                # to_bgr_transform,
+                # normalize_transform,
             ]
         )
         return transform
@@ -227,6 +264,9 @@ class COCODemo(object):
 
         return result
 
+
+    @torch.no_grad()
+    @profile
     def compute_prediction(self, original_image):
         """
         Arguments:
@@ -238,17 +278,30 @@ class COCODemo(object):
                 the BoxList via `prediction.fields()`
         """
         # apply pre-processing to image
-        image = self.transforms(original_image)
-        # convert to an ImageList, padded so that it is divisible by
+        # size sould be torch.Size([3, 800, 1066]) -> which is cfg.INPUT.MIN/MAX_SIZE_TEST
+        # image_tensor = self.transforms(original_image)
+        # del image_tensor
+        image = cv2.resize(original_image, (800, 1088), interpolation = cv2.INTER_AREA)
+        # print(image.shape)
+        # original_height, original_width, _ = original_image.shape
+        image_tensor = torch.FloatTensor(np.ascontiguousarray(np.array(image)[:, :, ::-1].transpose(2, 0, 1).astype(np.float32)))
+        image_tensor = image_tensor.unsqueeze(0)
+        # image_tensor.cpu().detach()
+
+        # del image_tensor
+        # # print(type(image))
+        # # convert to an ImageList, padded so that it is divisible by
         # cfg.DATALOADER.SIZE_DIVISIBILITY
-        image_list = to_image_list(image, self.cfg.DATALOADER.SIZE_DIVISIBILITY)
+
+        # image_list = to_image_list(image_tensor, self.cfg.DATALOADER.SIZE_DIVISIBILITY)
+        image_list = to_image_list(image_tensor, 0)
         image_list = image_list.to(self.device)
-        # compute predictions
-        with torch.no_grad():
-            predictions = self.model(image_list)
+        # # compute predictions
+        predictions = self.model(image_list)
+        # print(predictions)
         predictions = [o.to(self.cpu_device) for o in predictions]
 
-        del image_list
+        # del image_list
 
         # always single image is passed at a time
         prediction = predictions[0]
@@ -264,6 +317,10 @@ class COCODemo(object):
             # always single image is passed at a time
             masks = self.masker([masks], [prediction])[0]
             prediction.add_field("mask", masks)
+
+        del image_tensor
+        del predictions
+        del image_list
         return prediction
 
     def select_top_predictions(self, predictions):

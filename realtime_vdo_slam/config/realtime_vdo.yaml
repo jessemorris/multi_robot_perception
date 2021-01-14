@@ -7,8 +7,8 @@ info_msg_suffix: "/camera_info"
 
 #options for which analysis to run
 run_flow_net: False
-run_mask_rcnn: False
-run_mono_depth: True
+run_mask_rcnn: True
+run_mono_depth: False
 
 #for now so I can just select one camera
 camera_selection: "A1"

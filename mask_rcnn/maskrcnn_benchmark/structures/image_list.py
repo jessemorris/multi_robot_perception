@@ -2,7 +2,7 @@
 from __future__ import division
 
 import torch
-
+from memory_profiler import profile
 
 class ImageList(object):
     """
@@ -25,7 +25,6 @@ class ImageList(object):
         cast_tensor = self.tensors.to(*args, **kwargs)
         return ImageList(cast_tensor, self.image_sizes)
 
-
 def to_image_list(tensors, size_divisible=0):
     """
     tensors can be an ImageList, a torch.Tensor or
@@ -39,14 +38,18 @@ def to_image_list(tensors, size_divisible=0):
 
     if isinstance(tensors, ImageList):
         return tensors
-    elif isinstance(tensors, torch.Tensor):
+    
+    elif isinstance(tensors, torch.Tensor) or isinstance(tensors, torch.FloatTensor):
         # single tensor shape can be inferred
+        #I think should always go here unless we start doing inference on multiple images
+        print("Is instance torch.Tensor")
         if tensors.dim() == 3:
             tensors = tensors[None]
         assert tensors.dim() == 4
         image_sizes = [tensor.shape[-2:] for tensor in tensors]
         return ImageList(tensors, image_sizes)
     elif isinstance(tensors, (tuple, list)):
+        print("Is instance tuple/list")
         max_size = tuple(max(s) for s in zip(*[img.shape for img in tensors]))
 
         # TODO Ideally, just remove this and let me model handle arbitrary
@@ -61,11 +64,16 @@ def to_image_list(tensors, size_divisible=0):
             max_size = tuple(max_size)
 
         batch_shape = (len(tensors),) + max_size
+        #torch.Size([1, 3, 800, 1088])
         batched_imgs = tensors[0].new(*batch_shape).zero_()
-        for img, pad_img in zip(tensors, batched_imgs):
-            pad_img[: img.shape[0], : img.shape[1], : img.shape[2]].copy_(img)
+        # batched_imgs = tensors[0].new_full((*batch_shape), 0)
+        print(tensors.size())
+        # print(batched_imgs)
+        # print(*batch_shape)
+        # for img, pad_img in zip(tensors, batched_imgs):
+        #     pad_img[: img.shape[0], : img.shape[1], : img.shape[2]].copy_(img)
 
-        image_sizes = [im.shape[-2:] for im in tensors]
+        # image_sizes = [im.shape[-2:] for im in tensors]
 
         return ImageList(batched_imgs, image_sizes)
     else:

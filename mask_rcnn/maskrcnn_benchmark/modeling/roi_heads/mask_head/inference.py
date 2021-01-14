@@ -135,19 +135,19 @@ def paste_mask_in_image(mask, box, im_h, im_w, thresh=0.5, padding=1):
     # Set shape to [batchxCxHxW]
     mask = mask.expand((1, 1, -1, -1))
 
-    # Resize mask
+    # # Resize mask
     mask = mask.to(torch.float32)
     mask = interpolate(mask, size=(h, w), mode='bilinear', align_corners=False)
     mask = mask[0][0]
-
     if thresh >= 0:
+        #should be here
         mask = mask > thresh
     else:
         # for visualization and debugging, we also
         # allow it to return an unmodified mask
         mask = (mask * 255).to(torch.bool)
-
-    im_mask = torch.zeros((im_h, im_w), dtype=torch.bool)
+    im_mask = np.zeros((im_h, im_w))
+    # im_mask = torch.zeros((im_h, im_w), dtype=torch.bool)
     x_0 = max(box[0], 0)
     x_1 = min(box[2] + 1, im_w)
     y_0 = max(box[1], 0)
@@ -156,8 +156,10 @@ def paste_mask_in_image(mask, box, im_h, im_w, thresh=0.5, padding=1):
     im_mask[y_0:y_1, x_0:x_1] = mask[
         (y_0 - box[1]) : (y_1 - box[1]), (x_0 - box[0]) : (x_1 - box[0])
     ]
-    return im_mask
 
+    del mask
+    return im_mask
+    # return None
 
 class Masker(object):
     """
@@ -176,11 +178,18 @@ class Masker(object):
             paste_mask_in_image(mask[0], box, im_h, im_w, self.threshold, self.padding)
             for mask, box in zip(masks, boxes.bbox)
         ]
+
         if len(res) > 0:
-            res = torch.stack(res, dim=0)[:, None]
+            #size was torch.Size([19, 1, 480, 640])
+            # result = torch.stack(res, dim=0)[:, None]
+            # print(result.size())
+            result = np.stack(res, axis=0)[:, None]
+            print("Result shape {}".format(result.shape))
         else:
-            res = masks.new_empty((0, 1, masks.shape[-2], masks.shape[-1]))
-        return res
+            result = []
+
+        del res
+        return result
 
     def __call__(self, masks, boxes):
         if isinstance(boxes, BoxList):
@@ -195,7 +204,8 @@ class Masker(object):
         for mask, box in zip(masks, boxes):
             assert mask.shape[0] == len(box), "Number of objects should be the same."
             result = self.forward_single_image(mask, box)
-            results.append(result)
+            if result is not None:
+                results.append(result)
         return results
 
 
