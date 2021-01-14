@@ -190,7 +190,7 @@ class COCODemo(object):
             print('Loading weight from {}.'.format(weight_loading))
             _ = checkpointer._load_model(torch.load(weight_loading))
         
-        self.transforms = self.build_transform()
+        # self.transforms = self.build_transform()
 
         mask_threshold = -1 if show_mask_heatmaps else 0.5
         self.masker = Masker(threshold=mask_threshold, padding=1)
@@ -203,38 +203,36 @@ class COCODemo(object):
         self.show_mask_heatmaps = show_mask_heatmaps
         self.masks_per_dim = masks_per_dim
 
-    def build_transform(self):
-        """
-        Creates a basic transformation that was used to train the models
-        """
-        cfg = self.cfg
+    # def build_transform(self):
+    #     """
+    #     Creates a basic transformation that was used to train the models
+    #     """
+    #     cfg = self.cfg
 
-        # we are loading images with OpenCV, so we don't need to convert them
-        # to BGR, they are already! So all we need to do is to normalize
-        # by 255 if we want to convert to BGR255 format, or flip the channels
-        # if we want it to be in RGB in [0-1] range.
-        if cfg.INPUT.TO_BGR255:
-            to_bgr_transform = T.Lambda(lambda x: x * 255)
-            print("here")
-        else:
-            to_bgr_transform = T.Lambda(lambda x: x[[2, 1, 0]])
-            print("here1")
+    #     # we are loading images with OpenCV, so we don't need to convert them
+    #     # to BGR, they are already! So all we need to do is to normalize
+    #     # by 255 if we want to convert to BGR255 format, or flip the channels
+    #     # if we want it to be in RGB in [0-1] range.
+    #     if cfg.INPUT.TO_BGR255:
+    #         to_bgr_transform = T.Lambda(lambda x: x * 255)
+    #     else:
+    #         to_bgr_transform = T.Lambda(lambda x: x[[2, 1, 0]])
 
-        normalize_transform = T.Normalize(
-            mean=cfg.INPUT.PIXEL_MEAN, std=cfg.INPUT.PIXEL_STD
-        )
-        min_size = cfg.INPUT.MIN_SIZE_TEST
-        max_size = cfg.INPUT.MAX_SIZE_TEST
-        transform = T.Compose(
-            [
-                # T.ToPILImage(),
-                NumpyResize(min_size, max_size),
-                T.ToTensor(),
-                # to_bgr_transform,
-                # normalize_transform,
-            ]
-        )
-        return transform
+    #     normalize_transform = T.Normalize(
+    #         mean=cfg.INPUT.PIXEL_MEAN, std=cfg.INPUT.PIXEL_STD
+    #     )
+    #     min_size = cfg.INPUT.MIN_SIZE_TEST
+    #     max_size = cfg.INPUT.MAX_SIZE_TEST
+    #     transform = T.Compose(
+    #         [
+    #             # T.ToPILImage(),
+    #             NumpyResize(min_size, max_size),
+    #             T.ToTensor(),
+    #             # to_bgr_transform,
+    #             # normalize_transform,
+    #         ]
+    #     )
+    #     return transform
 
     def run_on_opencv_image(self, image):
         """
@@ -266,7 +264,6 @@ class COCODemo(object):
 
 
     @torch.no_grad()
-    @profile
     def compute_prediction(self, original_image):
         """
         Arguments:

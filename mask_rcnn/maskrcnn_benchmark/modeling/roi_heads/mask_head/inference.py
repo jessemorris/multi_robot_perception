@@ -184,7 +184,6 @@ class Masker(object):
             # result = torch.stack(res, dim=0)[:, None]
             # print(result.size())
             result = np.stack(res, axis=0)[:, None]
-            print("Result shape {}".format(result.shape))
         else:
             result = []
 

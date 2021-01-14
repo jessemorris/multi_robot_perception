@@ -73,18 +73,15 @@ class MaskRcnnRos(RosCppCommunicator):
             # test_image_msg = ros_numpy.msgify(Image, test_image, encoding='rgb8')
             self.mask_rcnn_test_publisher.publish(output_image_msg)
 
-            # response.success = True
-            # # response.output_image = output_image_msg
-            # response.output_mask = output_image_msg
-            # response.labels = labels
-            # response.label_indexs = label_indexs
+            response.success = True
+            # response.output_image = output_image_msg
+            response.output_mask = output_image_msg
+            response.labels = labels
+            response.label_indexs = label_indexs
 
-            # del response_image
-            # del labels
-            # del label_indexs
-
-
-            response.success = False
+            del response_image
+            del labels
+            del label_indexs
             return response
 
 
@@ -96,6 +93,7 @@ class MaskRcnnRos(RosCppCommunicator):
 
     @torch.no_grad()
     def display_predictions(self, image):
+        #note: due to changes in predictions.py this will no longer work
         return self.coco_demo.run_on_opencv_image(image)
 
     @torch.no_grad()
@@ -126,12 +124,10 @@ class MaskRcnnRos(RosCppCommunicator):
         colours = self.get_greyscale_colours(label_indexs)
         
         blank_mask = np.zeros((width, height),np.uint8)
-        print(masks.shape)
         if masks.ndim < 3:
             masks = np.expand_dims(masks, axis=0)
             masks = np.expand_dims(masks, axis=0)
 
-        print(masks.shape)
         for mask, colour in zip(masks, colours):
             thresh = mask[0, :, :].astype(np.uint8) * colour
             # print(mask.shape)

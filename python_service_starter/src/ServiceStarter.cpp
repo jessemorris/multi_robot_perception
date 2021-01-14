@@ -60,7 +60,8 @@ bool ServiceStarter::start_program() {
 
                 setenv(std::string(program_name + "_PY_WRITE_FD").c_str(), std::to_string(pipe_py_to_cpp[1]).c_str(), 1);
                 setenv("PYTHONUNBUFFERED", "true", 1);
-                oss << "python3 -m memory_profiler " << full_file_path;
+                // oss << "python3 -m memory_profiler " << full_file_path;
+                oss << "python3 " << full_file_path;
 
 
                 ::system(oss.str().c_str());

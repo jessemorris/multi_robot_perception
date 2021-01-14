@@ -42,14 +42,12 @@ def to_image_list(tensors, size_divisible=0):
     elif isinstance(tensors, torch.Tensor) or isinstance(tensors, torch.FloatTensor):
         # single tensor shape can be inferred
         #I think should always go here unless we start doing inference on multiple images
-        print("Is instance torch.Tensor")
         if tensors.dim() == 3:
             tensors = tensors[None]
         assert tensors.dim() == 4
         image_sizes = [tensor.shape[-2:] for tensor in tensors]
         return ImageList(tensors, image_sizes)
     elif isinstance(tensors, (tuple, list)):
-        print("Is instance tuple/list")
         max_size = tuple(max(s) for s in zip(*[img.shape for img in tensors]))
 
         # TODO Ideally, just remove this and let me model handle arbitrary
@@ -65,9 +63,11 @@ def to_image_list(tensors, size_divisible=0):
 
         batch_shape = (len(tensors),) + max_size
         #torch.Size([1, 3, 800, 1088])
-        batched_imgs = tensors[0].new(*batch_shape).zero_()
+
+        #getting to this code will cause the program to start to run out of memory -> I think its the new() tensor call
+        #if a single image instance is run at a time it should never get here as the previous if statement will be called
+        # batched_imgs = tensors[0].new(*batch_shape).zero_()
         # batched_imgs = tensors[0].new_full((*batch_shape), 0)
-        print(tensors.size())
         # print(batched_imgs)
         # print(*batch_shape)
         # for img, pad_img in zip(tensors, batched_imgs):
@@ -75,6 +75,7 @@ def to_image_list(tensors, size_divisible=0):
 
         # image_sizes = [im.shape[-2:] for im in tensors]
 
-        return ImageList(batched_imgs, image_sizes)
+        # return ImageList(batched_imgs, image_sizes)
+        return None
     else:
         raise TypeError("Unsupported type for to_image_list: {}".format(type(tensors)))

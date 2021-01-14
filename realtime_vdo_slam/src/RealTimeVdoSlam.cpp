@@ -167,24 +167,24 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         //run slam algorithm
         //not we have no ground truth
         //times are just relative to each other so we can just record rostim between each callback
-        // if (scene_flow_success && mask_rcnn_success && mono_depth_success) {
-        //     ros::Duration diff = current_time - previous_time;
-        //     double time_difference = diff.toSec();
+        if (scene_flow_success && mask_rcnn_success && mono_depth_success) {
+            ros::Duration diff = current_time - previous_time;
+            double time_difference = diff.toSec();
 
-        //     cv::Mat depth_image_float;
-        //     cv::Mat ground_truth = cv::Mat::eye(4,4,CV_32F);
-        //     std::vector<std::vector<float> > object_pose_gt;
-        //     mono_depth_mat.convertTo(depth_image_float, CV_32F);
-        //     mask_rcnn_mat.convertTo(mask_rcnn_mat, CV_32SC1);
+            cv::Mat depth_image_float;
+            cv::Mat ground_truth = cv::Mat::eye(4,4,CV_32F);
+            std::vector<std::vector<float> > object_pose_gt;
+            mono_depth_mat.convertTo(depth_image_float, CV_32F);
+            mask_rcnn_mat.convertTo(mask_rcnn_mat, CV_32SC1);
 
-        //     slam_system->TrackRGBD(image,depth_image_float,
-        //         scene_flow_mat,
-        //         mask_rcnn_mat,
-        //         ground_truth,
-        //         object_pose_gt,
-        //         time_difference,
-        //         image_trajectory,global_optim_trigger);
-        // }
+            slam_system->TrackRGBD(image,depth_image_float,
+                scene_flow_mat,
+                mask_rcnn_mat,
+                ground_truth,
+                object_pose_gt,
+                time_difference,
+                image_trajectory,global_optim_trigger);
+        }
 
 
     }
