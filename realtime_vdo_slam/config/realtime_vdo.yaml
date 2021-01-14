@@ -6,9 +6,9 @@ camera_suffix: "/image_color"
 info_msg_suffix: "/camera_info"
 
 #options for which analysis to run
-run_flow_net: True
+run_flow_net: False
 run_mask_rcnn: False
-run_mono_depth: False
+run_mono_depth: True
 
 #for now so I can just select one camera
 camera_selection: "A1"

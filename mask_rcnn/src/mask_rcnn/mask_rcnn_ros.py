@@ -177,10 +177,11 @@ class MaskRcnnRos(RosCppCommunicator):
 #         start_time = time.time()
 #         ret_val, img = cam.read()
 #         # response_image, labels, label_indexs = maskrcnn.analyse_image(img)
-#         response_image = maskrcnn.analyse_image(img)
+#         response_image, labels, label_indexs = maskrcnn.analyse_image(img)
 #         # test_image = maskrcnn.display_predictions(img)
 #         print("Time: {:.2f} s / img".format(time.time() - start_time))
 #         cv2.imshow("COCO detections", response_image)
+#         print(labels)
 #         # cv2.imshow("Preds", test_image)
 #         if cv2.waitKey(1) == 27:
 #             break  # esc to quit

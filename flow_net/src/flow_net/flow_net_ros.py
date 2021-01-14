@@ -66,18 +66,16 @@ class FlowNetRos(RosCppCommunicator):
             return response
 
 
-        output_tensor = self.analyse_flow(previous_image, current_image)
+        output_image = self.analyse_flow(previous_image, current_image)
 
-        self.log_to_ros(output_tensor.shape)
+        # self.log_to_ros(output_image.shape)
 
         # rgb_flow = self.flow2rgb(output_tensor)
         # output_image = (rgb_flow * 255).astype(np.uint8).transpose(1,2,0)
-        output_image = output_tensor.astype(np.float32)
-        print(output_image.shape)
         rgb_flow = self.flow2rgb(output_image)
         flow_image_msg = ros_numpy.msgify(Image, rgb_flow, encoding='rgb8')
         self.flow_net_test_publisher.publish(flow_image_msg)
-        # output_image_msg = ros_numpy.msgify(Image, output_image, encoding='rgb8')
+
         output_image_msg = ros_numpy.msgify(Image, output_image, encoding='32FC2')
         response.success = True
         response.output_image = output_image_msg
@@ -123,6 +121,7 @@ class FlowNetRos(RosCppCommunicator):
         #this is a 2 x R X C vector -> we need it to be a R X C X 2
         flow_map_np = flow.detach().cpu().numpy()
         flow_map_np = np.moveaxis(flow_map_np, 0, -1)
+        flow_map_np = flow_map_np.astype(np.float32)
 
 
         del tenFlow
@@ -179,4 +178,31 @@ class FlowNetRos(RosCppCommunicator):
         return img
 
 
+def main():
+    
+    flownet = FlowNetRos()
+    is_first = True
+    cam = cv2.VideoCapture(0)
+    previous_image = None
+    while True:
+
+        start_time = time.time()
+        ret_val, img = cam.read()
+        if is_first:
+            previous_image = img
+            is_first = False
+            continue
+        composite = flownet.analyse_flow(previous_image, img)
+        rgb_flow = flownet.flow2rgb(composite)
+        print("Time: {:.2f} s / img".format(time.time() - start_time))
+        cv2.imshow("RGB Flow", rgb_flow)
+        if cv2.waitKey(1) == 27:
+            break  # esc to quit
+
+        previous_image = img
+    cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    main()
 

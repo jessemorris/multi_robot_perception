@@ -18,6 +18,8 @@ import matplotlib.cm as cm
 
 import torch
 from torchvision import transforms, datasets
+import torch.backends.cudnn as cudnn
+from memory_profiler import profile
 
 
 from mono_depth_2.networks import DepthDecoder
@@ -36,6 +38,8 @@ import rospkg
 import rospy
 import ros_numpy
 
+import cv2
+
 package_path = "/home/jesse/Code/src/ros/src/multi_robot_perception/mono_depth_2/"
 sys.path.insert(0, package_path)
 
@@ -49,6 +53,8 @@ class MonoDepth2Ros(RosCppCommunicator):
         self.model_name = model_name
 
         self.model_path = model_path + self.model_name
+
+        torch.set_grad_enabled(False) 
 
         if torch.cuda.is_available():
             self.device = torch.device("cuda")
@@ -89,6 +95,7 @@ class MonoDepth2Ros(RosCppCommunicator):
         self.log_to_ros("Service call ready")
 
     @torch.no_grad()
+    # @profile(precision=4)
     def mono_depth_service_callback(self, req):
         response = MonoDepthResponse()
         try:
@@ -101,15 +108,19 @@ class MonoDepth2Ros(RosCppCommunicator):
 
         depth_image = self.analyse_depth(current_image)
 
-        output_image_msg = ros_numpy.msgify(Image, depth_image, encoding='mono16')
-        self.flow_net_test_publisher.publish(output_image_msg)
+        # output_image_msg = ros_numpy.msgify(Image, depth_image, encoding='mono16')
 
-        response.success = True
-        response.output_image = output_image_msg
+        # del depth_image
+        # response.success = True
+        # response.output_image = output_image_msg
 
+        # return response
+        response.success = False
+        rospy.sleep(0.5)
         return response
 
     @torch.no_grad()
+    # @profile(precision=4)
     def analyse_depth(self, input_image):
         """[Estimates depth of monocular image]
 
@@ -119,18 +130,32 @@ class MonoDepth2Ros(RosCppCommunicator):
         Returns:
             [numpy array]: [Depth image of type CV8UC1]
         """        
-        image = pilImage.fromarray(input_image)
-    
-        original_width, original_height = image.size
-        image = image.resize((self.feed_width, self.feed_height), pilImage.LANCZOS)
+        # image = pilImage.fromarray(input_image)
+        image = cv2.resize(input_image, (self.feed_width, self.feed_height), interpolation = cv2.INTER_AREA)
+        # print(image.shape)
+        original_height, original_width, _ = input_image.shape
+
+        tensor_image = torch.FloatTensor(np.ascontiguousarray(np.array(image)[:, :, ::-1].transpose(2, 0, 1).astype(np.float32) * (1.0 / 255.0)))
+        # print(tensor_image.size())
+
+        # image = image.resize((self.feed_width, self.feed_height), pilImage.LANCZOS)
+        #  tensor_image = transforms.ToTensor()(image)
         # self.log_to_ros(image)
         # self.log_to_ros("Input image type {}".format(type(image)))
-        image = transforms.ToTensor()(image).unsqueeze(0)
+        
+    
+        tensor_image = tensor_image.unsqueeze(0)
+        # tensor_image.cpu().numpy()
 
-        # PREDICTION
-        image = image.to(self.device)
-        features = self.encoder(image)
+        # del tensor_image
+        # del input_image
+        # del image
+        # # PREDICTION
+        #tensor image should be of size: torch.Size([1, 3, 192, 640])
+        image_predicted = tensor_image.to(self.device)
+        features = self.encoder(image_predicted)
         outputs = self.depth_decoder(features)
+
 
         disp = outputs[("disp", 0)]
         disp_resized = torch.nn.functional.interpolate(
@@ -138,13 +163,18 @@ class MonoDepth2Ros(RosCppCommunicator):
 
         #output is a np.float64. We must cast down to a np.float8 so that ROS encodings can handles this
         #apparently float16 is super slow becuase most intel processors dont support FP16 ops so we're going with np.uint16
-        depth_image_float = disp_resized.squeeze().cpu().numpy()
+        # depth_image_float = disp_resized.squeeze().cpu().numpy()
+        depth_image_float = disp_resized.squeeze().cpu().detach().numpy()
         depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=65536, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
-        # self.log_to_ros(depth_image.shape)
+        # # self.log_to_ros(depth_image.shape)
 
-        del image
+        del tensor_image
+        del image 
         del features
         del outputs
+        del depth_image_float
+        del image_predicted
+        del disp
 
         return depth_image
 
@@ -163,21 +193,21 @@ class MonoDepth2Ros(RosCppCommunicator):
         return (mapper.to_rgba(depth_image)[:, :, :3] * 255).astype(np.uint8)
 
 
-# def main():
+def main():
     
-#     monodepth = MonoDepth2Ros()
+    monodepth = MonoDepth2Ros()
 
-#     cam = cv2.VideoCapture(0)
-#     while True:
-#         start_time = time.time()
-#         ret_val, img = cam.read()
-#         composite = monodepth.analyse_depth(img)
-#         print("Time: {:.2f} s / img".format(time.time() - start_time))
-#         cv2.imshow("COCO detections", composite)
-#         if cv2.waitKey(1) == 27:
-#             break  # esc to quit
-#     cv2.destroyAllWindows()
+    cam = cv2.VideoCapture(0)
+    while True:
+        start_time = time.time()
+        ret_val, img = cam.read()
+        composite = monodepth.analyse_depth(img)
+        print("Time: {:.2f} s / img".format(time.time() - start_time))
+        cv2.imshow("COCO detections", composite)
+        if cv2.waitKey(1) == 27:
+            break  # esc to quit
+    cv2.destroyAllWindows()
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()

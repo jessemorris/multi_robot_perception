@@ -137,8 +137,8 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 // //TODO: proper headers
                 // header.frame_id = "base_link";
                 // header.stamp = ros::Time::now();
-                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono8", mask_rcnn_mat).toImageMsg();
-                maskrcnn_results.publish(img_msg);
+                // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono8", mask_rcnn_mat).toImageMsg();
+                // maskrcnn_results.publish(img_msg);
             }
             else {
                 ROS_WARN_STREAM("Could not analyse mask rcnn images");
@@ -151,8 +151,8 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             if (mono_depth_success) {
                 std_msgs::Header header = std_msgs::Header();
 
-                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono16", mono_depth_mat).toImageMsg();
-                monodepth_results.publish(img_msg);
+                // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono16", mono_depth_mat).toImageMsg();
+                // monodepth_results.publish(img_msg);
             }
             else {
                 ROS_WARN_STREAM("Could not analyse mono depthimages");
@@ -160,7 +160,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         }
 
 
-        previous_image = current_image.clone();
+        previous_image = current_image;
         previous_time = previous_time;
 
 
