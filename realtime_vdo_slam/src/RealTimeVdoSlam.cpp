@@ -5,6 +5,22 @@
 
 #include <memory>
 
+//should also convert unix timestamp to ROS time
+//current timetstamp is just time difference and not unix time
+VDO_SLAM::RosSceneObject::RosSceneObject(ros::NodeHandle& _nh, SceneObject& _object) :
+    nh(_nh),
+    SceneObject(_object) {
+
+        visualiser = nh.advertise<visualization_msgs::MarkerArray>("vdoslam/visualization", 0 );
+
+    }
+
+void VDO_SLAM::RosSceneObject::display_scene() {
+    for (SceneObject& scene_object: scene_objects) {
+
+    }
+}
+
 
 RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
         handler(n),
@@ -39,6 +55,8 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
         ROS_INFO_STREAM("starting mask rcnn service");
         mask_rcnn_interface.start_service();
         ros::service::waitForService("mask_rcnn_service");
+        ros::service::waitForService("mask_rcnn_label_list");
+        mask_rcnn_interface.set_mask_labels();
     }
     if(run_scene_flow) {
         ROS_INFO_STREAM("starting flow net service");
@@ -180,13 +198,15 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             mono_depth_mat.convertTo(depth_image_float, CV_32F);
             mask_rcnn_mat.convertTo(mask_rcnn_mat, CV_32SC1);
 
-            slam_system->TrackRGBD(image,depth_image_float,
+            std::shared_ptr<VDO_SLAM::Scene> scene =  slam_system->TrackRGBD(image,depth_image_float,
                 scene_flow_mat,
                 mask_rcnn_mat,
                 ground_truth,
                 object_pose_gt,
                 time_difference,
                 image_trajectory,global_optim_trigger);
+
+            set_scene_labels(*scene);
         }
 
         previous_time = current_time;
@@ -196,4 +216,14 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 
 
 
+}
+
+void RealTimeVdoSLAM::set_scene_labels(VDO_SLAM::Scene& scene) {
+    std::vector<VDO_SLAM::SceneObject> scene_objects = scene.get_scene_objects();
+    ROS_INFO_STREAM("Updating scene labels (size " << scene_objects.size() << ")");
+    for (auto& object :scene_objects) {
+        std::string label = mask_rcnn_interface.request_label(object.label_index);
+        object.label = label;
+        ROS_INFO_STREAM(object);        
+    }
 }

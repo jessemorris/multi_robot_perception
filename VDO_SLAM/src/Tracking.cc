@@ -29,6 +29,7 @@
 #include<mutex>
 #include<unistd.h>
 
+#include <memory>
 #include <numeric>
 #include <algorithm>
 #include <map>
@@ -161,7 +162,7 @@ Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const 
         cout << "- used detected feature for background scene..." << endl;
 }
 
-cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow,
+std::shared_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow,
                                 const cv::Mat &maskSEM, const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt,
                                 const double &timestamp, cv::Mat &imTraj, const int &nImage)
 {
@@ -241,6 +242,9 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
     // cv::imshow("Input seg mask", maskSEM);
     // cv::waitKey(0);
     mCurrentFrame = Frame(mImGray,imDepth,imFlow,maskSEM,timestamp,mpORBextractorLeft,mK,mDistCoef,mbf,mThDepth,mThDepthObj,nUseSampleFea);
+
+
+    std::shared_ptr<Scene> scene = std::make_shared<Scene>(f_id, timestamp);
 
     // ---------------------------------------------------------------------------------------
     // +++++++++++++++++++++++++ For sampled features ++++++++++++++++++++++++++++++++++++++++
@@ -536,6 +540,8 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
         cv::putText(imTraj, "Camera Trajectory (RED SQUARE)", cv::Point(10, 30), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
         char text[100];
         sprintf(text, "x = %02fm y = %02fm z = %02fm", CamPos.at<float>(0,3), CamPos.at<float>(1,3), CamPos.at<float>(2,3));
+        scene->update_camera_pos(CamPos.at<float>(0,3), CamPos.at<float>(1,3), CamPos.at<float>(2,3));
+
         cv::putText(imTraj, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
         cv::putText(imTraj, "Object Trajectories (COLORED CIRCLES)", cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
         cout << "v obj center " << mCurrentFrame.vObjCentre3D.size() << endl;
@@ -545,8 +551,18 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
                 continue;
             int x = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,0)*scale) + sta_x;
             int y = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,2)*scale) + sta_y;
+
+            float vel_x = mCurrentFrame.vSpeed[i].x;
+            float vel_y = mCurrentFrame.vSpeed[i].y;
             // int l = mCurrentFrame.nSemPosition[i];
             int l = mCurrentFrame.nModLabel[i];
+
+            SceneObject scene_object;
+            scene_object.pose = cv::Point3f(x, y, 0);
+            scene_object.velocity = cv::Point2f(vel_x, vel_y);
+            //jesse -> where does jun keep track of the semantic label for each object?
+            scene_object.label_index = l;
+            scene->add_scene_object(scene_object);
             switch (l)
             {
                 case 1:
@@ -649,7 +665,8 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
     mSegMapLast = mSegMap;   // new added Nov 21 2019
     mFlowMapLast = mFlowMap; // new added Nov 21 2019
 
-    return mCurrentFrame.mTcw.clone();
+    // return mCurrentFrame.mTcw.clone();
+    return scene;
 }
 
 

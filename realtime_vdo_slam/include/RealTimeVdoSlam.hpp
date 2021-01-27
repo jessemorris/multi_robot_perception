@@ -9,6 +9,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
@@ -30,6 +32,22 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+
+
+namespace VDO_SLAM {
+    
+    class RosSceneObject : public SceneObject {
+
+        public:
+            RosSceneObject(ros::NodeHandle& _nh, SceneObject& _object);
+            void display_scene();
+
+        private:
+            ros::NodeHandle nh;
+            ros::Publisher visualiser;
+        
+    };
+};
 
 //wrapper for camera information
 struct CameraInformation {
@@ -93,6 +111,7 @@ class RealTimeVdoSLAM {
         bool undistord_images;
 
         void image_callback(const sensor_msgs::ImageConstPtr& msg);
+        void set_scene_labels(VDO_SLAM::Scene& scene);
 
         //trajectory image for display
         cv::Mat image_trajectory;

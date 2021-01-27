@@ -16,11 +16,13 @@
 // eigen
 #include <Eigen/Core>
 
-#include"Map.h"
-#include"Frame.h"
-#include"ORBextractor.h"
-#include "System.h"
+#include "vdo_slam/Map.h"
+#include"vdo_slam/Frame.h"
+#include"vdo_slam/ORBextractor.h"
+#include "vdo_slam/System.h"
+#include "vdo_slam/Scene.h"
 
+#include <memory>
 #include <mutex>
 
 namespace VDO_SLAM
@@ -63,7 +65,7 @@ public:
     Tracking(System* pSys, Map* pMap, const string &strSettingPath, const int sensor);
 
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
-    cv::Mat GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow, const cv::Mat &maskSEM,
+    std::shared_ptr<Scene> GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow, const cv::Mat &maskSEM,
                           const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt, const double &timestamp,
                           cv::Mat &imTraj, const int &nImage);
 
@@ -216,6 +218,7 @@ protected:
 
     //Map
     Map* mpMap;
+
 
     //Calibration matrix
     cv::Mat mK;

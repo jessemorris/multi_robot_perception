@@ -9,6 +9,7 @@
 #include "vdo_slam/ORBextractor.h"
 #include "vdo_slam/System.h"
 #include "vdo_slam/Tracking.h"
+#include "vdo_slam/Scene.h"
 
 #include "vdo_slam/cvplot/color.h"
 #include "vdo_slam/cvplot/cvplot.h"

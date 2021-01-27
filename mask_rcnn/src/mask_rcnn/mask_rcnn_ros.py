@@ -17,7 +17,7 @@ import torch
 from mask_rcnn.predictor import COCODemo
 
 from mask_rcnn.srv import MaskRcnnVdoSlam, MaskRcnnVdoSlamResponse
-
+from mask_rcnn.srv import MaskRcnnLabelList, MaskRcnnLabelListResponse
 from mask_rcnn.srv import MaskRcnnVisualise, MaskRcnnVisualiseResponse
 from mask_rcnn.srv import MaskRcnnLabel, MaskRcnnLabelResponse
 from rostk_pyutils.ros_cpp_communicator import RosCppCommunicator
@@ -45,7 +45,7 @@ class MaskRcnnRos(RosCppCommunicator):
         # prepare object that handles inference plus adds predictions on top of image
         self.coco_demo = COCODemo(
             cfg,
-            confidence_threshold=0.7,
+            confidence_threshold=0.80,
             show_mask_heatmaps=False,
             masks_per_dim=2,
             min_image_size=800
@@ -58,6 +58,7 @@ class MaskRcnnRos(RosCppCommunicator):
         self.mask_rcnn_service = rospy.Service("mask_rcnn_service",MaskRcnnVdoSlam, self.mask_rcnn_service_callback)
         self.mask_rcnn_test_publisher = rospy.Publisher('mask_rcnn/test', Image, queue_size=10)
         self.mask_rcnn_label_service = rospy.Service("mask_rcnn_label", MaskRcnnLabel, self.label_request_callback)
+        self.mask_rcnn_label_list_service = rospy.Service("mask_rcnn_label_list", MaskRcnnLabelList, self.label_list_request_callback)
         self.log_to_ros("Service call ready")
 
 
@@ -79,6 +80,7 @@ class MaskRcnnRos(RosCppCommunicator):
             # response.output_image = output_image_msg
             response.output_mask = output_image_msg
             response.labels = labels
+            self.log_to_ros("Labels: {}".format(labels))
             response.label_indexs = label_indexs
 
             del response_image
@@ -97,6 +99,11 @@ class MaskRcnnRos(RosCppCommunicator):
         response = MaskRcnnLabelResponse()
         labels = self.convert_label_index_to_string(req.label_index)
         response.labels = labels
+        return response
+
+    def label_list_request_callback(self, req):
+        response = MaskRcnnLabelListResponse()
+        response.labels = self.coco_demo.CATEGORIES
         return response
 
     @torch.no_grad()

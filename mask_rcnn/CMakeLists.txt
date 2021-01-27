@@ -29,6 +29,7 @@ add_service_files(
   MaskRcnnVisualise.srv
   MaskRcnnVdoSlam.srv
   MaskRcnnLabel.srv
+  MaskRcnnLabelList.srv
 )
 
 #add_message_files(

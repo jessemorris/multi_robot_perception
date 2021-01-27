@@ -47,7 +47,7 @@ System::System(const string &strSettingsFile, const eSensor sensor):mSensor(sens
 }
 
 
-cv::Mat System::TrackRGBD(const cv::Mat &im, cv::Mat &depthmap, const cv::Mat &flowmap, const cv::Mat &masksem,
+std::shared_ptr<Scene> System::TrackRGBD(const cv::Mat &im, cv::Mat &depthmap, const cv::Mat &flowmap, const cv::Mat &masksem,
                           const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt,
                           const double &timestamp, cv::Mat &imTraj, const int &nImage)
 {
@@ -57,9 +57,8 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, cv::Mat &depthmap, const cv::Mat &f
         exit(-1);
     }
 
-    cv::Mat Tcw = mpTracker->GrabImageRGBD(im,depthmap,flowmap,masksem,mTcw_gt,vObjPose_gt,timestamp,imTraj,nImage);
+    return mpTracker->GrabImageRGBD(im,depthmap,flowmap,masksem,mTcw_gt,vObjPose_gt,timestamp,imTraj,nImage);
 
-    return Tcw;
 }
 
 void System::SaveResultsIJRR2020(const string &filename)

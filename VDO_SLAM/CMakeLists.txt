@@ -63,6 +63,7 @@ set(PUBLIC_HEADER_FILES
     include/${PROJECT_NAME}/Optimizer.h
     include/${PROJECT_NAME}/ORBextractor.h
     include/${PROJECT_NAME}/System.h
+    include/${PROJECT_NAME}/Scene.h
     include/${PROJECT_NAME}/Tracking.h
 
     include/${PROJECT_NAME}/cvplot/color.h
@@ -83,6 +84,7 @@ add_library(${PROJECT_NAME} SHARED
    src/Map.cc
    src/Optimizer.cc
    src/Frame.cc
+   src/Scene.cc
 
    src/cvplot/color.cc
    src/cvplot/figure.cc
