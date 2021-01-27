@@ -19,6 +19,7 @@ from mask_rcnn.predictor import COCODemo
 from mask_rcnn.srv import MaskRcnnVdoSlam, MaskRcnnVdoSlamResponse
 
 from mask_rcnn.srv import MaskRcnnVisualise, MaskRcnnVisualiseResponse
+from mask_rcnn.srv import MaskRcnnLabel, MaskRcnnLabelResponse
 from rostk_pyutils.ros_cpp_communicator import RosCppCommunicator
 
 from sensor_msgs.msg import Image
@@ -56,6 +57,7 @@ class MaskRcnnRos(RosCppCommunicator):
 
         self.mask_rcnn_service = rospy.Service("mask_rcnn_service",MaskRcnnVdoSlam, self.mask_rcnn_service_callback)
         self.mask_rcnn_test_publisher = rospy.Publisher('mask_rcnn/test', Image, queue_size=10)
+        self.mask_rcnn_label_service = rospy.Service("mask_rcnn_label", MaskRcnnLabel, self.label_request_callback)
         self.log_to_ros("Service call ready")
 
 
@@ -90,6 +92,12 @@ class MaskRcnnRos(RosCppCommunicator):
             self.log_to_ros(str(e))
             response.success = False
             return response
+
+    def label_request_callback(self, req):
+        response = MaskRcnnLabelResponse()
+        labels = self.convert_label_index_to_string(req.label_index)
+        response.labels = labels
+        return response
 
     @torch.no_grad()
     def display_predictions(self, image):

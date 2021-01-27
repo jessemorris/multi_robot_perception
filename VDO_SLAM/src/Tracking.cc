@@ -358,8 +358,11 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
     // ---------------------------------------------------------------------------------------------
 
     // // // ************** display label on the image ***************  // //
+    cout << "bFrame2Frame " << bFrame2Frame << endl;
+    cout << "timestamp " << timestamp << endl;
     if(timestamp!=0 && bFrame2Frame == true)
     {
+        cout << " TemperalMatch_subset size " << TemperalMatch_subset.size() << endl;
         std::vector<cv::KeyPoint> KeyPoints_tmp(1);
         // background features
         // for (int i = 0; i < mCurrentFrame.mvStatKeys.size(); i=i+1)
@@ -371,7 +374,6 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
         // }
         for (int i = 0; i < TemperalMatch_subset.size(); i=i+1)
         {
-            //  cout << " TemperalMatch_subset size " << TemperalMatch_subset.size() << endl;
             if (TemperalMatch_subset[i]>=mCurrentFrame.mvStatKeys.size())
                 continue;
             KeyPoints_tmp[0] = mCurrentFrame.mvStatKeys[TemperalMatch_subset[i]];
@@ -536,7 +538,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Ma
         sprintf(text, "x = %02fm y = %02fm z = %02fm", CamPos.at<float>(0,3), CamPos.at<float>(1,3), CamPos.at<float>(2,3));
         cv::putText(imTraj, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
         cv::putText(imTraj, "Object Trajectories (COLORED CIRCLES)", cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
-        cout << "v obj center" << mCurrentFrame.vObjCentre3D.size() << endl;
+        cout << "v obj center " << mCurrentFrame.vObjCentre3D.size() << endl;
         for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
         {
             if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0)
@@ -1044,6 +1046,7 @@ void Tracking::Track()
         mvKeysCurrentFrame = mCurrentFrame.mvStatKeys; // new added (12th Sep)
 
         mLastFrame = Frame(mCurrentFrame);  // this is very important!!!
+        //Jesse note: program has crashed here with "munmap_chunk(): invalid pointer" -> maybe problem with copy constructor?
         mLastFrame.mvObjKeys = mCurrentFrame.mvObjKeys;  // new added Nov 19 2019
         mLastFrame.mvObjDepth = mCurrentFrame.mvObjDepth;  // new added Nov 19 2019
         mLastFrame.vSemObjLabel = mCurrentFrame.vSemObjLabel; // new added Nov 19 2019
@@ -1232,8 +1235,8 @@ void Tracking::Track()
             // GetVelocityError(mpMap->vmRigidMotion_RF, mpMap->vp3DPointDyn, mpMap->vnFeatLabel,
             //                  mpMap->vnRMLabel, mpMap->vfAllSpeed_GT, mpMap->vnAssoDyn, mpMap->vbObjStat);
             f_id = 0; //14.1.2020 Jesse add -> need to reset fid so we optimize again for streaming
-            mpMap->reset();
-            mState = NO_IMAGES_YET;
+            // mpMap->reset();
+            // mState = NO_IMAGES_YET;
         }
         else {
             mState = OK;

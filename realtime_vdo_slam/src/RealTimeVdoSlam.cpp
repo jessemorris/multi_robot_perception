@@ -55,7 +55,8 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     ROS_INFO_STREAM("camera selection " << camera_selection);
 
     // gmsl/<>/image_colour
-    output_video_topic = topic_prefix + camera_selection + camera_suffix;
+    // output_video_topic = topic_prefix + camera_selection + camera_suffix;
+    output_video_topic = "/camera/raw_image";
     camea_info_topic = topic_prefix + camera_selection + info_msg_suffix;
 
     ROS_INFO_STREAM("video topic " << output_video_topic);
@@ -63,9 +64,9 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
 
     camera_information.topic = output_video_topic;
     ROS_INFO_STREAM("Waiting for camera info msg");
-    sensor_msgs::CameraInfoConstPtr camera_info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camea_info_topic);
-    camera_information.camera_info = *camera_info;
-    ROS_INFO_STREAM("Got camera info msg");
+    // sensor_msgs::CameraInfoConstPtr camera_info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camea_info_topic);
+    // camera_information.camera_info = *camera_info;
+    // ROS_INFO_STREAM("Got camera info msg");
 
 
     image_subscriber = image_transport.subscribe(output_video_topic, 1,
@@ -105,13 +106,15 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 
     if (is_first) {
         previous_image = image;
-        previous_time = msg->header.stamp;
+        // previous_time = msg->header.stamp;
+        previous_time = ros::Time::now();
         is_first = false;
         return;
     }
     else {
         cv::Mat current_image = image;
-        current_time = msg->header.stamp;
+        // current_time = msg->header.stamp;
+        current_time = ros::Time::now();
         if (run_scene_flow) {
             scene_flow_success = sceneflow.analyse_image(current_image, previous_image, scene_flow_mat);
 
@@ -161,7 +164,6 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 
 
         previous_image = current_image;
-        previous_time = previous_time;
 
 
         //run slam algorithm
@@ -169,7 +171,8 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         //times are just relative to each other so we can just record rostim between each callback
         if (scene_flow_success && mask_rcnn_success && mono_depth_success) {
             ros::Duration diff = current_time - previous_time;
-            double time_difference = diff.toSec();
+            //time should be in n seconds or seconds (or else?)
+            double time_difference = diff.toNSec();
 
             cv::Mat depth_image_float;
             cv::Mat ground_truth = cv::Mat::eye(4,4,CV_32F);
@@ -185,6 +188,8 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 time_difference,
                 image_trajectory,global_optim_trigger);
         }
+
+        previous_time = current_time;
 
 
     }
