@@ -6,7 +6,7 @@
 std::ostream &VDO_SLAM::operator << (std::ostream& output, const VDO_SLAM::SceneObject& object) {
     output << "SceneObject [pose:\nx: " << object.pose.x <<"\ny: " << object.pose.y;
     output << "\n Velocity:\nx: " << object.velocity.x <<"\ny: " << object.velocity.y;
-    output << "\nLabel: " << object.label<< " Label index: " << object.label_index << " ]";
+    output << "\nLabel: " << object.label<< " Label index: " << object.label_index << " tracking ID " << object.tracking_id << " ]";
 
     return output;
 }
@@ -25,9 +25,10 @@ void VDO_SLAM::Scene::update_camera_pos(float x, float y, float z) {
     camera_pos.z = z;
 }
 
-void  VDO_SLAM::Scene::update_camera_vel(float x, float y) {
+void  VDO_SLAM::Scene::update_camera_vel(float x, float y, float z) {
     camera_vel.x = x;
     camera_vel.y = y;
+    camera_vel.z = z;
 }
 
 std::vector<VDO_SLAM::SceneObject>& VDO_SLAM::Scene::get_scene_objects() {

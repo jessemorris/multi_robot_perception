@@ -52,7 +52,7 @@ namespace VDO_SLAM {
     class RosScene : public Scene {
 
         public:
-            RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _time = ros::Time::now());
+            RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _time);
             void display_scene();
 
         private:
@@ -80,11 +80,13 @@ struct VdoSlamInput {
     std::vector<std::vector<float> > object_pose_gt;
     cv::Mat ground_truth;
     double time_diff;
+    ros::Time image_time; //when the image was created so we can keep track of the real time despite algorithmic delays
 
-    VdoSlamInput(cv::Mat& _raw, cv::Mat& _flow, cv::Mat& _depth, cv::Mat& _mask, double _time_diff) : 
+    VdoSlamInput(cv::Mat& _raw, cv::Mat& _flow, cv::Mat& _depth, cv::Mat& _mask, double _time_diff, ros::Time& _image_time) : 
         raw(_raw),
         flow(_flow),
-        time_diff(_time_diff)
+        time_diff(_time_diff),
+        image_time(_image_time)
 
     {
         ground_truth = cv::Mat::eye(4,4,CV_32F);

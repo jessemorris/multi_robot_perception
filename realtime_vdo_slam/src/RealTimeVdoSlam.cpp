@@ -33,27 +33,12 @@ VDO_SLAM::RosScene::RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _ti
         }
 
         ROS_INFO_STREAM("Set all RosSceneObjects (size " << scene_objects.size() << ")");
-        ros::Time now = ros::Time::now();
 
-        //static transform between odom and map. We can update this later
+
         geometry_msgs::TransformStamped transform_stamped;
-        transform_stamped.header.stamp = now;
-        transform_stamped.header.frame_id = "map";
-        transform_stamped.child_frame_id = "odom";
-        transform_stamped.transform.translation.x = 0;
-        transform_stamped.transform.translation.y = 0;
-        transform_stamped.transform.translation.z = 0;
-        
-        //must provide quaternion!
-        transform_stamped.transform.rotation.x = 0;
-        transform_stamped.transform.rotation.y = 0;
-        transform_stamped.transform.rotation.z = 0;
-        transform_stamped.transform.rotation.w = 1;
-
-        broadcaster.sendTransform(transform_stamped);
 
         //update tf pose for ROS
-        transform_stamped.header.stamp = now;
+        transform_stamped.header.stamp = time;
         transform_stamped.header.frame_id = "odom";
         transform_stamped.child_frame_id = child_frame_id;
         transform_stamped.transform.translation.x = camera_pos.x/100.0;
@@ -70,20 +55,22 @@ VDO_SLAM::RosScene::RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _ti
         // ROS_INFO_STREAM("Published transform");
 
         nav_msgs::Odometry odom;
-        odom.header.stamp = now;
+        odom.header.stamp = time;
         odom.header.frame_id = "odom";
         odom.child_frame_id = child_frame_id;
-        odom.pose.pose.position.x = camera_pos.x;
-        odom.pose.pose.position.y = camera_pos.y;
-        odom.pose.pose.position.z = camera_pos.z;
+        odom.pose.pose.position.x = camera_pos.x*-1;
+        odom.pose.pose.position.y = camera_pos.y*-1;
+        odom.pose.pose.position.z = 0;
 
         odom.pose.pose.orientation.x = 0;
-        odom.pose.pose.orientation.w = 0;
+        odom.pose.pose.orientation.y = 0;
         odom.pose.pose.orientation.z = 0;
         odom.pose.pose.orientation.w = 1;
 
         //TODO: find velocity from vdo slam
-        // odom.twist.twist.linear.x = 1;
+        odom.twist.twist.linear.x = camera_vel.x;
+        odom.twist.twist.linear.y = camera_vel.y;
+        odom.twist.twist.linear.z = camera_vel.z;
 
         odom_pub.publish(odom);
 
@@ -93,34 +80,33 @@ VDO_SLAM::RosScene::RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _ti
 
 void VDO_SLAM::RosScene::display_scene() {
     visualization_msgs::MarkerArray marker_array;
-    int i = 0;
     for (SceneObject& scene_object: scene_objects) {
         // RosSceneObject* ros_scene_object = dynamic_cast<RosSceneObject*>(&scene_object);
         ROS_INFO_STREAM(scene_object);
         visualization_msgs::Marker marker;
-        marker.header.frame_id = child_frame_id;
+        marker.header.frame_id = "odom";
         marker.header.stamp = time;
         marker.ns = "vdoslam";
-        marker.id = i;
+        marker.id = scene_object.tracking_id;
         marker.type = visualization_msgs::Marker::SPHERE;
         marker.action = visualization_msgs::Marker::ADD;
-        marker.pose.position.x = scene_object.pose.x/100;
-        marker.pose.position.y = scene_object.pose.y/100;
-        marker.pose.position.z = scene_object.pose.z/100;
+        marker.pose.position.x = scene_object.pose.x/10;
+        marker.pose.position.y = scene_object.pose.y/10;
+        marker.pose.position.z = scene_object.pose.z/10;
         marker.pose.orientation.x = 0.0;
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
         marker.pose.orientation.w = 1.0;
         marker.scale.x = 1;
-        marker.scale.y = 0.1;
-        marker.scale.z = 0.1;
+        marker.scale.y = 0.5;
+        marker.scale.z = 0.5;
         marker.color.a = 1.0; // Don't forget to set the alpha!
         marker.color.r = 0.0;
         marker.color.g = 1.0;
         marker.color.b = 0.0;
+        marker.text = scene_object.label;
 
         marker_array.markers.push_back(marker);
-        i++;
     }
 
     visualiser.publish(marker_array);
@@ -192,7 +178,7 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     // ROS_INFO_STREAM("Got camera info msg");
 
 
-    image_subscriber = image_transport.subscribe(output_video_topic, 1,
+    image_subscriber = image_transport.subscribe(output_video_topic, 10,
                                                &RealTimeVdoSLAM::image_callback, this);
 
     maskrcnn_results = image_transport.advertise("vdoslam/results/maskrcnn", 10);
@@ -305,7 +291,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             double time_difference = diff.toNSec();
 
             std::shared_ptr<VdoSlamInput> input = std::make_shared<VdoSlamInput>(image,scene_flow_mat,
-                    mono_depth_mat, mask_rcnn_mat, time_difference);
+                    mono_depth_mat, mask_rcnn_mat, time_difference, current_time);
 
             //add the input to the thread queue so we can deal with it later
             push_vdo_input(input);
@@ -382,7 +368,7 @@ void RealTimeVdoSLAM::vdo_worker() {
             scene = std::move(unique_scene);
 
             set_scene_labels(*scene);
-            std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(new VDO_SLAM::RosScene(handler, *scene, current_time));
+            std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(new VDO_SLAM::RosScene(handler, *scene, input->image_time));
             ros_scene = std::move(unique_ros_scene);
             ros_scene->display_scene();
         }

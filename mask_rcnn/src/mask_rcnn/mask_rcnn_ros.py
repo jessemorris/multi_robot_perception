@@ -80,7 +80,6 @@ class MaskRcnnRos(RosCppCommunicator):
             # response.output_image = output_image_msg
             response.output_mask = output_image_msg
             response.labels = labels
-            self.log_to_ros("Labels: {}".format(labels))
             response.label_indexs = label_indexs
 
             del response_image
@@ -136,15 +135,17 @@ class MaskRcnnRos(RosCppCommunicator):
         width = image.shape[0]
         height = image.shape[1]
 
-        colours = self.get_greyscale_colours(label_indexs)
+        # colours = self.get_greyscale_colours(label_indexs)
         
         blank_mask = np.zeros((width, height),np.uint8)
         if masks.ndim < 3:
             masks = np.expand_dims(masks, axis=0)
             masks = np.expand_dims(masks, axis=0)
 
-        for mask, colour in zip(masks, colours):
-            thresh = mask[0, :, :].astype(np.uint8) * colour
+        #TODO: make sure there is a boarder around each mask so that they are definetely considered
+        #separate objects
+        for mask, semantic_index in zip(masks, label_indexs):
+            thresh = mask[0, :, :].astype(np.uint8) * semantic_index
             # print(mask.shape)
             # thresh = mask.astype(np.uint8) * colour
             # print(thresh)
@@ -168,6 +169,7 @@ class MaskRcnnRos(RosCppCommunicator):
 
     def get_greyscale_colours(self, label_index):
         return self._greyscale_colours[label_index]
+        
 
     def _generate_grayscale_values(self):
         """[Generates n number of distinct values between 1 and 255 for each label. This should be 

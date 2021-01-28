@@ -11,15 +11,17 @@ namespace VDO_SLAM
     struct SceneObject {
         cv::Point3f pose;
         cv::Point2f velocity;
-        int label_index;
+        int label_index; //this is semantic label
         std::string label;
+        int tracking_id;
 
 
         SceneObject(const SceneObject& scene_object) :
             pose(scene_object.pose),
             velocity(scene_object.velocity),
             label_index(scene_object.label_index),
-            label(scene_object.label) {}
+            label(scene_object.label),
+            tracking_id(scene_object.tracking_id) {}
 
         SceneObject() {}
 
@@ -43,7 +45,7 @@ namespace VDO_SLAM
 
             void add_scene_object(SceneObject _object);
             void update_camera_pos(float x, float y, float z);
-            void update_camera_vel(float x, float y);
+            void update_camera_vel(float x, float y, float z);
             std::vector<SceneObject>& get_scene_objects();
 
             const int& get_global_fid() const;
@@ -53,7 +55,7 @@ namespace VDO_SLAM
         protected:
             std::vector<SceneObject> scene_objects;
             cv::Point3f camera_pos;
-            cv::Point2f camera_vel;
+            cv::Point3f camera_vel;
 
         private:
             int global_fid;

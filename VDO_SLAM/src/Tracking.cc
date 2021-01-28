@@ -171,9 +171,12 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     bJoint = true;
     cv::RNG rng((unsigned)time(NULL));
 
+    cout << "Starting M state " << mState << endl;
+
     // Initialize Global ID
-    if (mState==NO_IMAGES_YET)
+    if (mState==NO_IMAGES_YET) {
         f_id = 0;
+    }
 
     mImGray = imRGB;
 
@@ -539,7 +542,15 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         cv::putText(imTraj, "Camera Trajectory (RED SQUARE)", cv::Point(10, 30), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
         char text[100];
         sprintf(text, "x = %02fm y = %02fm z = %02fm", CamPos.at<float>(0,3), CamPos.at<float>(1,3), CamPos.at<float>(2,3));
+
+        //we take the final column becuase I assume matrix is in R | t form
         scene->update_camera_pos(CamPos.at<float>(0,3), CamPos.at<float>(1,3), CamPos.at<float>(2,3));
+
+        if (!mVelocity.empty()) {
+            cv::Mat CameraMotion = Converter::toInvMatrix(mVelocity);
+            scene->update_camera_vel(CameraMotion.at<float>(0,3), CameraMotion.at<float>(1,3), CameraMotion.at<float>(2,3));
+        }
+
 
         cv::putText(imTraj, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
         cv::putText(imTraj, "Object Trajectories (COLORED CIRCLES)", cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
@@ -552,16 +563,19 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
             int x = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,0)*scale) + sta_x;
             int y = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,2)*scale) + sta_y;
 
-            float vel_x = mCurrentFrame.vSpeed[i].x;
-            float vel_y = mCurrentFrame.vSpeed[i].y;
+            float world_x = mCurrentFrame.vObjCentre3D[i].at<float>(0,0);
+            float world_y = mCurrentFrame.vObjCentre3D[i].at<float>(0,2);
+
+            float vel_x = mCurrentFrame.vSpeed[i].x/36;
+            float vel_y = mCurrentFrame.vSpeed[i].y/36;
             // int l = mCurrentFrame.nSemPosition[i];
             int l = mCurrentFrame.nModLabel[i];
 
             SceneObject scene_object;
-            scene_object.pose = cv::Point3f(x, y, 0);
+            scene_object.pose = cv::Point3f(world_x, world_y, 0);
             scene_object.velocity = cv::Point2f(vel_x, vel_y);
-            //jesse -> where does jun keep track of the semantic label for each object?
-            scene_object.label_index = l;
+            scene_object.tracking_id = l;
+            scene_object.label_index = mCurrentFrame.nSemPosition[i];
             cout << "Made scene object" << endl;
             scene->add_scene_object(scene_object);
             cout << "Added scene object" << endl;
@@ -722,8 +736,8 @@ void Tracking::Track()
 
 
         s_1_2 = clock();
-        cout << "the ground truth pose: " << endl << mCurrentFrame.mTcw_gt << endl;
-        cout << "initial pose: " << endl << iniTcw << endl;
+        // cout << "the ground truth pose: " << endl << mCurrentFrame.mTcw_gt << endl;
+        // cout << "initial pose: " << endl << iniTcw << endl;
         // // compute the pose with new matching
         mCurrentFrame.SetPose(iniTcw);
         if (bJoint)
@@ -734,7 +748,7 @@ void Tracking::Track()
         e_1_2 = clock();
         cam_pos_time = (double)(e_1_1-s_1_1)/CLOCKS_PER_SEC*1000 + (double)(e_1_2-s_1_2)/CLOCKS_PER_SEC*1000;
         all_timing[1] = cam_pos_time;
-        cout << "camera pose estimation time: " << cam_pos_time << endl;
+        // cout << "camera pose estimation time: " << cam_pos_time << endl;
 
         // Update motion model
         if(!mLastFrame.mTcw.empty())
@@ -766,7 +780,7 @@ void Tracking::Track()
         cout << std::fixed << std::setprecision(6);
         float r_rpe_cam = acos( (trace_rpe_cam -1.0)/2.0 )*180.0/3.1415926;
 
-        cout << "the relative pose error of estimated camera pose, " << "t: " << t_rpe_cam <<  " R: " << r_rpe_cam << endl;
+        // cout << "the relative pose error of estimated camera pose, " << "t: " << t_rpe_cam <<  " R: " << r_rpe_cam << endl;
 
         // // **** show the picked points ****
         // std::vector<cv::KeyPoint> PickKeys;
@@ -1114,6 +1128,7 @@ void Tracking::Track()
 
         // (5) camera pose
         cv::Mat CameraPoseTmp = Converter::toInvMatrix(mCurrentFrame.mTcw);
+        cout << "camera pose tmp " << CameraPoseTmp << endl;
         mpMap->vmCameraPose.push_back(CameraPoseTmp);
         mpMap->vmCameraPose_RF.push_back(CameraPoseTmp);
         // (6) Rigid motions and label, including camera (label=0) and objects (label>0)
@@ -1122,8 +1137,9 @@ void Tracking::Track()
         std::vector<bool> Obj_Stat_Tmp;
         // (6.1) Save Camera Motion and Label
         cv::Mat CameraMotionTmp = Converter::toInvMatrix(mVelocity);
+        cout << "camera motion tmp " << CameraMotionTmp << endl;
         Mot_Tmp.push_back(CameraMotionTmp);
-        ObjPose_Tmp.push_back(CameraMotionTmp);
+        // ObjPose_Tmp.push_back(CameraMotionTmp); -> jesse comments this -> just looks like it shouldn't be here...?
         Mot_Lab_Tmp.push_back(0);
         Sem_Lab_Tmp.push_back(0);
         Obj_Stat_Tmp.push_back(true);
@@ -1147,43 +1163,44 @@ void Tracking::Track()
         mpMap->vbObjStat.push_back(Obj_Stat_Tmp);
 
         // (6.4) Count the tracking times of each unique object
-        if (max_id>1)
-            mpMap->vnObjTraTime = GetObjTrackTime(mpMap->vnRMLabel,mpMap->vnSMLabel, mpMap->vnSMLabelGT);
+        // if (max_id>1)
+        //     mpMap->vnObjTraTime = GetObjTrackTime(mpMap->vnRMLabel,mpMap->vnSMLabel, mpMap->vnSMLabelGT); // jesse comments about due to includion of GT (thinking this might break everything)
 
         // ---------------------------- Ground Truth --------------------------------
 
         // (7) Ground Truth Camera Pose
-        cv::Mat CameraPoseTmpGT = Converter::toInvMatrix(mCurrentFrame.mTcw_gt);
-        mpMap->vmCameraPose_GT.push_back(CameraPoseTmpGT);
+        // cv::Mat CameraPoseTmpGT = Converter::toInvMatrix(mCurrentFrame.mTcw_gt);
+        // mpMap->vmCameraPose_GT.push_back(CameraPoseTmpGT);
 
+        //jesse -> we dont need ground truths
         // (8) Ground Truth Rigid Motions
-        std::vector<cv::Mat> Mot_Tmp_gt;
-        // (8.1) Save Camera Motion
-        cv::Mat CameraMotionTmp_gt = mLastFrame.mTcw_gt*Converter::toInvMatrix(mCurrentFrame.mTcw_gt);
-        Mot_Tmp_gt.push_back(CameraMotionTmp_gt);
-        // (8.2) Save Object Motions
-        for (int i = 0; i < mCurrentFrame.vObjMod_gt.size(); ++i)
-        {
-            if (!mCurrentFrame.bObjStat[i])
-                continue;
-            Mot_Tmp_gt.push_back(mCurrentFrame.vObjMod_gt[i]);
-        }
-        // (8.3) Save to The Map
-        mpMap->vmRigidMotion_GT.push_back(Mot_Tmp_gt);
+        // std::vector<cv::Mat> Mot_Tmp_gt;
+        // // (8.1) Save Camera Motion
+        // cv::Mat CameraMotionTmp_gt = mLastFrame.mTcw_gt*Converter::toInvMatrix(mCurrentFrame.mTcw_gt);
+        // Mot_Tmp_gt.push_back(CameraMotionTmp_gt);
+        // // (8.2) Save Object Motions
+        // for (int i = 0; i < mCurrentFrame.vObjMod_gt.size(); ++i)
+        // {
+        //     if (!mCurrentFrame.bObjStat[i])
+        //         continue;
+        //     Mot_Tmp_gt.push_back(mCurrentFrame.vObjMod_gt[i]);
+        // }
+        // // (8.3) Save to The Map
+        // mpMap->vmRigidMotion_GT.push_back(Mot_Tmp_gt);
 
-        // (9) Ground Truth Camera and Object Speeds
-        std::vector<float> Speed_Tmp_gt;
-        // (9.1) Save Camera Speed
-        Speed_Tmp_gt.push_back(1.0);
-        // (9.2) Save Object Motions
-        for (int i = 0; i < mCurrentFrame.vObjSpeed_gt.size(); ++i)
-        {
-            if (!mCurrentFrame.bObjStat[i])
-                continue;
-            Speed_Tmp_gt.push_back(mCurrentFrame.vObjSpeed_gt[i]);
-        }
-        // (9.3) Save to The Map
-        mpMap->vfAllSpeed_GT.push_back(Speed_Tmp_gt);
+        // // (9) Ground Truth Camera and Object Speeds
+        // std::vector<float> Speed_Tmp_gt;
+        // // (9.1) Save Camera Speed
+        // Speed_Tmp_gt.push_back(1.0);
+        // // (9.2) Save Object Motions
+        // for (int i = 0; i < mCurrentFrame.vObjSpeed_gt.size(); ++i)
+        // {
+        //     if (!mCurrentFrame.bObjStat[i])
+        //         continue;
+        //     Speed_Tmp_gt.push_back(mCurrentFrame.vObjSpeed_gt[i]);
+        // }
+        // // (9.3) Save to The Map
+        // mpMap->vfAllSpeed_GT.push_back(Speed_Tmp_gt);
 
         // (10) Computed Camera and Object Speeds
         std::vector<cv::Mat> Centre_Tmp;
@@ -1207,6 +1224,7 @@ void Tracking::Track()
     // ============== Partial batch optimize on all the measurements (local optimization) ==============
     // =================================================================================================
 
+    //jesse -> this was false before?
     bLocalBatch = false;
     if ( (f_id-nOVERLAP_SIZE+1)%(nWINDOW_SIZE-nOVERLAP_SIZE)==0 && f_id>=nWINDOW_SIZE-1 && bLocalBatch)
     {
@@ -1242,11 +1260,11 @@ void Tracking::Track()
 
         // GetVelocityError(mpMap->vmRigidMotion, mpMap->vp3DPointDyn, mpMap->vnFeatLabel,
         //                  mpMap->vnRMLabel, mpMap->vfAllSpeed_GT, mpMap->vnAssoDyn, mpMap->vbObjStat);
-
         if (bGlobalBatch && mTestData==KITTI)
         {
             // Get Full Batch Optimization
-            Optimizer::FullBatchOptimization(mpMap,mK);
+            // Optimizer::FullBatchOptimization(mpMap,mK);
+            Optimizer::PartialBatchOptimization(mpMap,mK,f_id);
 
             // Metric Error AFTER Optimization
             // GetMetricError(mpMap->vmCameraPose_RF,mpMap->vmRigidMotion_RF, mpMap->vmObjPosePre,
