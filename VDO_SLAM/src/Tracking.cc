@@ -390,7 +390,6 @@ std::shared_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         // static and dynamic objects
         for (int i = 0; i < mCurrentFrame.vObjLabel.size(); ++i)
         {
-            //  cout << " mCurrentFrame vObjLabel size " << mCurrentFrame.vObjLabel.size() << endl;
             if(mCurrentFrame.vObjLabel[i]==-1 || mCurrentFrame.vObjLabel[i]==-2)
                 continue;
             int l = mCurrentFrame.vObjLabel[i];

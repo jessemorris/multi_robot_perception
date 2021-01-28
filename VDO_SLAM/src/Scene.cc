@@ -15,13 +15,19 @@ VDO_SLAM::Scene::Scene(int _id, double _timestamp):
     id(_id),
     timestamp(_timestamp) {}
 
-void VDO_SLAM::Scene::add_scene_object(VDO_SLAM::SceneObject& _object) {
+//I think I do want to copy here
+void VDO_SLAM::Scene::add_scene_object(VDO_SLAM::SceneObject _object) {
     scene_objects.push_back(_object);
 }
 void VDO_SLAM::Scene::update_camera_pos(float x, float y, float z) {
     camera_pos.x = x;
     camera_pos.y = y;
     camera_pos.z = z;
+}
+
+void  VDO_SLAM::Scene::update_camera_vel(float x, float y) {
+    camera_vel.x = x;
+    camera_vel.y = y;
 }
 
 std::vector<VDO_SLAM::SceneObject>& VDO_SLAM::Scene::get_scene_objects() {

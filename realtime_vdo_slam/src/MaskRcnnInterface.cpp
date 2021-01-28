@@ -36,6 +36,9 @@ bool MaskRcnnInterface::start_service() {
 }
 
 std::string MaskRcnnInterface::request_label(int index) {
+    if (index > mask_labels.size() -1) {
+        return "invalid";
+    }
     return mask_labels[index];
 }
 

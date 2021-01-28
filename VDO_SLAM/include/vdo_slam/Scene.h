@@ -22,6 +22,9 @@ namespace VDO_SLAM
             label(scene_object.label) {}
 
         SceneObject() {}
+
+        //hack to make class polymorphic
+        virtual void vf() {}
         friend std::ostream &operator << (std::ostream& output, const SceneObject& object);
         
     };
@@ -31,9 +34,16 @@ namespace VDO_SLAM
         public:
 
             Scene(int _id, double _timestamp);
-            Scene(int _id, double _timestamp);
-            void add_scene_object(SceneObject& _object);
+            Scene(const Scene& scene) :
+                id(scene.get_id()),
+                timestamp(scene.get_timestamp()),
+                scene_objects(scene.scene_objects),
+                camera_pos(scene.camera_pos) {}
+
+
+            void add_scene_object(SceneObject _object);
             void update_camera_pos(float x, float y, float z);
+            void update_camera_vel(float x, float y);
             std::vector<SceneObject>& get_scene_objects();
 
             const int& get_global_fid() const;
@@ -43,6 +53,7 @@ namespace VDO_SLAM
         protected:
             std::vector<SceneObject> scene_objects;
             cv::Point3f camera_pos;
+            cv::Point2f camera_vel;
 
         private:
             int global_fid;
