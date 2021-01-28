@@ -29,7 +29,7 @@ class MaskRcnnInterface {
 
         bool analyse_image(cv::Mat& current_image, cv::Mat& dst, std::vector<std::string>& labels, std::vector<int>& label_indexs);
         bool request_labels(const std::vector<int>& label_indexs, std::vector<std::string>& labels);
-        std::string request_label(int index);
+        std::string& request_label(int index);
         bool set_mask_labels();
         bool start_service();
 
@@ -42,6 +42,8 @@ class MaskRcnnInterface {
         
         ros::ServiceClient mask_rcnn_labels_list;
         std::vector<std::string> mask_labels; //we will request this at the start of the program from the mask rcnn interface
+
+        std::string invalid_name;
 
         bool service_started;
 

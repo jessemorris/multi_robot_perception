@@ -161,7 +161,7 @@ class RealTimeVdoSLAM {
 
         //VdoSlam
         std::unique_ptr<VDO_SLAM::System> slam_system;
-        std::shared_ptr<VDO_SLAM::RosScene> ros_scene;
+        std::unique_ptr<VDO_SLAM::RosScene> ros_scene;
         std::queue<std::shared_ptr<VdoSlamInput>> vdo_input_queue;
         std::mutex queue_mutex;
         std::thread vdo_worker_thread;

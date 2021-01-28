@@ -162,7 +162,7 @@ Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const 
         cout << "- used detected feature for background scene..." << endl;
 }
 
-std::shared_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow,
+std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow,
                                 const cv::Mat &maskSEM, const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt,
                                 const double &timestamp, cv::Mat &imTraj, const int &nImage)
 {
@@ -244,7 +244,7 @@ std::shared_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     mCurrentFrame = Frame(mImGray,imDepth,imFlow,maskSEM,timestamp,mpORBextractorLeft,mK,mDistCoef,mbf,mThDepth,mThDepthObj,nUseSampleFea);
 
 
-    std::shared_ptr<Scene> scene = std::make_shared<Scene>(f_id, timestamp);
+    std::unique_ptr<Scene> scene = std::unique_ptr<Scene>(new Scene(f_id, timestamp));
 
     // ---------------------------------------------------------------------------------------
     // +++++++++++++++++++++++++ For sampled features ++++++++++++++++++++++++++++++++++++++++
@@ -546,8 +546,9 @@ std::shared_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         cout << "v obj center " << mCurrentFrame.vObjCentre3D.size() << endl;
         for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
         {
-            if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0)
+            if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0) {
                 continue;
+            }
             int x = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,0)*scale) + sta_x;
             int y = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,2)*scale) + sta_y;
 
@@ -561,7 +562,9 @@ std::shared_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
             scene_object.velocity = cv::Point2f(vel_x, vel_y);
             //jesse -> where does jun keep track of the semantic label for each object?
             scene_object.label_index = l;
+            cout << "Made scene object" << endl;
             scene->add_scene_object(scene_object);
+            cout << "Added scene object" << endl;
             switch (l)
             {
                 case 1:
@@ -612,7 +615,7 @@ std::shared_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         else
             cv::waitKey(1);
     }
-
+    cout << "done showing object trajectories" <<endl;
 
     // if(timestamp!=0 && bFrame2Frame == true && mTestData==OMD)
     // {
@@ -1097,6 +1100,7 @@ void Tracking::Track()
         cout << "mpMap vfDepSta size " << mpMap->vfDepSta.size() << endl;
         cout << "mpMap vmCameraPose_GT size " << mpMap->vmCameraPose_GT.size() << endl;
 
+        //Jesse -> this may be why when global batch is not running it doenst update the masks as well
         if (f_id==StopFrame || bLocalBatch)
         {
             // (3) save static feature tracklets

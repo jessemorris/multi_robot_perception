@@ -13,6 +13,7 @@
 //TOOD put in utils file for PytonServicesInterface
 MaskRcnnInterface::MaskRcnnInterface(ros::NodeHandle& n) :
         nh(n),
+        invalid_name("invalid"),
         service_started(false)
     {
       
@@ -35,9 +36,9 @@ bool MaskRcnnInterface::start_service() {
     
 }
 
-std::string MaskRcnnInterface::request_label(int index) {
+std::string& MaskRcnnInterface::request_label(int index) {
     if (index > mask_labels.size() -1) {
-        return "invalid";
+        return invalid_name;
     }
     return mask_labels[index];
 }

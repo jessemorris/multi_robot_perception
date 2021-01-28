@@ -307,6 +307,7 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             std::shared_ptr<VdoSlamInput> input = std::make_shared<VdoSlamInput>(image,scene_flow_mat,
                     mono_depth_mat, mask_rcnn_mat, time_difference);
 
+            //add the input to the thread queue so we can deal with it later
             push_vdo_input(input);
 
             // cv::Mat depth_image_float;
@@ -343,7 +344,7 @@ void RealTimeVdoSLAM::set_scene_labels(VDO_SLAM::Scene& scene) {
     for (auto& object :scene_objects) {
         std::string label = mask_rcnn_interface.request_label(object.label_index);
         object.label = label;
-        // ROS_INFO_STREAM(object);        
+        ROS_INFO_STREAM(object);        
     }
 }
 
@@ -363,13 +364,14 @@ void RealTimeVdoSLAM::push_vdo_input(std::shared_ptr<VdoSlamInput> input) {
 
 void RealTimeVdoSLAM::vdo_worker() {
 
+    std::unique_ptr<VDO_SLAM::Scene> scene;
     while (ros::ok()) {
 
         if (!vdo_input_queue.empty()) {
 
             std::shared_ptr<VdoSlamInput> input = pop_vdo_input();
 
-            std::shared_ptr<VDO_SLAM::Scene> scene =  slam_system->TrackRGBD(input->raw,input->depth,
+            std::unique_ptr<VDO_SLAM::Scene> unique_scene =  slam_system->TrackRGBD(input->raw,input->depth,
                 input->flow,
                 input->mask,
                 input->ground_truth,
@@ -377,8 +379,11 @@ void RealTimeVdoSLAM::vdo_worker() {
                 input->time_diff,
                 image_trajectory,global_optim_trigger);
 
+            scene = std::move(unique_scene);
+
             set_scene_labels(*scene);
-            ros_scene = std::make_shared<VDO_SLAM::RosScene>(handler, *scene, current_time);
+            std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(new VDO_SLAM::RosScene(handler, *scene, current_time));
+            ros_scene = std::move(unique_ros_scene);
             ros_scene->display_scene();
         }
     }
