@@ -334,12 +334,15 @@ class COCODemo(object):
                 of the detection properties can be found in the fields of
                 the BoxList via `prediction.fields()`
         """
-        scores = predictions.get_field("scores")
-        keep = torch.nonzero(scores > self.confidence_threshold).squeeze(1)
-        predictions = predictions[keep]
-        scores = predictions.get_field("scores")
-        _, idx = scores.sort(0, descending=True)
-        return predictions[idx]
+
+        if len(predictions) > 0:
+            scores = predictions.get_field("scores")
+            keep = torch.nonzero(scores > self.confidence_threshold).squeeze(1)
+            predictions = predictions[keep]
+            scores = predictions.get_field("scores")
+            _, idx = scores.sort(0, descending=True)
+            return predictions[idx]
+        return None
 
     def compute_colors_for_labels(self, labels):
         """

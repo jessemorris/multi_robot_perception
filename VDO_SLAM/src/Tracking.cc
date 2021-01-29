@@ -329,22 +329,22 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     else
     {
          cout << "After assign pose ground truth" << endl;
-        mCurrentFrame.mTcw_gt = Converter::toInvMatrix(mTcw_gt)*mOriginInv;
+        // mCurrentFrame.mTcw_gt = Converter::toInvMatrix(mTcw_gt)*mOriginInv;
     }
     cout << "After assign pose ground truth" << endl;
 
     // Assign object pose ground truth
-    mCurrentFrame.nSemPosi_gt.resize(vObjPose_gt.size());
-    mCurrentFrame.vObjPose_gt.resize(vObjPose_gt.size());
-    for (int i = 0; i < vObjPose_gt.size(); ++i){
-        // (1) label
-        mCurrentFrame.nSemPosi_gt[i] = vObjPose_gt[i][1];
-        // (2) pose
-        if (mTestData==OMD)
-            mCurrentFrame.vObjPose_gt[i] = ObjPoseParsingOX(vObjPose_gt[i]);
-        else if (mTestData==KITTI)
-            mCurrentFrame.vObjPose_gt[i] = ObjPoseParsingKT(vObjPose_gt[i]);
-    }
+    // mCurrentFrame.nSemPosi_gt.resize(vObjPose_gt.size());
+    // mCurrentFrame.vObjPose_gt.resize(vObjPose_gt.size());
+    // for (int i = 0; i < vObjPose_gt.size(); ++i){
+    //     // (1) label
+    //     mCurrentFrame.nSemPosi_gt[i] = vObjPose_gt[i][1];
+    //     // (2) pose
+    //     if (mTestData==OMD)
+    //         mCurrentFrame.vObjPose_gt[i] = ObjPoseParsingOX(vObjPose_gt[i]);
+    //     else if (mTestData==KITTI)
+    //         mCurrentFrame.vObjPose_gt[i] = ObjPoseParsingKT(vObjPose_gt[i]);
+    // }
 
     // Save temperal matches for visualization
     TemperalMatch = vector<int>(mCurrentFrame.N_s,-1);
@@ -576,9 +576,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
             scene_object.velocity = cv::Point2f(vel_x, vel_y);
             scene_object.tracking_id = l;
             scene_object.label_index = mCurrentFrame.nSemPosition[i];
-            cout << "Made scene object" << endl;
             scene->add_scene_object(scene_object);
-            cout << "Added scene object" << endl;
             switch (l)
             {
                 case 1:
@@ -764,21 +762,21 @@ void Tracking::Track()
         // cv::Mat Tcw_est_inv = Converter::toInvMatrix(mCurrentFrame.mTcw);
         // cv::Mat RePoEr_cam = Tcw_est_inv*mCurrentFrame.mTcw_gt;
         // cout << "error matrix: " << endl << RePoEr_cam << endl;
-        cv::Mat T_lc_inv = mCurrentFrame.mTcw*Converter::toInvMatrix(mLastFrame.mTcw);
-        cv::Mat T_lc_gt = mLastFrame.mTcw_gt*Converter::toInvMatrix(mCurrentFrame.mTcw_gt);
-        cv::Mat RePoEr_cam = T_lc_inv*T_lc_gt;
+        // cv::Mat T_lc_inv = mCurrentFrame.mTcw*Converter::toInvMatrix(mLastFrame.mTcw);
+        // cv::Mat T_lc_gt = mLastFrame.mTcw_gt*Converter::toInvMatrix(mCurrentFrame.mTcw_gt);
+        // cv::Mat RePoEr_cam = T_lc_inv*T_lc_gt;
 
-        float t_rpe_cam = std::sqrt( RePoEr_cam.at<float>(0,3)*RePoEr_cam.at<float>(0,3) + RePoEr_cam.at<float>(1,3)*RePoEr_cam.at<float>(1,3) + RePoEr_cam.at<float>(2,3)*RePoEr_cam.at<float>(2,3) );
-        float trace_rpe_cam = 0;
-        for (int i = 0; i < 3; ++i)
-        {
-            if (RePoEr_cam.at<float>(i,i)>1.0)
-                 trace_rpe_cam = trace_rpe_cam + 1.0-(RePoEr_cam.at<float>(i,i)-1.0);
-            else
-                trace_rpe_cam = trace_rpe_cam + RePoEr_cam.at<float>(i,i);
-        }
-        cout << std::fixed << std::setprecision(6);
-        float r_rpe_cam = acos( (trace_rpe_cam -1.0)/2.0 )*180.0/3.1415926;
+        // float t_rpe_cam = std::sqrt( RePoEr_cam.at<float>(0,3)*RePoEr_cam.at<float>(0,3) + RePoEr_cam.at<float>(1,3)*RePoEr_cam.at<float>(1,3) + RePoEr_cam.at<float>(2,3)*RePoEr_cam.at<float>(2,3) );
+        // float trace_rpe_cam = 0;
+        // for (int i = 0; i < 3; ++i)
+        // {
+        //     if (RePoEr_cam.at<float>(i,i)>1.0)
+        //          trace_rpe_cam = trace_rpe_cam + 1.0-(RePoEr_cam.at<float>(i,i)-1.0);
+        //     else
+        //         trace_rpe_cam = trace_rpe_cam + RePoEr_cam.at<float>(i,i);
+        // }
+        // cout << std::fixed << std::setprecision(6);
+        // float r_rpe_cam = acos( (trace_rpe_cam -1.0)/2.0 )*180.0/3.1415926;
 
         // cout << "the relative pose error of estimated camera pose, " << "t: " << t_rpe_cam <<  " R: " << r_rpe_cam << endl;
 

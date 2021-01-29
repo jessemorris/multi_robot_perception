@@ -26,6 +26,7 @@ VDO_SLAM::RosScene::RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _ti
         nh.getParam("/frame_id", child_frame_id);
         ROS_INFO_STREAM("Setting child frame it: " << child_frame_id);
         ROS_INFO_STREAM("Camera pos: " << camera_pos_translation);
+        ROS_INFO_STREAM("Camera rot: " << camera_pos_rotation);
 
         //convert them all into RosSceneObjects
         int id = 0;
@@ -34,9 +35,6 @@ VDO_SLAM::RosScene::RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _ti
             scene_objects[i] = ros_scene_object;
             id++;
         }
-
-        ROS_INFO_STREAM("Set all RosSceneObjects (size " << scene_objects.size() << ")");
-
 
         geometry_msgs::TransformStamped transform_stamped;
 
@@ -49,9 +47,11 @@ VDO_SLAM::RosScene::RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _ti
         transform_stamped.transform.translation.z = 0;
 
         tf2::Quaternion quat;
+        ROS_INFO_STREAM("making transform");
         tf2::Matrix3x3 rotation_matrix_pos(camera_pos_rotation.at<float>(0, 0), camera_pos_rotation.at<float>(0, 1), camera_pos_rotation.at<float>(0, 2),
                                            camera_pos_rotation.at<float>(1, 0), camera_pos_rotation.at<float>(1, 1), camera_pos_rotation.at<float>(1, 2),
                                            camera_pos_rotation.at<float>(2, 0), camera_pos_rotation.at<float>(2, 1), camera_pos_rotation.at<float>(2, 2));
+                
 
         rotation_matrix_pos.getRotation(quat);
         
@@ -62,7 +62,7 @@ VDO_SLAM::RosScene::RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _ti
         transform_stamped.transform.rotation.w = quat.w();
 
         broadcaster.sendTransform(transform_stamped);
-        // ROS_INFO_STREAM("Published transform");
+        ROS_INFO_STREAM("Published transform");
 
         nav_msgs::Odometry odom;
         odom.header.stamp = time;
@@ -111,9 +111,9 @@ void VDO_SLAM::RosScene::display_scene() {
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
         marker.pose.orientation.w = 1.0;
-        marker.scale.x = 1;
-        marker.scale.y = 1;
-        marker.scale.z = 1;
+        marker.scale.x = 2;
+        marker.scale.y = 2;
+        marker.scale.z = 2;
         marker.color.a = 1.0; // Don't forget to set the alpha!
         marker.color.r = 0.0;
         marker.color.g = 1.0;
@@ -159,22 +159,38 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     ROS_INFO_STREAM("global optim trigger " << global_optim_trigger);
 
     if(run_mask_rcnn) {
-        ROS_INFO_STREAM("starting mask rcnn service");
-        mask_rcnn_interface.start_service();
-        ros::service::waitForService("mask_rcnn_service");
-        ros::service::waitForService("mask_rcnn_label_list");
+        //first we check if the services exist so we dont start them again
+        if  (!ros::service::exists("mask_rcnn_service", true)) {
+            ROS_INFO_STREAM("starting mask rcnn service");
+            mask_rcnn_interface.start_service();
+            ros::service::waitForService("mask_rcnn_service");
+            ros::service::waitForService("mask_rcnn_label_list");
+        }
+        else {
+            ROS_INFO_STREAM("Mask Rcnn already active");
+        }
         mask_rcnn_interface.set_mask_labels();
     }
     if(run_scene_flow) {
-        ROS_INFO_STREAM("starting flow net service");
-        sceneflow.start_service();
-        ros::service::waitForService("flow_net_service");
+        if  (!ros::service::exists("flow_net_service", true)) { 
+            ROS_INFO_STREAM("starting flow net service");
+            sceneflow.start_service();
+            ros::service::waitForService("flow_net_service");
+        }
+        else {
+            ROS_INFO_STREAM("Flow Net already active");
+        }
     }
 
     if(run_mono_depth) {
-        ROS_INFO_STREAM("starting mono_depth service");
-        mono_depth.start_service();
-        ros::service::waitForService("mono_depth_service");
+        if  (!ros::service::exists("mono_depth_service", true)) { 
+            ROS_INFO_STREAM("starting mono_depth service");
+            mono_depth.start_service();
+            ros::service::waitForService("mono_depth_service");
+        }
+        else {
+            ROS_INFO_STREAM("MonoDepth already active");
+        }
     }
 
     ROS_INFO_STREAM("camera selection " << camera_selection);
@@ -188,7 +204,7 @@ RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
     ROS_INFO_STREAM("camera info topic " << camea_info_topic);
 
     camera_information.topic = output_video_topic;
-    ROS_INFO_STREAM("Waiting for camera info msg");
+    // ROS_INFO_STREAM("Waiting for camera info msg");
     // sensor_msgs::CameraInfoConstPtr camera_info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camea_info_topic);
     // camera_information.camera_info = *camera_info;
     // ROS_INFO_STREAM("Got camera info msg");
@@ -311,24 +327,6 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 
             //add the input to the thread queue so we can deal with it later
             push_vdo_input(input);
-
-            // cv::Mat depth_image_float;
-            // cv::Mat ground_truth = cv::Mat::eye(4,4,CV_32F);
-            // std::vector<std::vector<float> > object_pose_gt;
-            // mono_depth_mat.convertTo(depth_image_float, CV_32F);
-            // mask_rcnn_mat.convertTo(mask_rcnn_mat, CV_32SC1);
-
-            // std::shared_ptr<VDO_SLAM::Scene> scene =  slam_system->TrackRGBD(image,depth_image_float,
-            //     scene_flow_mat,
-            //     mask_rcnn_mat,
-            //     ground_truth,
-            //     object_pose_gt,
-            //     time_difference,
-            //     image_trajectory,global_optim_trigger);
-
-            // set_scene_labels(*scene);
-            // ros_scene = std::make_shared<VDO_SLAM::RosScene>(handler, *scene, current_time);
-            // ros_scene->display_scene();
         }
 
         previous_time = current_time;
@@ -343,11 +341,11 @@ void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 void RealTimeVdoSLAM::set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene) {
     int size = scene->scene_objects_size();
     VDO_SLAM::SceneObject* object_ptr = scene->get_scene_objects_ptr();
-    ROS_INFO_STREAM("Updating scene labels (size " << size << ")");
+    ROS_DEBUG_STREAM("Updating scene labels (size " << size << ")");
     for(int i = 0; i < size; i++) {
         std::string label = mask_rcnn_interface.request_label(object_ptr->label_index);
         object_ptr->label = label;
-        ROS_INFO_STREAM(*object_ptr);  
+        ROS_DEBUG_STREAM(*object_ptr);  
         object_ptr++;      
 
     }
@@ -372,6 +370,8 @@ void RealTimeVdoSLAM::vdo_worker() {
     std::unique_ptr<VDO_SLAM::Scene> scene;
     while (ros::ok()) {
 
+
+        //cam add semaphore here so we waste less CPU time but it seems fine for now
         if (!vdo_input_queue.empty()) {
 
             std::shared_ptr<VdoSlamInput> input = pop_vdo_input();
@@ -386,14 +386,6 @@ void RealTimeVdoSLAM::vdo_worker() {
 
             set_scene_labels(unique_scene);
             scene = std::move(unique_scene);
-            std::vector<VDO_SLAM::SceneObject> scene_objects = scene->get_scene_objects();
-            ROS_INFO_STREAM("After update");
-            for(int i = 0; i < scene_objects.size(); i++) {
-                VDO_SLAM::SceneObject* object = &scene_objects[i];
-                ROS_INFO_STREAM(*object);        
-
-            }
-
             std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(new VDO_SLAM::RosScene(handler, *scene, input->image_time));
             ros_scene = std::move(unique_ros_scene);
             ros_scene->display_scene();

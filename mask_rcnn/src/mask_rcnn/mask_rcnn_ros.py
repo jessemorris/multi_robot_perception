@@ -29,10 +29,11 @@ import random
 
 
 import time
-
+#e2e_mask_rcnn_X_101_32x8d_FPN_1x_caffe2
+#e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml
 class MaskRcnnRos(RosCppCommunicator):
 
-    def __init__(self, config_path = package_path + "src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"):
+    def __init__(self, config_path = package_path + "src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_X_101_32x8d_FPN_1x_caffe2.yaml"):
         RosCppCommunicator.__init__(self)
         self.model_config_path = config_path
         cfg.merge_from_file(self.model_config_path)
@@ -45,9 +46,9 @@ class MaskRcnnRos(RosCppCommunicator):
         # prepare object that handles inference plus adds predictions on top of image
         self.coco_demo = COCODemo(
             cfg,
-            confidence_threshold=0.80,
+            confidence_threshold=0.8,
             show_mask_heatmaps=False,
-            masks_per_dim=2,
+            masks_per_dim=1,
             min_image_size=800
         )
 
@@ -70,11 +71,14 @@ class MaskRcnnRos(RosCppCommunicator):
             input_image = ros_numpy.numpify(req.input_image)
 
             response_image, labels, label_indexs = self.analyse_image(input_image)
+            
+            display_image = response_image * 48
             # test_image = self.display_predictions(input_image)
 
             output_image_msg = ros_numpy.msgify(Image, response_image, encoding='mono8')
+            display_image_msg = ros_numpy.msgify(Image, display_image, encoding='mono8')
             # test_image_msg = ros_numpy.msgify(Image, test_image, encoding='rgb8')
-            self.mask_rcnn_test_publisher.publish(output_image_msg)
+            self.mask_rcnn_test_publisher.publish(display_image_msg)
 
             response.success = True
             # response.output_image = output_image_msg
@@ -128,16 +132,19 @@ class MaskRcnnRos(RosCppCommunicator):
             predictions (BoxList): the result of the computation by the model.
                 It should contain the field `mask` and `labels`.
         """
+        width = image.shape[0]
+        height = image.shape[1]
+        blank_mask = np.zeros((width, height),np.uint8)
+
+        if predictions is None:
+            return blank_mask, [], []
         masks = predictions.get_field("mask")
         label_indexs = predictions.get_field("labels").numpy()
         labels = self.convert_label_index_to_string(label_indexs)
 
-        width = image.shape[0]
-        height = image.shape[1]
 
         # colours = self.get_greyscale_colours(label_indexs)
         
-        blank_mask = np.zeros((width, height),np.uint8)
         if masks.ndim < 3:
             masks = np.expand_dims(masks, axis=0)
             masks = np.expand_dims(masks, axis=0)
@@ -199,9 +206,10 @@ def main():
         ret_val, img = cam.read()
         # response_image, labels, label_indexs = maskrcnn.analyse_image(img)
         response_image, labels, label_indexs = maskrcnn.analyse_image(img)
+        display_image = response_image * 48
         # test_image = maskrcnn.display_predictions(img)
         print("Time: {:.2f} s / img".format(time.time() - start_time))
-        cv2.imshow("COCO detections", response_image)
+        cv2.imshow("COCO detections", display_image)
         print(labels)
         # cv2.imshow("Preds", test_image)
         if cv2.waitKey(1) == 27:

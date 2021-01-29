@@ -93,14 +93,13 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
     // cout << "feature detection time: " << fea_det_time << endl;
 
     N = mvKeys.size();
-
+    cout << "mvKeys size " << mvKeys.size() << endl;
     if(mvKeys.empty())
         return;
 
     if (UseSampleFea==0)
     {
         // // // Option I: ~~~~~~~ use detected features ~~~~~~~~~~ // // //
-
         for (int i = 0; i < mvKeys.size(); ++i)
         {
             int x = mvKeys[i].pt.x;

@@ -13,7 +13,17 @@ std::ostream &VDO_SLAM::operator << (std::ostream& output, const VDO_SLAM::Scene
 
 VDO_SLAM::Scene::Scene(int _id, double _timestamp):
     id(_id),
-    timestamp(_timestamp) {}
+    timestamp(_timestamp) {
+        //init camera pose
+        camera_pos_translation.x = 0.0;
+        camera_pos_translation.y = 0.0;
+        camera_pos_translation.z = 0.0;
+
+        //take rotation
+        camera_pos_rotation = (cv::Mat_<float>(3,3) << 0, 0, 0,
+                                                       0, 0, 0,
+                                                       0, 0, 0);
+    }
 
 //I think I do want to copy here
 void VDO_SLAM::Scene::add_scene_object(VDO_SLAM::SceneObject _object) {
