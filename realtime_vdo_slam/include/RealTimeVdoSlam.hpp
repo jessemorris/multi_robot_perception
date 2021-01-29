@@ -62,6 +62,8 @@ namespace VDO_SLAM {
             ros::Publisher visualiser;
             ros::Publisher odom_pub;
             tf2_ros::TransformBroadcaster broadcaster;
+
+            static int vis_count; //used for marker visualisation
         
     };
 
@@ -151,11 +153,11 @@ class RealTimeVdoSLAM {
         bool undistord_images;
 
         void image_callback(const sensor_msgs::ImageConstPtr& msg);
-        void set_scene_labels(VDO_SLAM::Scene& scene);
+        void set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene);
         void vdo_worker();
 
         std::shared_ptr<VdoSlamInput> pop_vdo_input();
-        void push_vdo_input(std::shared_ptr<VdoSlamInput> input);
+        void push_vdo_input(std::shared_ptr<VdoSlamInput>& input);
 
         //trajectory image for display
         cv::Mat image_trajectory;

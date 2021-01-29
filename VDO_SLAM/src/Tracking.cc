@@ -544,11 +544,11 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         sprintf(text, "x = %02fm y = %02fm z = %02fm", CamPos.at<float>(0,3), CamPos.at<float>(1,3), CamPos.at<float>(2,3));
 
         //we take the final column becuase I assume matrix is in R | t form
-        scene->update_camera_pos(CamPos.at<float>(0,3), CamPos.at<float>(1,3), CamPos.at<float>(2,3));
+        scene->update_camera_pos(CamPos);
 
         if (!mVelocity.empty()) {
             cv::Mat CameraMotion = Converter::toInvMatrix(mVelocity);
-            scene->update_camera_vel(CameraMotion.at<float>(0,3), CameraMotion.at<float>(1,3), CameraMotion.at<float>(2,3));
+            scene->update_camera_vel(CameraMotion);
         }
 
 

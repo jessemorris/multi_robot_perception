@@ -60,10 +60,9 @@ int main(int argc, char **argv)
 
     RealTimeVdoSLAM real_time_vdom(n);
 
-    // while(ros::ok()) {
-    //     ros::spinOnce();
-    //     r.sleep();
-    // }
-    ros::spin();
+    while(ros::ok()) {
+        ros::spinOnce();
+        r.sleep();
+    }
     
 }
