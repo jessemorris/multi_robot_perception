@@ -20,16 +20,8 @@ ImagePrepcoessing::ImagePrepcoessing(ros::NodeHandle& n) :
         mask_rcnn_success(false),
         mono_depth_success(false)
 {
-    //set up config
-    //TODO: param not working?
-    // handler.param<std::string>("/topic_prefix", topic_prefix, "/gmsl/");
-    // handler.param<std::string>("/camera_suffix", camera_suffix, "/image_color");
-    // handler.param<std::string>("/info_msg_suffix", info_msg_suffix, "/camera_info");
 
-    // handler.param<std::string>("/camera_selection", camera_selection, "A0");
     handler.param<std::string>("/input_camera_topic", input_camera_topic, "/camera/image_raw");
-
-
     handler.param<bool>("/apply_undistortion", undistord_images, false);
     handler.param<bool>("/run_mask_rcnn", run_mask_rcnn, false);
     handler.param<bool>("/run_flow_net", run_scene_flow, false);
@@ -92,9 +84,7 @@ ImagePrepcoessing::ImagePrepcoessing(ros::NodeHandle& n) :
 
 }
 
-ImagePrepcoessing::~ImagePrepcoessing() {
-
-}
+ImagePrepcoessing::~ImagePrepcoessing() {}
 
 void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGB8);
@@ -123,12 +113,15 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         // //TODO: what should this be
         // original_header.frame_id = "base_link";
         if (run_scene_flow) {
-            scene_flow_success = sceneflow.analyse_image(current_image, previous_image, scene_flow_mat);
+            scene_flow_success = sceneflow.analyse_image(current_image, previous_image, scene_flow_mat, scene_flow_viz);
 
             if (scene_flow_success) {
                 //#TODO: cannot fisplay until convert from scene flow to rgb               
-                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", scene_flow_mat).toImageMsg();
+                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "32FC2", scene_flow_mat).toImageMsg();
                 flownet_raw.publish(img_msg);
+
+                img_msg = cv_bridge::CvImage(original_header, "rgb8", scene_flow_viz).toImageMsg();
+                flownet_viz.publish(img_msg);
             }
             else {
                 ROS_WARN_STREAM("Could not analyse scene flow images");
@@ -136,11 +129,15 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         }
 
         if (run_mask_rcnn) {
-            mask_rcnn_success = mask_rcnn_interface.analyse_image(current_image, mask_rcnn_mat, mask_rcnn_labels, mask_rcnn_label_indexs);
+            mask_rcnn_success = mask_rcnn_interface.analyse_image(current_image, mask_rcnn_mat, mask_rcnn_viz, mask_rcnn_labels, mask_rcnn_label_indexs);
 
             if (mask_rcnn_success) {
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "mono8", mask_rcnn_mat).toImageMsg();
                 maskrcnn_raw.publish(img_msg);
+
+                img_msg = cv_bridge::CvImage(original_header, "mono8", mask_rcnn_viz).toImageMsg();
+                maskrcnn_viz.publish(img_msg);
+                
             }
             else {
                 ROS_WARN_STREAM("Could not analyse mask rcnn images");
@@ -167,16 +164,3 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 
 
 }
-
-int main(int argc, char **argv)
-{
-    ros::init(argc, argv, "image_preprocessing");
-    ros::NodeHandle n;
-
-    ImagePrepcoessing image_processing(n);
-    ros::spin();
-
-
-
-}
-

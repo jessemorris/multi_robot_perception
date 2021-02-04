@@ -2,6 +2,7 @@ sensor_msgs/Image input_image
 
 ---
 sensor_msgs/Image output_mask
+sensor_msgs/Image output_viz
 string[] labels
 int32[] label_indexs
 bool success

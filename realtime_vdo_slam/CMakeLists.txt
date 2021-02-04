@@ -162,6 +162,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+	src/ImagePreprocessing.cpp
 	src/RealTimeVdoSlam.cpp
 	src/MaskRcnnInterface.cpp
 	src/SceneFlow.cpp
@@ -193,7 +194,7 @@ endif()
 
 
 add_executable(image_preprocessing_node
-		src/ImagePreprocessing.cpp
+		src/ImagePreprocessingNode.cpp
 		)
 
 

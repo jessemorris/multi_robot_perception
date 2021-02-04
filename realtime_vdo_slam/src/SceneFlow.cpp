@@ -28,7 +28,7 @@ bool SceneFlow::start_service() {
 }
 
 
-bool SceneFlow::analyse_image(cv::Mat& current_image,cv::Mat& previous_image, cv::Mat& dst) {
+bool SceneFlow::analyse_image(cv::Mat& current_image,cv::Mat& previous_image, cv::Mat& dst, cv::Mat& viz) {
 
     if (!service_started) {
         return false;
@@ -45,10 +45,12 @@ bool SceneFlow::analyse_image(cv::Mat& current_image,cv::Mat& previous_image, cv
 
         if (srv.response.success) {
             cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(srv.response.output_image, sensor_msgs::image_encodings::TYPE_32FC2);
-            cv::Mat image = cv_ptr->image;
+            dst = cv_ptr->image;
 
-            //do i need to copy here?
-            dst = image;
+            cv_ptr = cv_bridge::toCvCopy(srv.response.output_viz, sensor_msgs::image_encodings::RGB8);
+            viz = cv_ptr->image;
+
+
             return true;
         }
         else {

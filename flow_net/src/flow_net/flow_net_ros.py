@@ -74,11 +74,11 @@ class FlowNetRos(RosCppCommunicator):
         # output_image = (rgb_flow * 255).astype(np.uint8).transpose(1,2,0)
         rgb_flow = self.flow2rgb(output_image)
         flow_image_msg = ros_numpy.msgify(Image, rgb_flow, encoding='rgb8')
-        self.flow_net_test_publisher.publish(flow_image_msg)
 
         output_image_msg = ros_numpy.msgify(Image, output_image, encoding='32FC2')
         response.success = True
         response.output_image = output_image_msg
+        response.ouput_viz = flow_image_msg
 
         return response
 

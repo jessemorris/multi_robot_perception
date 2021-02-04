@@ -213,6 +213,7 @@ std::shared_ptr<VdoSlamInput> RosVdoSlam::pop_vdo_input() {
     queue_mutex.unlock();
     return input;
 }
+
 void RosVdoSlam::push_vdo_input(std::shared_ptr<VdoSlamInput>& input) {
     queue_mutex.lock();
     vdo_input_queue.push(input);

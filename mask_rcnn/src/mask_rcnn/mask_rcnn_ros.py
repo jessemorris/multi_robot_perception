@@ -57,7 +57,6 @@ class MaskRcnnRos(RosCppCommunicator):
 
 
         self.mask_rcnn_service = rospy.Service("mask_rcnn_service",MaskRcnnVdoSlam, self.mask_rcnn_service_callback)
-        self.mask_rcnn_test_publisher = rospy.Publisher('mask_rcnn/test', Image, queue_size=10)
         self.mask_rcnn_label_service = rospy.Service("mask_rcnn_label", MaskRcnnLabel, self.label_request_callback)
         self.mask_rcnn_label_list_service = rospy.Service("mask_rcnn_label_list", MaskRcnnLabelList, self.label_list_request_callback)
         self.log_to_ros("Service call ready")
@@ -76,14 +75,13 @@ class MaskRcnnRos(RosCppCommunicator):
 
             output_image_msg = ros_numpy.msgify(Image, response_image, encoding='mono8')
             display_image_msg = ros_numpy.msgify(Image, display_image, encoding='mono8')
-            # test_image_msg = ros_numpy.msgify(Image, test_image, encoding='rgb8')
-            self.mask_rcnn_test_publisher.publish(display_image_msg)
 
             response.success = True
             # response.output_image = output_image_msg
             response.output_mask = output_image_msg
             response.labels = labels
             response.label_indexs = label_indexs
+            response.ouput_viz = display_image_msg
 
             del response_image
             del labels

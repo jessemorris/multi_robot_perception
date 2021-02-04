@@ -26,7 +26,6 @@ include_directories(
 
 add_service_files(
   FILES
-  MaskRcnnVisualise.srv
   MaskRcnnVdoSlam.srv
   MaskRcnnLabel.srv
   MaskRcnnLabelList.srv

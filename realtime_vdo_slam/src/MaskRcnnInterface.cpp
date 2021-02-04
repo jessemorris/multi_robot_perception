@@ -34,7 +34,7 @@ bool MaskRcnnInterface::start_service() {
 }
 
 
-bool MaskRcnnInterface::analyse_image(cv::Mat& current_image, cv::Mat& dst, 
+bool MaskRcnnInterface::analyse_image(cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz,
     std::vector<std::string>& labels, std::vector<int>& label_indexs) {
 
     if (!service_started) {
@@ -49,7 +49,10 @@ bool MaskRcnnInterface::analyse_image(cv::Mat& current_image, cv::Mat& dst,
 
         if (srv.response.success) {
             cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(srv.response.output_mask, sensor_msgs::image_encodings::MONO8);
-            cv::Mat image = cv_ptr->image;
+            dst = cv_ptr->image;
+
+            cv_ptr = cv_bridge::toCvCopy(srv.response.output_viz, sensor_msgs::image_encodings::MONO8);
+            viz = cv_ptr->image;
 
             for (std::vector<std::string>::iterator it = srv.response.labels.begin(); it != srv.response.labels.end(); ++it) {
                 labels.push_back(*it);
@@ -58,12 +61,6 @@ bool MaskRcnnInterface::analyse_image(cv::Mat& current_image, cv::Mat& dst,
             for (std::vector<int>::iterator it = srv.response.label_indexs.begin(); it != srv.response.label_indexs.end(); ++it) {
                 label_indexs.push_back(*it);
             }
-                
-            // labels.assign(std::begin(*srv.response.labels.data()), std::end(*srv.response.labels.data()));
-            // label_indexs.assign(std::begin(*srv.response.label_indexs.data()), std::end(*srv.response.label_indexs.data()));
-
-            //do i need to copy here?
-            dst = image;
             return true;
         }
         else {

@@ -76,7 +76,11 @@ namespace VDO_SLAM {
         bool mono_depth_success;
 
         cv::Mat scene_flow_mat;
+        cv::Mat scene_flow_viz;
+
         cv::Mat mask_rcnn_mat;
+        cv::Mat mask_rcnn_viz;
+        
         cv::Mat mono_depth_mat;
 
 

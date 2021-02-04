@@ -28,7 +28,7 @@ class SceneFlow {
         ~SceneFlow() {};
 
 
-        bool analyse_image(cv::Mat& current_image,cv::Mat& previous_image, cv::Mat& dst);
+        bool analyse_image(cv::Mat& current_image,cv::Mat& previous_image, cv::Mat& dst, cv::Mat& viz);
         //TODO: write function convert flow to rgb image
         bool start_service();
 

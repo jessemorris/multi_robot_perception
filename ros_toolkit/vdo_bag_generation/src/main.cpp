@@ -76,7 +76,7 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
 
     std::string out_file_name, video_stream_namespace;
-    n.param<std::string>("/out_file", out_file_name, "out");
+    n.param<std::string>("/out_file", out_file_name, "vdo_out.bag");
     n.param<std::string>("/video_stream_namespace", video_stream_namespace, "/gmsl/A2/");
 
     std::string input_video_topic = "/vdoslam/input/camera/rgb/image_raw";
@@ -92,20 +92,20 @@ int main(int argc, char **argv)
 
     VdoBagPlayback playback(out_file_name);
     //these messages can can come in at anytime
-    ros::Subscriber sub_odom = n.subscribe(odom_topic, 1000, &VdoBagPlayback::odom_callback, &playback);
-    ros::Subscriber sub_tf_static = n.subscribe(tf_static_topic, 1000, &VdoBagPlayback::tf_static_callback, &playback);
-    ros::Subscriber sub_tf = n.subscribe(tf_static_topic, 1000, &VdoBagPlayback::tf_static_callback, &playback);
-    ros::Subscriber sub_camera_info = n.subscribe(camera_info_topic, 1000, &VdoBagPlayback::camera_info_callback, &playback);
+    ros::Subscriber sub_odom = n.subscribe(odom_topic, 100, &VdoBagPlayback::odom_callback, &playback);
+    ros::Subscriber sub_tf_static = n.subscribe(tf_static_topic, 100, &VdoBagPlayback::tf_static_callback, &playback);
+    ros::Subscriber sub_tf = n.subscribe(tf_topic, 100, &VdoBagPlayback::tf_callback, &playback);
+    ros::Subscriber sub_camera_info = n.subscribe(camera_info_topic, 100, &VdoBagPlayback::camera_info_callback, &playback);
 
     //these ones we must synchronize to a single time
     //TODO: add subscribers to visualser topics for flow and maskrcnn
-    message_filters::Subscriber<sensor_msgs::Image> image_raw_sub(n, input_video_topic, 1);
-    message_filters::Subscriber<sensor_msgs::Image> mask_rcnn_sub(n, mask_rcnn_topic, 1);
-    message_filters::Subscriber<sensor_msgs::Image> flow_sub(n, flow_net_topic, 1);
-    message_filters::Subscriber<sensor_msgs::Image> depth_sub(n, monodepth_topic, 1);
+    message_filters::Subscriber<sensor_msgs::Image> image_raw_sub(n, input_video_topic, 10);
+    message_filters::Subscriber<sensor_msgs::Image> mask_rcnn_sub(n, mask_rcnn_topic, 10);
+    message_filters::Subscriber<sensor_msgs::Image> flow_sub(n, flow_net_topic, 10);
+    message_filters::Subscriber<sensor_msgs::Image> depth_sub(n, monodepth_topic, 10);
 
     message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> sync(image_raw_sub,
-            mask_rcnn_sub,flow_sub, depth_sub,  10);
+            mask_rcnn_sub,flow_sub, depth_sub,  20);
 
     sync.registerCallback(boost::bind(&VdoBagPlayback::image_synch_callback, &playback, _1, _2, _3, _4));
 

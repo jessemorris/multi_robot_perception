@@ -27,7 +27,7 @@ class MaskRcnnInterface {
         ~MaskRcnnInterface() {};
 
 
-        bool analyse_image(cv::Mat& current_image, cv::Mat& dst, std::vector<std::string>& labels, std::vector<int>& label_indexs);
+        bool analyse_image(cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz, std::vector<std::string>& labels, std::vector<int>& label_indexs);
         bool start_service();
 
         static bool request_labels(const std::vector<int>& label_indexs, std::vector<std::string>& labels);
