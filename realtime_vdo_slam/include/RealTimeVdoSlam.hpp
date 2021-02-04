@@ -11,6 +11,8 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
 
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
@@ -69,14 +71,6 @@ namespace VDO_SLAM {
 
 
 };
-
-//wrapper for camera information
-struct CameraInformation {
-    std::string topic;
-    sensor_msgs::CameraInfo camera_info;
-
-};
-
 struct VdoSlamInput {
     cv::Mat raw, flow, depth, mask;
     std::vector<std::vector<float> > object_pose_gt;
@@ -98,80 +92,46 @@ struct VdoSlamInput {
 
 };
 
+typedef const sensor_msgs::ImageConstPtr& ImageConst;
 
-class RealTimeVdoSLAM {
+
+class RosVdoSlam {
 
     public:
-        RealTimeVdoSLAM(ros::NodeHandle& n);
-        ~RealTimeVdoSLAM();
+        RosVdoSlam(ros::NodeHandle& n);
+        ~RosVdoSlam();
 
+        void vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth);
 
     private:
-        std::string topic_prefix;
-        std::string camera_suffix;
-        std::string info_msg_suffix;
+        ros::NodeHandle handle;
 
-        std::string camera_selection;
-
-        ros::NodeHandle handler;
-        SceneFlow sceneflow;
-        MaskRcnnInterface mask_rcnn_interface;
-        MonoDepth mono_depth;
-
-        bool run_scene_flow;
-        bool run_mask_rcnn;
-        bool run_mono_depth;
-
-        bool scene_flow_success;
-        bool mask_rcnn_success;
-        bool mono_depth_success;
-
-        int global_optim_trigger;
-
-        cv::Mat scene_flow_mat;
-        cv::Mat mask_rcnn_mat;
-        cv::Mat mono_depth_mat;
-
-
-        //evnetually become list when i have more than one camera
-        std::string output_video_topic;
-        std::string camea_info_topic;
-        CameraInformation camera_information;
-        
-
-        image_transport::ImageTransport image_transport;
-        image_transport::Subscriber image_subscriber;
-        image_transport::Publisher maskrcnn_results;
-        image_transport::Publisher flownet_results;
-        image_transport::Publisher monodepth_results;
-
-        bool is_first;
-        cv::Mat previous_image;
-
-        
-        //if set to true cv::undistort will be applied to the images
-        bool undistord_images;
-
-        void image_callback(const sensor_msgs::ImageConstPtr& msg);
         void set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene);
         void vdo_worker();
 
         std::shared_ptr<VdoSlamInput> pop_vdo_input();
         void push_vdo_input(std::shared_ptr<VdoSlamInput>& input);
 
-        //trajectory image for display
-        cv::Mat image_trajectory;
+        //ros time synchronizers for all input data
 
-
+        int global_optim_trigger;
         //VdoSlam
+        cv::Mat image_trajectory;
         std::unique_ptr<VDO_SLAM::System> slam_system;
         std::unique_ptr<VDO_SLAM::RosScene> ros_scene;
         std::queue<std::shared_ptr<VdoSlamInput>> vdo_input_queue;
         std::mutex queue_mutex;
         std::thread vdo_worker_thread;
-        ros::Time previous_time;
-        ros::Time current_time;
 
+        message_filters::Subscriber<sensor_msgs::Image> raw_img;
+        message_filters::Subscriber<sensor_msgs::Image> mask_img;
+        message_filters::Subscriber<sensor_msgs::Image> flow_img;
+        message_filters::Subscriber<sensor_msgs::Image> depth_img;
+
+        message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> sync;
+
+        ros::Time current_time;
+        ros::Time previous_time;
 
 
 };

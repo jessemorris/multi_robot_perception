@@ -66,7 +66,6 @@ class MaskRcnnRos(RosCppCommunicator):
     @torch.no_grad()
     def mask_rcnn_service_callback(self, req):
         response = MaskRcnnVdoSlamResponse()
-        self.log_to_ros("Inside callback")
         try: 
             input_image = ros_numpy.numpify(req.input_image)
 

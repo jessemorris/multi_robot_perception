@@ -1,4 +1,5 @@
 #include "RealTimeVdoSlam.hpp"
+#include "MaskRcnnInterface.hpp"
 #include <ros/package.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <nav_msgs/Odometry.h>
@@ -128,222 +129,76 @@ void VDO_SLAM::RosScene::display_scene() {
     visualiser.publish(marker_array);
 }
 
+RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
+        handle(n),
+        raw_img(handle, "vdoslam/input/camera/rgb/image_raw", 1),
+        mask_img(handle, "vdoslam/input/camera/mask/image_raw", 1),
+        flow_img(handle, "vdoslam/input/camera/flow/image_raw", 1),
+        depth_img(handle, "vdoslam/input/camera/depth/image_raw", 1),
+        sync(raw_img, mask_img, flow_img, depth_img, 20)
 
-RealTimeVdoSLAM::RealTimeVdoSLAM(ros::NodeHandle& n) :
-        handler(n),
-        sceneflow(n),
-        mask_rcnn_interface(n),
-        mono_depth(n),
-        image_transport(n),
-        is_first(true),
-        scene_flow_success(false),
-        mask_rcnn_success(false),
-        mono_depth_success(false)
-{
-    //set up config
-    //TODO: param not working?
-    handler.param<std::string>("/topic_prefix", topic_prefix, "/gmsl/");
-    handler.param<std::string>("/camera_suffix", camera_suffix, "/image_color");
-    handler.param<std::string>("/info_msg_suffix", info_msg_suffix, "/camera_info");
+    {
+        handle.getParam("/global_optim_trigger", global_optim_trigger);
+        ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
 
-    handler.param<std::string>("/camera_selection", camera_selection, "A0");
+        std::string path = ros::package::getPath("realtime_vdo_slam");
+        std::string vdo_slam_config_path = path + "/config/vdo_config.yaml";
 
 
-    handler.param<bool>("/apply_undistortion", undistord_images, false);
-    handler.param<bool>("/run_mask_rcnn", run_mask_rcnn, false);
-    handler.param<bool>("/run_flow_net", run_scene_flow, false);
-    handler.param<bool>("/run_mono_depth", run_mono_depth, false);
+        slam_system = std::make_unique< VDO_SLAM::System>(vdo_slam_config_path,VDO_SLAM::System::RGBD);
+        image_trajectory = cv::Mat::zeros(800, 600, CV_8UC3);
+        vdo_worker_thread = std::thread(&RosVdoSlam::vdo_worker, this);
 
-    //after how many images full batch oprtimisation should be run
-    handler.param<int>("/global_optim_trigger", global_optim_trigger, 10);
-    ROS_INFO_STREAM("global optim trigger " << global_optim_trigger);
+        //TODO: should get proper previous time
+        previous_time = ros::Time::now();
 
-    if(run_mask_rcnn) {
-        //first we check if the services exist so we dont start them again
-        if  (!ros::service::exists("mask_rcnn_service", true)) {
-            ROS_INFO_STREAM("starting mask rcnn service");
-            mask_rcnn_interface.start_service();
-            ros::service::waitForService("mask_rcnn_service");
-            ros::service::waitForService("mask_rcnn_label_list");
-        }
-        else {
-            ROS_INFO_STREAM("Mask Rcnn already active");
-        }
-        mask_rcnn_interface.set_mask_labels();
-    }
-    if(run_scene_flow) {
-        if  (!ros::service::exists("flow_net_service", true)) { 
-            ROS_INFO_STREAM("starting flow net service");
-            sceneflow.start_service();
-            ros::service::waitForService("flow_net_service");
-        }
-        else {
-            ROS_INFO_STREAM("Flow Net already active");
-        }
     }
 
-    if(run_mono_depth) {
-        if  (!ros::service::exists("mono_depth_service", true)) { 
-            ROS_INFO_STREAM("starting mono_depth service");
-            mono_depth.start_service();
-            ros::service::waitForService("mono_depth_service");
-        }
-        else {
-            ROS_INFO_STREAM("MonoDepth already active");
-        }
-    }
-
-    ROS_INFO_STREAM("camera selection " << camera_selection);
-
-    // gmsl/<>/image_colour
-    // output_video_topic = topic_prefix + camera_selection + camera_suffix;
-    output_video_topic = "/camera/raw_image";
-    camea_info_topic = topic_prefix + camera_selection + info_msg_suffix;
-
-    ROS_INFO_STREAM("video topic " << output_video_topic);
-    ROS_INFO_STREAM("camera info topic " << camea_info_topic);
-
-    camera_information.topic = output_video_topic;
-    // ROS_INFO_STREAM("Waiting for camera info msg");
-    // sensor_msgs::CameraInfoConstPtr camera_info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camea_info_topic);
-    // camera_information.camera_info = *camera_info;
-    // ROS_INFO_STREAM("Got camera info msg");
-
-
-    image_subscriber = image_transport.subscribe(output_video_topic, 10,
-                                               &RealTimeVdoSLAM::image_callback, this);
-
-    maskrcnn_results = image_transport.advertise("vdoslam/results/maskrcnn", 10);
-    flownet_results = image_transport.advertise("vdoslam/results/flownet", 10);
-    monodepth_results = image_transport.advertise("vdoslam/results/monodepth", 10);
-
-
-    std::string path = ros::package::getPath("realtime_vdo_slam");
-    std::string vdo_slam_config_path = path + "/config/vdo_config.yaml";
-    // VDO_SLAM::System SLAM(vdo_slam_config_path,VDO_SLAM::System::RGBD);
-    slam_system = std::make_unique< VDO_SLAM::System>(vdo_slam_config_path,VDO_SLAM::System::RGBD);
-    image_trajectory = cv::Mat::zeros(800, 600, CV_8UC3);
-
-    vdo_worker_thread = std::thread(&RealTimeVdoSLAM::vdo_worker, this);
-}
-
-RealTimeVdoSLAM::~RealTimeVdoSLAM() {
+RosVdoSlam::~RosVdoSlam() {
     if (vdo_worker_thread.joinable()) {
         vdo_worker_thread.join();
     }
-
 }
 
-void RealTimeVdoSLAM::image_callback(const sensor_msgs::ImageConstPtr& msg) {
-    cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGB8);
-    cv::Mat distored = cv_ptr->image;
-    // cv::cvtColor(distored, distored, CV_RGB2BGR);
-    cv::Mat image = distored;
+void RosVdoSlam::vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth) {
+    //the actual time the image was craeted
+    current_time = raw_image->header.stamp;
+    ros::Duration diff = current_time - previous_time;
+    //time should be in n seconds or seconds (or else?)
+    double time_difference = diff.toNSec();
 
+    cv::Mat image, scene_flow_mat, mono_depth_mat, mask_rcnn_mat;
+    cv_bridge::CvImagePtr cv_ptr;
+    cv_ptr = cv_bridge::toCvCopy(*raw_image, sensor_msgs::image_encodings::RGB8);
+    image = cv_ptr->image;
 
-    // if (undistord_images) {
-    //     cv::undistort(distored, image, camera_information.intrinsic, camera_information.distortion);
-    // }
-    // else {
-    //     image = distored;
-    // }
-    // cv::Mat flow_matrix, segmentation_mask;
-    std::vector<std::string> mask_rcnn_labels;
-    std::vector<int> mask_rcnn_label_indexs;
+    cv_ptr = cv_bridge::toCvCopy(*mask, sensor_msgs::image_encodings::MONO8);
+    mask_rcnn_mat = cv_ptr->image;
 
+    cv_ptr = cv_bridge::toCvCopy(*flow, sensor_msgs::image_encodings::TYPE_32FC2);
+    scene_flow_mat = cv_ptr->image;
 
-    if (is_first) {
-        previous_image = image;
-        // previous_time = msg->header.stamp;
-        previous_time = ros::Time::now();
-        is_first = false;
-        return;
-    }
-    else {
-        cv::Mat current_image = image;
-        // current_time = msg->header.stamp;
-        current_time = ros::Time::now();
-        if (run_scene_flow) {
-            scene_flow_success = sceneflow.analyse_image(current_image, previous_image, scene_flow_mat);
-
-            if (scene_flow_success) {
-                //#TODO: cannot fisplay until convert from scene flow to rgb
-                // std_msgs::Header header = std_msgs::Header();
-
-               
-                // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "rgb8", scene_flow_mat).toImageMsg();
-                // flownet_results.publish(img_msg);
-            }
-            else {
-                ROS_WARN_STREAM("Could not analyse scene flow images");
-            }
-        }
-
-        if (run_mask_rcnn) {
-            mask_rcnn_success = mask_rcnn_interface.analyse_image(current_image, mask_rcnn_mat, mask_rcnn_labels, mask_rcnn_label_indexs);
-
-            if (mask_rcnn_success) {
-                std_msgs::Header header = std_msgs::Header();
-
-                // //TODO: proper headers
-                // header.frame_id = "base_link";
-                // header.stamp = ros::Time::now();
-                // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono8", mask_rcnn_mat).toImageMsg();
-                // maskrcnn_results.publish(img_msg);
-            }
-            else {
-                ROS_WARN_STREAM("Could not analyse mask rcnn images");
-            }
-        }
-
-        if (run_mono_depth) {
-            mono_depth_success = mono_depth.analyse_image(current_image, mono_depth_mat);
-
-            if (mono_depth_success) {
-                std_msgs::Header header = std_msgs::Header();
-
-                // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(msg->header, "mono16", mono_depth_mat).toImageMsg();
-                // monodepth_results.publish(img_msg);
-            }
-            else {
-                ROS_WARN_STREAM("Could not analyse mono depthimages");
-            }
-        }
-
-
-        previous_image = current_image;
-
-
-        //run slam algorithm
-        //not we have no ground truth
-        //times are just relative to each other so we can just record rostim between each callback
-        if (scene_flow_success && mask_rcnn_success && mono_depth_success) {
-            ros::Duration diff = current_time - previous_time;
-            //time should be in n seconds or seconds (or else?)
-            double time_difference = diff.toNSec();
-
-            std::shared_ptr<VdoSlamInput> input = std::make_shared<VdoSlamInput>(image,scene_flow_mat,
-                    mono_depth_mat, mask_rcnn_mat, time_difference, current_time);
-
-            //add the input to the thread queue so we can deal with it later
-            push_vdo_input(input);
-        }
-
-        previous_time = current_time;
-
-
-    }
+    cv_ptr = cv_bridge::toCvCopy(*depth, sensor_msgs::image_encodings::MONO16);
+    mono_depth_mat = cv_ptr->image;
 
 
 
+    std::shared_ptr<VdoSlamInput> input = std::make_shared<VdoSlamInput>(image,scene_flow_mat,
+            mono_depth_mat, mask_rcnn_mat, time_difference, current_time);
+
+    //add the input to the thread queue so we can deal with it later
+    push_vdo_input(input);
+    previous_time = current_time;
+    
 }
 
-void RealTimeVdoSLAM::set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene) {
+
+void RosVdoSlam::set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene) {
     int size = scene->scene_objects_size();
     VDO_SLAM::SceneObject* object_ptr = scene->get_scene_objects_ptr();
     ROS_DEBUG_STREAM("Updating scene labels (size " << size << ")");
     for(int i = 0; i < size; i++) {
-        std::string label = mask_rcnn_interface.request_label(object_ptr->label_index);
+        std::string label = MaskRcnnInterface::request_label(object_ptr->label_index);
         object_ptr->label = label;
         ROS_DEBUG_STREAM(*object_ptr);  
         object_ptr++;      
@@ -351,21 +206,21 @@ void RealTimeVdoSLAM::set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene) 
     }
 }
 
-std::shared_ptr<VdoSlamInput> RealTimeVdoSLAM::pop_vdo_input() {
+std::shared_ptr<VdoSlamInput> RosVdoSlam::pop_vdo_input() {
     queue_mutex.lock();
     std::shared_ptr<VdoSlamInput> input = vdo_input_queue.front();
     vdo_input_queue.pop();
     queue_mutex.unlock();
     return input;
 }
-void RealTimeVdoSLAM::push_vdo_input(std::shared_ptr<VdoSlamInput>& input) {
+void RosVdoSlam::push_vdo_input(std::shared_ptr<VdoSlamInput>& input) {
     queue_mutex.lock();
     vdo_input_queue.push(input);
     queue_mutex.unlock();
 }
 
 
-void RealTimeVdoSLAM::vdo_worker() {
+void RosVdoSlam::vdo_worker() {
 
     std::unique_ptr<VDO_SLAM::Scene> scene;
     while (ros::ok()) {
@@ -386,7 +241,7 @@ void RealTimeVdoSLAM::vdo_worker() {
 
             set_scene_labels(unique_scene);
             scene = std::move(unique_scene);
-            std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(new VDO_SLAM::RosScene(handler, *scene, input->image_time));
+            std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(new VDO_SLAM::RosScene(handle, *scene, input->image_time));
             ros_scene = std::move(unique_ros_scene);
             ros_scene->display_scene();
         }

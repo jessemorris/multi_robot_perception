@@ -25,7 +25,7 @@
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "realtime_vdo_slam");
+    ros::init(argc, argv, "ros_vdoslam");
     ros::NodeHandle n;
 
     //lets just set up some static transforms for now
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 
     ros::Rate r(2);
 
-    RealTimeVdoSLAM real_time_vdom(n);
+    RosVdoSlam ros_vdo_slam(n);
 
     while(ros::ok()) {
         ros::spinOnce();

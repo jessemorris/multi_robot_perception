@@ -161,24 +161,51 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/../VDO_SLAM/
 )
 
-
-add_executable(${PROJECT_NAME}_node
-		src/main.cpp
-		src/SceneFlow.cpp
-		src/MonoDepth.cpp
-		src/MaskRcnnInterface.cpp
-		src/RealTimeVdoSlam.cpp)
+add_library(${PROJECT_NAME}
+	src/RealTimeVdoSlam.cpp
+	src/MaskRcnnInterface.cpp
+	src/SceneFlow.cpp
+	src/MonoDepth.cpp)
 
 
-
-target_link_libraries(${PROJECT_NAME}_node
+target_link_libraries(${PROJECT_NAME}
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
-		${PROJECT_SOURCE_DIR}/../VDO_SLAM/lib/libvdo_slam.so
+		${PROJECT_SOURCE_DIR}/../VDO_SLAM/lib/libvdo_slam.so)
+
+
+add_executable(ros_vdoslam_node
+		src/RosVdoSlam.cpp)
+
+target_link_libraries(ros_vdoslam_node
+		${catkin_LIBRARIES}
+		${OpenCV_LIBS}
+		${PROJECT_NAME}
 		)
 
 if(catkin_EXPORTED_LIBRARIES)
-  add_dependencies(${PROJECT_NAME}_node
+  add_dependencies(ros_vdoslam_node
+		  ${catkin_EXPORTED_LIBRARIES}
+		  ${catkin_LIBRARIES}
+		  ${OpenCV_LIBS})
+endif()
+
+
+
+add_executable(image_preprocessing_node
+		src/ImagePreprocessing.cpp
+		)
+
+
+
+target_link_libraries(image_preprocessing_node
+		${catkin_LIBRARIES}
+		${OpenCV_LIBS}
+		${PROJECT_NAME}
+		)
+
+if(catkin_EXPORTED_LIBRARIES)
+  add_dependencies(image_preprocessing_node
 		  ${catkin_EXPORTED_LIBRARIES}
 		  ${catkin_LIBRARIES}
 		  ${OpenCV_LIBS})
@@ -227,9 +254,10 @@ endif()
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS ${PROJECT_NAME}_node
+install(TARGETS ros_vdoslam_node image_preprocessing_node
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html

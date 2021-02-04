@@ -1,9 +1,10 @@
 scene_flow_delay_count: 1
 
-#taken from multicamera lidar config
-topic_prefix: "/gmsl/"
-camera_suffix: "/image_color"
-info_msg_suffix: "/camera_info"
+# #taken from multicamera lidar config
+# topic_prefix: "/gmsl/"
+# camera_suffix: "/image_color"
+# info_msg_suffix: "/camera_info"
+input_camera_topic: /gmsl/A2/image_color
 
 #options for which analysis to run
 run_flow_net: True
