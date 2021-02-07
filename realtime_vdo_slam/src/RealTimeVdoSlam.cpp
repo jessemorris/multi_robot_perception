@@ -22,6 +22,7 @@ VDO_SLAM::RosScene::RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _ti
     time(_time),
     Scene(_object) {
 
+        //TODO: I am creating these new sevices every time -> should make them static pointers
         visualiser = nh.advertise<visualization_msgs::MarkerArray>("vdoslam/visualization", 20 );
         odom_pub = nh.advertise<nav_msgs::Odometry>("vdoslam/odom", 20);
         nh.getParam("/frame_id", child_frame_id);
@@ -41,7 +42,7 @@ VDO_SLAM::RosScene::RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _ti
 
         //update tf pose for ROS
         transform_stamped.header.stamp = time;
-        transform_stamped.header.frame_id = "odom";
+        transform_stamped.header.frame_id = "vdo_odom";
         transform_stamped.child_frame_id = child_frame_id;
         transform_stamped.transform.translation.x = camera_pos_translation.x;
         transform_stamped.transform.translation.y = camera_pos_translation.y;
@@ -67,7 +68,7 @@ VDO_SLAM::RosScene::RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _ti
 
         nav_msgs::Odometry odom;
         odom.header.stamp = time;
-        odom.header.frame_id = "odom";
+        odom.header.frame_id = "vdo_odom";
         odom.child_frame_id = child_frame_id;
         odom.pose.pose.position.x = camera_pos_translation.x;
         odom.pose.pose.position.y = camera_pos_translation.y;
@@ -95,7 +96,7 @@ void VDO_SLAM::RosScene::display_scene() {
     for (SceneObject& scene_object: scene_objects) {
         ROS_INFO_STREAM(scene_object);
         visualization_msgs::Marker marker;
-        marker.header.frame_id = "odom";
+        marker.header.frame_id = "vdo_odom";
         marker.header.stamp = time;
         marker.ns = "vdoslam";
         marker.id = scene_object.tracking_id;
@@ -131,15 +132,28 @@ void VDO_SLAM::RosScene::display_scene() {
 
 RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         handle(n),
-        raw_img(handle,"/camera/rgb/image_raw", 10),
-        mask_img(handle,"/camera/mask/image_raw", 10),
-        flow_img(handle,"/camera/flow/image_raw", 10),
-        depth_img(handle,"/camera/depth/image_raw", 10),
-        sync(raw_img, mask_img, flow_img, depth_img, 20)
+        mask_rcnn_interface(n),
+        raw_img(handle,"/camera/rgb/image_raw", 5),
+        mask_img(handle,"/camera/mask/image_raw", 5),
+        flow_img(handle,"/camera/flow/image_raw", 5),
+        depth_img(handle,"/camera/depth/image_raw", 5),
+        sync(raw_img, mask_img, flow_img, depth_img, 5)
 
     {
         handle.getParam("/global_optim_trigger", global_optim_trigger);
         ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
+
+        //first we check if the services exist so we dont start them again
+        if  (!ros::service::exists("mask_rcnn_service", true)) {
+            ROS_INFO_STREAM("starting mask rcnn service");
+            mask_rcnn_interface.start_service();
+            ros::service::waitForService("mask_rcnn_service");
+            MaskRcnnInterface::set_mask_labels(handle);
+        }
+        else {
+            ROS_INFO_STREAM("Mask Rcnn already active");
+        }
+        MaskRcnnInterface::set_mask_labels(handle);
 
         std::string path = ros::package::getPath("realtime_vdo_slam");
         std::string vdo_slam_config_path = path + "/config/vdo_config.yaml";
@@ -189,7 +203,6 @@ void RosVdoSlam::vdo_input_callback(ImageConst raw_image, ImageConst mask, Image
             mono_depth_mat, mask_rcnn_mat, time_difference, current_time);
 
     //add the input to the thread queue so we can deal with it later
-    ROS_INFO_STREAM("made input");
     push_vdo_input(input);
     previous_time = current_time;
     

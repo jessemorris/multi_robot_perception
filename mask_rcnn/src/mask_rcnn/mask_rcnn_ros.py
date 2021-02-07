@@ -41,7 +41,7 @@ class MaskRcnnRos(RosCppCommunicator):
         cfg.freeze()
 
         self._greyscale_palette = (2 * 25 - 1)
-        self._colour_palette = np.array([2 ** 25 - 1, 2 ** 15 - 1, 2 ** 21 - 1])
+        self._colour_palette = np.array([2 ** 29 - 1, 2 ** 7 - 1, 2 ** 11 - 5])
 
 
         # prepare object that handles inference plus adds predictions on top of image
@@ -55,7 +55,6 @@ class MaskRcnnRos(RosCppCommunicator):
 
         self._greyscale_colours = self._generate_grayscale_values()
         self._colours = self._generate_coloured_values()
-        print(self._colours)
 
 
 
@@ -190,16 +189,18 @@ class MaskRcnnRos(RosCppCommunicator):
         return colors
 
     def _generate_coloured_mask(self, mask, labels, labels_index):
-        mask =  np.expand_dims(mask, 2) 
-        mask = np.repeat(mask, 3, axis=2) # give the mask the same shape as your image
-        coloured_img = np.zeros(mask.shape)
+        # mask =  np.expand_dims(mask, 2) 
+        # mask = np.repeat(mask, 3, axis=2) # give the mask the same shape as your image
+        coloured_img = np.zeros((mask.shape[0], mask.shape[1], 3))
         
         for index in labels_index:
             colour = self._colours[index]
-            mask.flatten()
-            np.where(mask == index, np.multiply(mask, colour), mask )
-            colored_mask = mask.reshape(coloured_img.shape)
-            coloured_img = coloured_img + colored_mask
+            coloured_img[mask == index] = colour
+            # mask.flatten()
+            # np.where(mask == index, np.multiply(mask, colour), mask )
+            # colored_mask = mask.reshape(coloured_img.shape)
+            # print(colored_mask.shape)
+            # coloured_img = coloured_img + colored_mask
         coloured_img = coloured_img.astype('uint8')
         return coloured_img
 

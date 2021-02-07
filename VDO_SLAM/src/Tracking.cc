@@ -529,11 +529,12 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     if (mTestData==KITTI && !mCurrentFrame.mTcw.empty())
     {
         cout << "Showing trajectory results on KITTi" << endl;
-        int sta_x = 300, sta_y = 100, radi = 2, thic = 5;  // (160/120/2/5)
+        int sta_x = 300, sta_y = 300, radi = 2, thic = 5;  // (160/120/2/5)
         float scale = 6; // 6
         cout << "mTcw shape: rows " << mCurrentFrame.mTcw.rows << " cols " <<mCurrentFrame.mTcw.cols << endl;
         cv::Mat CamPos = Converter::toInvMatrix(mCurrentFrame.mTcw);
         cout << "Made cam pos" << endl;
+
         int x = int(CamPos.at<float>(0,3)*scale) + sta_x;
         int y = int(CamPos.at<float>(2,3)*scale) + sta_y;
         // cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(255,0,0), thic);
@@ -560,6 +561,8 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
             if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0) {
                 continue;
             }
+
+            //rotate 90 deg clockwise (x,y) -> (y, -x)
             int x = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,0)*scale) + sta_x;
             int y = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,2)*scale) + sta_y;
 
@@ -742,7 +745,6 @@ void Tracking::Track()
             Optimizer::PoseOptimizationFlow2Cam(&mCurrentFrame, &mLastFrame, TemperalMatch_subset);
         else
             Optimizer::PoseOptimizationNew(&mCurrentFrame, &mLastFrame, TemperalMatch_subset);
-        cout << "pose after update: " << endl << mCurrentFrame.mTcw << endl;
         e_1_2 = clock();
         cam_pos_time = (double)(e_1_1-s_1_1)/CLOCKS_PER_SEC*1000 + (double)(e_1_2-s_1_2)/CLOCKS_PER_SEC*1000;
         all_timing[1] = cam_pos_time;

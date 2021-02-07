@@ -51,7 +51,7 @@ bool MaskRcnnInterface::analyse_image(cv::Mat& current_image, cv::Mat& dst, cv::
             cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(srv.response.output_mask, sensor_msgs::image_encodings::MONO8);
             dst = cv_ptr->image;
 
-            cv_ptr = cv_bridge::toCvCopy(srv.response.output_viz, sensor_msgs::image_encodings::MONO8);
+            cv_ptr = cv_bridge::toCvCopy(srv.response.output_viz, sensor_msgs::image_encodings::RGB8);
             viz = cv_ptr->image;
 
             for (std::vector<std::string>::iterator it = srv.response.labels.begin(); it != srv.response.labels.end(); ++it) {

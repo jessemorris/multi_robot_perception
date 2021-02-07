@@ -59,7 +59,7 @@ class VdoBagPlayback {
                 dt = ros::Duration(0);
                 timing_info->video_time = ros::Time::now();
 
-                if (timing_info->video_time < ros::TIME_MIN) {
+                if (timing_info->video_time <= ros::TIME_MIN) {
                     timing_info->video_time = ros::TIME_MIN;
                 }
 
@@ -184,6 +184,8 @@ int main(int argc, char **argv)
     std::string map_topic = "/localiser/map";
     std::string tf_static_topic = "/tf_static";
     std::string tf_topic = "/tf";
+
+    //TODO: add gps - not needed for paper (we just need odom)
 
     VdoBagPlayback playback(out_file_name);
     //these messages can can come in at anytime
