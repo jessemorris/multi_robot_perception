@@ -2,6 +2,6 @@
 
 
   <param name="out_file" value="$(arg out_file)"/>
-  <param name="video_stream_namespace" type="string" value="/gmsl/A2/" />
+  <param name="video_stream_namespace" type="string" value="/gmsl/A1/" />
   <node pkg="vdo_bag_generation" type="vdo_bag_generation_node" name="vdo_bag_generation" output="screen" />
 </launch>

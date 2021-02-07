@@ -1,5 +1,6 @@
 #include "ImagePreprocessing.hpp"
 #include <ros/package.h>
+#include <ros/ros.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <nav_msgs/Odometry.h>
 #include <vdo_slam.hpp>
@@ -22,10 +23,24 @@ ImagePrepcoessing::ImagePrepcoessing(ros::NodeHandle& n) :
 {
 
     handler.param<std::string>("/input_camera_topic", input_camera_topic, "/camera/image_raw");
+    handler.param<std::string>("/input_camera_info_topic", input_camera_info_topic, "/camera/camera_info");
     handler.param<bool>("/apply_undistortion", undistord_images, false);
     handler.param<bool>("/run_mask_rcnn", run_mask_rcnn, false);
     handler.param<bool>("/run_flow_net", run_scene_flow, false);
     handler.param<bool>("/run_mono_depth", run_mono_depth, false);
+
+    if (undistord_images) {
+        ROS_INFO_STREAM("Waiting for camera info topic: " << input_camera_topic);
+        auto info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(input_camera_info_topic);
+        camera_info.intrinsics = (cv::Mat_<double>(3,3) << info->K[0], info->K[1], info->K[2], 
+                                                         info->K[3], info->K[4], info->K[5], 
+                                                         info->K[6], info->K[7], info->K[8]);
+        
+        camera_info.dist_coeffs = cv::Mat_<double>(1,info->D.size());
+        memcpy(camera_info.dist_coeffs.data, info->D.data(), info->D.size()*sizeof(double));
+
+        ROS_INFO_STREAM(camera_info.dist_coeffs);
+    }
 
 
     if(run_mask_rcnn) {
@@ -89,26 +104,29 @@ ImagePrepcoessing::~ImagePrepcoessing() {}
 void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGB8);
     cv::Mat distored = cv_ptr->image;
-    // cv::cvtColor(distored, distored, CV_RGB2BGR);
-    cv::Mat image = distored;
+    cv::Mat undistorted;
+    distored.copyTo(undistorted);
+
+    if (undistord_images) {
+        undistortImage(distored, undistorted);
+    }
+
+
+    cv::Mat image = undistorted;
     std_msgs::Header original_header = msg->header;
 
     std::vector<std::string> mask_rcnn_labels;
     std::vector<int> mask_rcnn_label_indexs;
-    // std_msgs::Header original_header = std_msgs::Header();
 
     if (is_first) {
         previous_image = image;
         previous_time = msg->header.stamp;
-        // previous_time = ros::Time::now();
         is_first = false;
         return;
     }
     else {
         cv::Mat current_image = image;
-        // current_time = msg->header.stamp;
-        // current_time = ros::Time::now();
-        // original_header.stamp = current_time;
+        current_time = msg->header.stamp;
 
         // //TODO: what should this be
         // original_header.frame_id = "base_link";
@@ -156,6 +174,7 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             }
         }
 
+        // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
         input_image.publish(msg);
 
         previous_image = current_image;
@@ -164,3 +183,9 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 
 
 }
+
+
+void ImagePrepcoessing::undistortImage(cv::Mat& input, cv::Mat& undistorted) {
+    cv::undistort(input, undistorted, camera_info.intrinsics, camera_info.dist_coeffs);
+}
+

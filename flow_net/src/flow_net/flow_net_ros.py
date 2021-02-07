@@ -78,7 +78,7 @@ class FlowNetRos(RosCppCommunicator):
         output_image_msg = ros_numpy.msgify(Image, output_image, encoding='32FC2')
         response.success = True
         response.output_image = output_image_msg
-        response.ouput_viz = flow_image_msg
+        response.output_viz = flow_image_msg
 
         return response
 

@@ -81,7 +81,7 @@ class MaskRcnnRos(RosCppCommunicator):
             response.output_mask = output_image_msg
             response.labels = labels
             response.label_indexs = label_indexs
-            response.ouput_viz = display_image_msg
+            response.output_viz = display_image_msg
 
             del response_image
             del labels

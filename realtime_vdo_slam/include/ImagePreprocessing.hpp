@@ -40,8 +40,12 @@
 
 //wrapper for camera information
 struct CameraInformation {
+    typedef std::unique_ptr<CameraInformation> CameraInformationPtr;
+
     std::string topic;
-    sensor_msgs::CameraInfo camera_info;
+    cv::Mat intrinsics;
+    cv::Mat dist_coeffs;
+    sensor_msgs::CameraInfoConstPtr camera_info_msg;
 
 };
 
@@ -52,6 +56,8 @@ namespace VDO_SLAM {
     public:
         ImagePrepcoessing(ros::NodeHandle& n);
         ~ImagePrepcoessing();
+
+        void undistortImage(cv::Mat& input, cv::Mat& undistorted);
 
 
     private:
@@ -111,13 +117,11 @@ namespace VDO_SLAM {
         //trajectory image for display
         cv::Mat image_trajectory;
 
+        std::string input_camera_info_topic;
 
-        //VdoSlam
-        // std::unique_ptr<VDO_SLAM::System> slam_system;
-        // std::unique_ptr<VDO_SLAM::RosScene> ros_scene;
-        // std::queue<std::shared_ptr<VdoSlamInput>> vdo_input_queue;
-        // std::mutex queue_mutex;
-        // std::thread vdo_worker_thread;
+        CameraInformation camera_info;
+
+
         ros::Time previous_time;
         ros::Time current_time;
 
