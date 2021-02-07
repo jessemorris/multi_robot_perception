@@ -125,7 +125,7 @@ class MonoDepth2Ros(RosCppCommunicator):
 
         Returns:
             [numpy array]: [Depth image of type CV8UC1]
-        """        
+        """ 
         # image = pilImage.fromarray(input_image)
         image = cv2.resize(input_image, (self.feed_width, self.feed_height), interpolation = cv2.INTER_AREA)
         # print(image.shape)
@@ -141,26 +141,20 @@ class MonoDepth2Ros(RosCppCommunicator):
         
     
         tensor_image = tensor_image.unsqueeze(0)
-        # tensor_image.cpu().numpy()
-
-        # del tensor_image
-        # del input_image
-        # del image
-        # # PREDICTION
-        #tensor image should be of size: torch.Size([1, 3, 192, 640])
         image_predicted = tensor_image.to(self.device)
         features = self.encoder(image_predicted)
         outputs = self.depth_decoder(features)
 
 
         disp = outputs[("disp", 0)]
+        disp, _ = self.disp_to_depth(disp, 1e-3, 80)
+
         disp_resized = torch.nn.functional.interpolate(
             disp, (original_height, original_width), mode="bilinear", align_corners=False)
 
         #output is a np.float64. We must cast down to a np.float8 so that ROS encodings can handles this
         #apparently float16 is super slow becuase most intel processors dont support FP16 ops so we're going with np.uint16
-        # depth_image_float = disp_resized.squeeze().cpu().numpy()
-        depth_image_float = disp_resized.squeeze().cpu().detach().numpy()
+        depth_image_float = disp_resized.squeeze().cpu().numpy()
         depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=65536, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
         # # self.log_to_ros(depth_image.shape)
 
@@ -173,6 +167,17 @@ class MonoDepth2Ros(RosCppCommunicator):
         del disp
 
         return depth_image
+
+    def disp_to_depth(self, disp, min_depth, max_depth):
+            """Convert network's sigmoid output into depth prediction
+            The formula for this conversion is given in the 'additional considerations'
+            section of the paper.
+            """
+            min_disp = 1 / max_depth
+            max_disp = 1 / min_depth
+            scaled_disp = min_disp + (max_disp - min_disp) * disp
+            depth = 1 / scaled_disp
+            return scaled_disp, depth       
 
     def depth_image_to_colourmap(self, depth_image):
         """[Converts the depth image to a colour mapping for visualiation]

@@ -36,11 +36,11 @@ Camera.RGB: 1
 ChooseData: 2
 
 # Deptmap values factor
-DepthMapFactor: 256.0
+DepthMapFactor: 500
 
 # Close/Far Depth threshold
 #ThDepthBG: 40.0
-ThDepthBG: 6000
+ThDepthBG: 3000
 ThDepthOBJ: 25.0
 
 # Max Tracking Points on Background and Object in each frame

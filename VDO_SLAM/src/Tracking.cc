@@ -535,6 +535,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         cv::Mat CamPos = Converter::toInvMatrix(mCurrentFrame.mTcw);
         cout << "Made cam pos" << endl;
 
+        //x is 0, 3 y is 2,3?
         int x = int(CamPos.at<float>(0,3)*scale) + sta_x;
         int y = int(CamPos.at<float>(2,3)*scale) + sta_y;
         // cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(255,0,0), thic);
@@ -555,7 +556,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
 
         cv::putText(imTraj, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
         cv::putText(imTraj, "Object Trajectories (COLORED CIRCLES)", cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
-        cout << "v obj center " << mCurrentFrame.vObjCentre3D.size() << endl;
+        // cout << "v obj center " << mCurrentFrame.vObjCentre3D.size() << endl;
         for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
         {
             if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0) {
@@ -630,7 +631,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         else
             cv::waitKey(1);
     }
-    cout << "done showing object trajectories" <<endl;
+    // cout << "done showing object trajectories" <<endl;
 
     // if(timestamp!=0 && bFrame2Frame == true && mTestData==OMD)
     // {
@@ -693,7 +694,7 @@ void Tracking::Track()
         mState = NOT_INITIALIZED;
 
     mLastProcessedState=mState;
-    std::cout << "last processed state " << mLastProcessedState << std::endl;
+    // std::cout << "last processed state " << mLastProcessedState << std::endl;
 
 
     if(mState==NOT_INITIALIZED)
@@ -711,9 +712,9 @@ void Tracking::Track()
     {
         bFrame2Frame = true;
 
-        cout << "--------------------------------------------" << endl;
-        cout << "..........Dealing with Camera Pose.........." << endl;
-        cout << "--------------------------------------------" << endl;
+        // cout << "--------------------------------------------" << endl;
+        // cout << "..........Dealing with Camera Pose.........." << endl;
+        // cout << "--------------------------------------------" << endl;
 
         // // *********** Update TemperalMatch ***********
         for (int i = 0; i < mCurrentFrame.N_s; ++i){
@@ -726,7 +727,7 @@ void Tracking::Track()
             return;
         }
 
-        cout << "Temperal Match size is " << TemperalMatch.size() << endl;
+        // cout << "Temperal Match size is " << TemperalMatch.size() << endl;
 
         clock_t s_1_1, s_1_2, e_1_1, e_1_2;
         double cam_pos_time;
@@ -793,9 +794,9 @@ void Tracking::Track()
 
         // -------------------------------------------------
 
-        cout << "--------------------------------------------" << endl;
-        cout << "..........Dealing with Objects Now.........." << endl;
-        cout << "--------------------------------------------" << endl;
+        // cout << "--------------------------------------------" << endl;
+        // cout << "..........Dealing with Objects Now.........." << endl;
+        // cout << "--------------------------------------------" << endl;
 
         // // ====== compute sparse scene flow to the found matches =======
         GetSceneFlowObj();
@@ -832,7 +833,7 @@ void Tracking::Track()
         // main loop
         for (int i = 0; i < ObjIdNew.size(); ++i)
         {
-            cout << endl << "Processing Object No.[" << mCurrentFrame.nModLabel[i] << "]:" << endl;
+            // cout << endl << "Processing Object No.[" << mCurrentFrame.nModLabel[i] << "]:" << endl;
             // Get the ground truth object motion
             cv::Mat L_p, L_c, L_w_p, L_w_c, H_p_c, H_p_c_body;
             bool bCheckGT1 = false, bCheckGT2 = false;
@@ -1110,9 +1111,9 @@ void Tracking::Track()
         mpMap->vnAssoDyn.push_back(mCurrentFrame.nDynInlierID);        // (new added Nov 20 2019)
         mpMap->vnFeatLabel.push_back(mCurrentFrame.vObjLabel);         // (new added Nov 20 2019)
 
-        cout << "mpMap vpFfeatSta size " << mpMap->vpFeatSta.size() << endl;
-        cout << "mpMap vfDepSta size " << mpMap->vfDepSta.size() << endl;
-        cout << "mpMap vmCameraPose_GT size " << mpMap->vmCameraPose_GT.size() << endl;
+        // cout << "mpMap vpFfeatSta size " << mpMap->vpFeatSta.size() << endl;
+        // cout << "mpMap vfDepSta size " << mpMap->vfDepSta.size() << endl;
+        // cout << "mpMap vmCameraPose_GT size " << mpMap->vmCameraPose_GT.size() << endl;
 
         //Jesse -> this may be why when global batch is not running it doenst update the masks as well
         if (f_id==StopFrame || bLocalBatch)
@@ -1123,8 +1124,8 @@ void Tracking::Track()
             mpMap->TrackletDyn = GetDynamicTrackNew();  // (new added Nov 20 2019)
         }
 
-        cout << "mpMap TrackletSta size " << mpMap->TrackletSta.size() << endl;
-        cout << "mpMap TrackletDyn size " << mpMap->TrackletDyn.size() << endl;
+        // cout << "mpMap TrackletSta size " << mpMap->TrackletSta.size() << endl;
+        // cout << "mpMap TrackletDyn size " << mpMap->TrackletDyn.size() << endl;
 
         // (5) camera pose
         cv::Mat CameraPoseTmp = Converter::toInvMatrix(mCurrentFrame.mTcw);
@@ -1246,12 +1247,12 @@ void Tracking::Track()
     // ============== Full batch optimize on all the measurements (global optimization) ================
     // =================================================================================================
 
-    cout << "Fid: " << f_id << endl;
-    cout << "StopFrame: " << StopFrame << endl;
+    // cout << "Fid: " << f_id << endl;
+    // cout << "StopFrame: " << StopFrame << endl;
     bGlobalBatch = true;
     if (f_id==StopFrame) // bFrame2Frame f_id>=2
     {
-        cout << "Fid is stop frame: " << f_id << endl;
+        // cout << "Fid is stop frame: " << f_id << endl;
         // Metric Error BEFORE Optimization
         //comment these becuase we have no ground truth
         // GetMetricError(mpMap->vmCameraPose,mpMap->vmRigidMotion, mpMap->vmObjPosePre,

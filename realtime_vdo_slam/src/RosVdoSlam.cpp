@@ -47,6 +47,9 @@ int main(int argc, char **argv)
     //   ROS_ERROR("%s",ex.what());
     //   ros::Duration(1.0).sleep();
     // }
+    ros::Rate r(2);
+    RosVdoSlam ros_vdo_slam(n);
+
     ROS_INFO_STREAM("Waiting for /odom for initalisation");
     nav_msgs::OdometryConstPtr odom = ros::topic::waitForMessage<nav_msgs::Odometry>("/odom");
 
@@ -67,17 +70,6 @@ int main(int argc, char **argv)
 
     static_broadcaster.sendTransform(transform_stamped);
 
-
-    // std::string child_frame_id;
-    // n.getParam("/frame_id", child_frame_id);
-    // //make transform between odom and camera_link -> for now we say they are the same
-    // transform_stamped.header.frame_id = "odom";
-    // transform_stamped.child_frame_id = child_frame_id;
-    // static_broadcaster.sendTransform(transform_stamped);
-
-    ros::Rate r(2);
-
-    RosVdoSlam ros_vdo_slam(n);
 
     while(ros::ok()) {
         ros::spinOnce();

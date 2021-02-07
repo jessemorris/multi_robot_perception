@@ -68,7 +68,7 @@ VDO_SLAM::RosScene::RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _ti
 
         nav_msgs::Odometry odom;
         odom.header.stamp = time;
-        odom.header.frame_id = "vdo_odom";
+        odom.header.frame_id = "map";
         odom.child_frame_id = child_frame_id;
         odom.pose.pose.position.x = camera_pos_translation.x;
         odom.pose.pose.position.y = camera_pos_translation.y;
@@ -137,7 +137,7 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         mask_img(handle,"/camera/mask/image_raw", 5),
         flow_img(handle,"/camera/flow/image_raw", 5),
         depth_img(handle,"/camera/depth/image_raw", 5),
-        sync(raw_img, mask_img, flow_img, depth_img, 5)
+        sync(raw_img, mask_img, flow_img, depth_img, 20)
 
     {
         handle.getParam("/global_optim_trigger", global_optim_trigger);
