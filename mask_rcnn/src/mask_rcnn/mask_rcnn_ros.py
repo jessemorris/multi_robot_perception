@@ -76,7 +76,7 @@ class MaskRcnnRos(RosCppCommunicator):
             # test_image = self.display_predictions(input_image)
 
             output_image_msg = ros_numpy.msgify(Image, response_image, encoding='mono8')
-            display_image_msg = ros_numpy.msgify(Image, display_image, encoding='mono8')
+            display_image_msg = ros_numpy.msgify(Image, display_image, encoding='rgb8')
 
             response.success = True
             # response.output_image = output_image_msg
@@ -200,7 +200,7 @@ class MaskRcnnRos(RosCppCommunicator):
             np.where(mask == index, np.multiply(mask, colour), mask )
             colored_mask = mask.reshape(coloured_img.shape)
             coloured_img = coloured_img + colored_mask
-
+        coloured_img = coloured_img.astype('uint8')
         return coloured_img
 
 

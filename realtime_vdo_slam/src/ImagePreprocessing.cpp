@@ -153,7 +153,7 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "mono8", mask_rcnn_mat).toImageMsg();
                 maskrcnn_raw.publish(img_msg);
 
-                img_msg = cv_bridge::CvImage(original_header, "mono8", mask_rcnn_viz).toImageMsg();
+                img_msg = cv_bridge::CvImage(original_header, "rgb8", mask_rcnn_viz).toImageMsg();
                 maskrcnn_viz.publish(img_msg);
                 
             }
