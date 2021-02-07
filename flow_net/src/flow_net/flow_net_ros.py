@@ -45,7 +45,6 @@ class FlowNetRos(RosCppCommunicator):
 
         #set up service calls
         self.flow_net_service = rospy.Service("flow_net_service",FlowNet, self.flow_net_service_callback)
-        self.flow_net_test_publisher = rospy.Publisher('flow_net/test', Image, queue_size=10)
         self.log_to_ros("Service call ready")
 
 

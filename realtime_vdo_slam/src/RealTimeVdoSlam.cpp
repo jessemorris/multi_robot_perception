@@ -131,10 +131,10 @@ void VDO_SLAM::RosScene::display_scene() {
 
 RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         handle(n),
-        raw_img(handle, "vdoslam/input/camera/rgb/image_raw", 1),
-        mask_img(handle, "vdoslam/input/camera/mask/image_raw", 1),
-        flow_img(handle, "vdoslam/input/camera/flow/image_raw", 1),
-        depth_img(handle, "vdoslam/input/camera/depth/image_raw", 1),
+        raw_img(handle,"/camera/rgb/image_raw", 10),
+        mask_img(handle,"/camera/mask/image_raw", 10),
+        flow_img(handle,"/camera/flow/image_raw", 10),
+        depth_img(handle,"/camera/depth/image_raw", 10),
         sync(raw_img, mask_img, flow_img, depth_img, 20)
 
     {
@@ -144,13 +144,15 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         std::string path = ros::package::getPath("realtime_vdo_slam");
         std::string vdo_slam_config_path = path + "/config/vdo_config.yaml";
 
-
-        slam_system = std::make_unique< VDO_SLAM::System>(vdo_slam_config_path,VDO_SLAM::System::RGBD);
+        //TODO: should get proper previous time
+        previous_time = ros::Time::now();
         image_trajectory = cv::Mat::zeros(800, 600, CV_8UC3);
         vdo_worker_thread = std::thread(&RosVdoSlam::vdo_worker, this);
 
-        //TODO: should get proper previous time
-        previous_time = ros::Time::now();
+        sync.registerCallback(boost::bind(&RosVdoSlam::vdo_input_callback, this, _1, _2, _3, _4));
+
+        slam_system = std::make_unique< VDO_SLAM::System>(vdo_slam_config_path,VDO_SLAM::System::RGBD);
+
 
     }
 
@@ -187,6 +189,7 @@ void RosVdoSlam::vdo_input_callback(ImageConst raw_image, ImageConst mask, Image
             mono_depth_mat, mask_rcnn_mat, time_difference, current_time);
 
     //add the input to the thread queue so we can deal with it later
+    ROS_INFO_STREAM("made input");
     push_vdo_input(input);
     previous_time = current_time;
     

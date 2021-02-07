@@ -91,7 +91,6 @@ class MonoDepth2Ros(RosCppCommunicator):
 
         #set up service calls
         self.mono_depth_service = rospy.Service("mono_depth_service",MonoDepth, self.mono_depth_service_callback)
-        self.mono_depth_test_publisher = rospy.Publisher('mono_depth/test', Image, queue_size=10)
         self.log_to_ros("Service call ready")
 
     @torch.no_grad()
@@ -109,7 +108,6 @@ class MonoDepth2Ros(RosCppCommunicator):
         depth_image = self.analyse_depth(current_image)
 
         output_image_msg = ros_numpy.msgify(Image, depth_image, encoding='mono16')
-        self.mono_depth_test_publisher.publish(output_image_msg)
 
         del depth_image
         response.success = True

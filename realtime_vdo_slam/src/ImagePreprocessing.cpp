@@ -88,14 +88,14 @@ ImagePrepcoessing::ImagePrepcoessing(ros::NodeHandle& n) :
     ///camera/rgb/image_raw
     //these will be published as the output of the program with the same timestamp as well as the
     //the original image
-    input_image = image_transport.advertise("vdoslam/input/camera/rgb/image_raw", 10);
+    input_image = image_transport.advertise("/vdoslam/input/camera/rgb/image_raw", 10);
 
-    maskrcnn_raw = image_transport.advertise("vdoslam/input/camera/mask/image_raw", 10);
-    maskrcnn_viz = image_transport.advertise("vdoslam/input/camera/mask/colour_mask", 10);
+    maskrcnn_raw = image_transport.advertise("/vdoslam/input/camera/mask/image_raw", 10);
+    maskrcnn_viz = image_transport.advertise("/vdoslam/input/camera/mask/colour_mask", 10);
 
-    flownet_raw = image_transport.advertise("vdoslam/input/camera/flow/image_raw", 10);
-    flownet_viz = image_transport.advertise("vdoslam/input/camera/flow/colour_map", 10);
-    monodepth_raw = image_transport.advertise("vdoslam/input/camera/depth/image_raw", 10);
+    flownet_raw = image_transport.advertise("/vdoslam/input/camera/flow/image_raw", 10);
+    flownet_viz = image_transport.advertise("/vdoslam/input/camera/flow/colour_map", 10);
+    monodepth_raw = image_transport.advertise("/vdoslam/input/camera/depth/image_raw", 10);
 
 }
 

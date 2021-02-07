@@ -41,6 +41,7 @@ class MaskRcnnRos(RosCppCommunicator):
         cfg.freeze()
 
         self._greyscale_palette = (2 * 25 - 1)
+        self._colour_palette = np.array([2 ** 25 - 1, 2 ** 15 - 1, 2 ** 21 - 1])
 
 
         # prepare object that handles inference plus adds predictions on top of image
@@ -48,11 +49,13 @@ class MaskRcnnRos(RosCppCommunicator):
             cfg,
             confidence_threshold=0.8,
             show_mask_heatmaps=False,
-            masks_per_dim=1,
+            masks_per_dim=2,
             min_image_size=800
         )
 
         self._greyscale_colours = self._generate_grayscale_values()
+        self._colours = self._generate_coloured_values()
+        print(self._colours)
 
 
 
@@ -69,8 +72,7 @@ class MaskRcnnRos(RosCppCommunicator):
             input_image = ros_numpy.numpify(req.input_image)
 
             response_image, labels, label_indexs = self.analyse_image(input_image)
-            
-            display_image = response_image * 48
+            display_image = self._generate_coloured_mask(response_image, labels, label_indexs)
             # test_image = self.display_predictions(input_image)
 
             output_image_msg = ros_numpy.msgify(Image, response_image, encoding='mono8')
@@ -150,16 +152,7 @@ class MaskRcnnRos(RosCppCommunicator):
         #separate objects
         for mask, semantic_index in zip(masks, label_indexs):
             thresh = mask[0, :, :].astype(np.uint8) * semantic_index
-            # print(mask.shape)
-            # thresh = mask.astype(np.uint8) * colour
-            # print(thresh)
-        
             blank_mask += thresh
-            # contours, hierarchy = cv2_util.findContours(
-            #     thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
-            # )
-            # # contours = contours[0] if len(contours) == 2 else contours[1]
-            # image = cv2.drawContours(image, contours, -1, color, 3)
 
         composite = blank_mask
 
@@ -186,8 +179,29 @@ class MaskRcnnRos(RosCppCommunicator):
         categories_index = np.linspace(0, numer_of_cats, numer_of_cats + 1)
         colors = np.array(categories_index) * self._greyscale_palette
         colors = (colors % 255).astype("uint8")
-        print(type(colors))
         return colors
+
+    def _generate_coloured_values(self):
+        numer_of_cats = len(self.coco_demo.CATEGORIES)  
+        categories_index = np.linspace(0, numer_of_cats, numer_of_cats + 1)
+        colors = [(np.multiply(index,self._colour_palette) % 255).astype('uint8') for index in categories_index]
+        # colors = np.array(categories_index) % 255) * self._colour_palette
+        # colors = (colors % 255).astype("uint8")
+        return colors
+
+    def _generate_coloured_mask(self, mask, labels, labels_index):
+        mask =  np.expand_dims(mask, 2) 
+        mask = np.repeat(mask, 3, axis=2) # give the mask the same shape as your image
+        coloured_img = np.zeros(mask.shape)
+        
+        for index in labels_index:
+            colour = self._colours[index]
+            mask.flatten()
+            np.where(mask == index, np.multiply(mask, colour), mask )
+            colored_mask = mask.reshape(coloured_img.shape)
+            coloured_img = coloured_img + colored_mask
+
+        return coloured_img
 
 
 
@@ -203,7 +217,8 @@ def main():
         ret_val, img = cam.read()
         # response_image, labels, label_indexs = maskrcnn.analyse_image(img)
         response_image, labels, label_indexs = maskrcnn.analyse_image(img)
-        display_image = response_image * 48
+        display_image = maskrcnn._generate_coloured_mask(response_image, labels, label_indexs)
+
         # test_image = maskrcnn.display_predictions(img)
         print("Time: {:.2f} s / img".format(time.time() - start_time))
         cv2.imshow("COCO detections", display_image)
