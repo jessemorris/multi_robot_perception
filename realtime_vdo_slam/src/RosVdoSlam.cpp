@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     static_broadcaster.sendTransform(transform_stamped);
     ros::spinOnce();
 
-    ros::Rate r(2);
+    ros::Rate r(10);
     RosVdoSlam ros_vdo_slam(n);
 
     // ROS_INFO_STREAM("Waiting for /odom for initalisation");

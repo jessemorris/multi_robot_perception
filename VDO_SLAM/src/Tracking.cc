@@ -197,6 +197,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                     imD.at<float>(i,j) = mbf/(imD.at<float>(i,j)/mDepthMapFactor);
                     // --- for monocular depth map ---
                     // imD.at<float>(i,j) = imD.at<float>(i,j)/500.0;
+                    // imD.at<float>(i,j) = imD.at<float>(i,j)/mDepthMapFactor;
                 }
             }
         }
@@ -1274,7 +1275,6 @@ void Tracking::Track()
             // GetVelocityError(mpMap->vmRigidMotion_RF, mpMap->vp3DPointDyn, mpMap->vnFeatLabel,
             //                  mpMap->vnRMLabel, mpMap->vfAllSpeed_GT, mpMap->vnAssoDyn, mpMap->vbObjStat);
             f_id = 0; //14.1.2020 Jesse add -> need to reset fid so we optimize again for streaming
-            // mpMap->reset();
             // mState = NO_IMAGES_YET;
         }
         else {

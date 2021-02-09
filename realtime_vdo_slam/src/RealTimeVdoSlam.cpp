@@ -118,8 +118,8 @@ void VDO_SLAM::RosScene::make_vizualisation(visualization_msgs::MarkerArray& mar
         // marker.type = visualization_msgs::Marker::SPHERE;
         marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
         marker.action = visualization_msgs::Marker::ADD;
-        marker.pose.position.x = scene_object.pose.x;
-        marker.pose.position.y = scene_object.pose.y;
+        marker.pose.position.x = -scene_object.pose.x;
+        marker.pose.position.y = -scene_object.pose.y;
         marker.pose.position.z = 0;
 
 

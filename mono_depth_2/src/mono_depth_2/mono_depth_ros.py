@@ -140,7 +140,6 @@ class MonoDepth2Ros(RosCppCommunicator):
 
 
         disp = outputs[("disp", 0)]
-        disp, _ = disp_to_depth(disp, 0.1, 100)
         disp_resized = torch.nn.functional.interpolate(
             disp, (original_height, original_width), mode="bilinear", align_corners=False)
 
@@ -149,8 +148,9 @@ class MonoDepth2Ros(RosCppCommunicator):
         #apparently float16 is super slow becuase most intel processors dont support FP16 ops so we're going with np.uint16
         # depth_image_float = disp_resized.squeeze().cpu().numpy()
         depth_image_float = disp_resized.squeeze().cpu().detach().numpy()
-        # depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=65536, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
-        depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=65536, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
+
+        
         del tensor_image
         del image 
         del features
