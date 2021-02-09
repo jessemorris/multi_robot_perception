@@ -22,6 +22,7 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <iostream>
 #include <stdio.h>
+#include <nav_msgs/Odometry.h>
 
 
 #include <vdo_slam.hpp>
@@ -48,27 +49,52 @@ namespace VDO_SLAM {
             ros::Time time;
             int uid;
     };
+
     
     class RosScene : public Scene {
 
+
         public:
-            RosScene(ros::NodeHandle& _nh, Scene& _object, ros::Time _time);
-            void display_scene();
+            RosScene(Scene& _object, ros::Time _time);
+
+            const nav_msgs::Odometry& odom_msg() const;
+            const geometry_msgs::TransformStamped& tf_transform_msg() const;
+            void make_vizualisation(visualization_msgs::MarkerArray& marker_array);
 
         private:
-            std::string child_frame_id;
             ros::Time time;
+
+            nav_msgs::Odometry odom;
+            geometry_msgs::TransformStamped transform_stamped;
+
+        
+    };
+
+    class RosSceneManager {
+
+        public:
+            RosSceneManager(ros::NodeHandle& _nh);
+            void display_scene(std::unique_ptr<VDO_SLAM::RosScene>& scene);
+
+        private:
             ros::NodeHandle nh;
             ros::Publisher visualiser;
             ros::Publisher odom_pub;
             tf2_ros::TransformBroadcaster broadcaster;
+            std::string child_frame_id;
+
+        
 
             static int vis_count; //used for marker visualisation
-        
+
     };
 
 
 };
+
+typedef std::unique_ptr<VDO_SLAM::RosScene> RosScenePtr;
+
+
 struct VdoSlamInput {
     cv::Mat raw, flow, depth, mask;
     std::vector<std::vector<float> > object_pose_gt;
@@ -116,9 +142,11 @@ class RosVdoSlam {
 
         int global_optim_trigger;
         //VdoSlam
+        VDO_SLAM::RosSceneManager ros_scene_manager;
+        std::unique_ptr<VDO_SLAM::RosScene> ros_scene;
+
         cv::Mat image_trajectory;
         std::unique_ptr<VDO_SLAM::System> slam_system;
-        std::unique_ptr<VDO_SLAM::RosScene> ros_scene;
         std::queue<std::shared_ptr<VdoSlamInput>> vdo_input_queue;
         std::mutex queue_mutex;
         std::thread vdo_worker_thread;

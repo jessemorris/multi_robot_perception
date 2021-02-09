@@ -33,7 +33,7 @@ import time
 #e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml
 class MaskRcnnRos(RosCppCommunicator):
 
-    def __init__(self, config_path = package_path + "src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_X_101_32x8d_FPN_1x_caffe2.yaml"):
+    def __init__(self, config_path = package_path + "src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"):
         RosCppCommunicator.__init__(self)
         self.model_config_path = config_path
         cfg.merge_from_file(self.model_config_path)
@@ -47,9 +47,9 @@ class MaskRcnnRos(RosCppCommunicator):
         # prepare object that handles inference plus adds predictions on top of image
         self.coco_demo = COCODemo(
             cfg,
-            confidence_threshold=0.8,
+            confidence_threshold=0.80,
             show_mask_heatmaps=False,
-            masks_per_dim=2,
+            masks_per_dim=4,
             min_image_size=800
         )
 
@@ -70,7 +70,7 @@ class MaskRcnnRos(RosCppCommunicator):
         try: 
             input_image = ros_numpy.numpify(req.input_image)
 
-            response_image, labels, label_indexs = self.analyse_image(input_image)
+            response_image, labels, label_indexs, _ = self.analyse_image(input_image)
             display_image = self._generate_coloured_mask(response_image, labels, label_indexs)
             # test_image = self.display_predictions(input_image)
 
@@ -116,9 +116,25 @@ class MaskRcnnRos(RosCppCommunicator):
     def analyse_image(self, image):
         predictions = self.coco_demo.compute_prediction(image)
         top_predictions = self.coco_demo.select_top_predictions(predictions)
-        return self.create_pixel_masks(image, top_predictions)
-       
-        # result = image.copy()
+        composite, labels, label_indexs =  self.create_pixel_masks(image, top_predictions)
+
+        if top_predictions:
+            #in form [x,y,w,h]
+            bounding_boxes = []
+            top_predictions = top_predictions.convert("xywh")
+            boxes = top_predictions.bbox
+            for box in boxes:
+                xmin, ymin, w, h = box.split(1, dim=-1)
+                rect = [int(xmin.numpy()[0]), int(ymin.numpy()[0]), int(w.numpy()[0]), int(h.numpy()[0]) ]
+                bounding_boxes.append(rect)
+            
+            if len(bounding_boxes) < 1:
+                bounding_boxes = [[]]
+
+            return composite, labels, label_indexs, bounding_boxes
+        else:
+            return composite, labels, label_indexs, []
+
 
     def create_pixel_masks(self, image, predictions):
         """

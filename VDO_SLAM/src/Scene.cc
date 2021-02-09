@@ -25,6 +25,22 @@ VDO_SLAM::Scene::Scene(int _id, double _timestamp):
                                                        0, 0, 0);
     }
 
+const cv::Point3f& VDO_SLAM::Scene::camera_pos_T() const {
+    return camera_pos_translation;
+}
+
+const cv::Mat& VDO_SLAM::Scene::camera_pos_R() const {
+    return camera_pos_rotation;
+}
+
+const cv::Point3f& VDO_SLAM::Scene::camera_vel_T() const {
+    return camera_vel_translation;
+
+}
+const cv::Mat& VDO_SLAM::Scene::camera_vel_R() const {
+    return camera_vel_rotation;
+}
+
 //I think I do want to copy here
 void VDO_SLAM::Scene::add_scene_object(VDO_SLAM::SceneObject _object) {
     scene_objects.push_back(_object);

@@ -19,7 +19,7 @@ import matplotlib.cm as cm
 import torch
 from torchvision import transforms, datasets
 import torch.backends.cudnn as cudnn
-from memory_profiler import profile
+# from memory_profiler import profile
 
 
 from mono_depth_2.networks import DepthDecoder
@@ -48,7 +48,7 @@ rospack = rospkg.RosPack()
 package_path = rospack.get_path("mono_depth_2")
 
 class MonoDepth2Ros(RosCppCommunicator):
-    def __init__(self, model_path= package_path + "/src/mono_depth_2/models/", model_name = "stereo_640x192"):
+    def __init__(self, model_path= package_path + "/src/mono_depth_2/models/", model_name = "mono_640x192"):
         RosCppCommunicator.__init__(self)
         self.model_name = model_name
 
@@ -132,13 +132,6 @@ class MonoDepth2Ros(RosCppCommunicator):
         original_height, original_width, _ = input_image.shape
 
         tensor_image = torch.FloatTensor(np.ascontiguousarray(np.array(image)[:, :, ::-1].transpose(2, 0, 1).astype(np.float32) * (1.0 / 255.0)))
-        # print(tensor_image.size())
-
-        # image = image.resize((self.feed_width, self.feed_height), pilImage.LANCZOS)
-        #  tensor_image = transforms.ToTensor()(image)
-        # self.log_to_ros(image)
-        # self.log_to_ros("Input image type {}".format(type(image)))
-        
     
         tensor_image = tensor_image.unsqueeze(0)
         image_predicted = tensor_image.to(self.device)
@@ -147,17 +140,17 @@ class MonoDepth2Ros(RosCppCommunicator):
 
 
         disp = outputs[("disp", 0)]
-        disp, _ = self.disp_to_depth(disp, 1e-3, 80)
-
+        disp, _ = disp_to_depth(disp, 0.1, 100)
         disp_resized = torch.nn.functional.interpolate(
             disp, (original_height, original_width), mode="bilinear", align_corners=False)
 
+        disp_resized = disp_resized
         #output is a np.float64. We must cast down to a np.float8 so that ROS encodings can handles this
         #apparently float16 is super slow becuase most intel processors dont support FP16 ops so we're going with np.uint16
-        depth_image_float = disp_resized.squeeze().cpu().numpy()
-        depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=65536, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
-        # # self.log_to_ros(depth_image.shape)
-
+        # depth_image_float = disp_resized.squeeze().cpu().numpy()
+        depth_image_float = disp_resized.squeeze().cpu().detach().numpy()
+        # depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=65536, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
+        depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
         del tensor_image
         del image 
         del features

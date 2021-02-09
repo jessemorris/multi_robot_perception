@@ -47,6 +47,12 @@ namespace VDO_SLAM
                 camera_vel_rotation(scene.camera_vel_rotation) {}
 
 
+            const cv::Point3f& camera_pos_T() const;
+            const cv::Mat& camera_pos_R() const;
+
+            const cv::Point3f& camera_vel_T() const;
+            const cv::Mat& camera_vel_R() const;
+
             void add_scene_object(SceneObject _object);
             void update_camera_pos(cv::Mat& pos_matrix); //should be in form [R | t]
             void update_camera_vel(cv::Mat& vel_matrix); //should be in form [R | t]

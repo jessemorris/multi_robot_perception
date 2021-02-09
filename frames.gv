@@ -1,16 +1,17 @@
 digraph G {
-"map" -> "vdo_odom"[label="Broadcaster: /ros_vdoslam\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1612677892.106 sec old)\nBuffer length: 0.000 sec\n"];
-"odom" -> "base_link"[label="Broadcaster: /play_1612677874218260687\nAverage rate: 200.896 Hz\nMost recent transform: 1533015633.188 ( 79662258.917 sec old)\nBuffer length: 4.938 sec\n"];
-"map" -> "odom"[label="Broadcaster: /play_1612677874218260687\nAverage rate: 200.896 Hz\nMost recent transform: 1533015633.188 ( 79662258.917 sec old)\nBuffer length: 4.938 sec\n"];
-"base_link" -> "base_link_horizon"[label="Broadcaster: /play_1612677874218260687\nAverage rate: 100.448 Hz\nMost recent transform: 1533015633.188 ( 79662258.917 sec old)\nBuffer length: 4.938 sec\n"];
-"base_footprint" -> "base_footprint_horizon"[label="Broadcaster: /play_1612677874218260687\nAverage rate: 100.448 Hz\nMost recent transform: 1533015633.188 ( 79662258.917 sec old)\nBuffer length: 4.938 sec\n"];
-"vdo_odom" -> "vdo_camera_link"[label="Broadcaster: /ros_vdoslam\nAverage rate: 14.194 Hz\nMost recent transform: 1533015629.436 ( 79662262.669 sec old)\nBuffer length: 3.100 sec\n"];
+"map" -> "vdo_odom"[label="Broadcaster: /ros_vdoslam\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 49.162 sec old)\nBuffer length: 0.000 sec\n"];
+"map" -> "odom"[label="Broadcaster: /play_1612828593342104761\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 49.162 sec old)\nBuffer length: 0.000 sec\n"];
+"map" -> "vdo_map"[label="Broadcaster: /ros_vdoslam\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 49.162 sec old)\nBuffer length: 0.000 sec\n"];
+"odom" -> "base_link"[label="Broadcaster: /play_1612828593342104761\nAverage rate: 200.657 Hz\nMost recent transform: 1533015664.841 ( -1533015615.678 sec old)\nBuffer length: 4.904 sec\n"];
+"base_link" -> "base_link_horizon"[label="Broadcaster: /play_1612828593342104761\nAverage rate: 100.128 Hz\nMost recent transform: 1533015664.841 ( -1533015615.678 sec old)\nBuffer length: 4.904 sec\n"];
+"base_footprint" -> "base_footprint_horizon"[label="Broadcaster: /play_1612828593342104761\nAverage rate: 100.128 Hz\nMost recent transform: 1533015664.841 ( -1533015615.678 sec old)\nBuffer length: 4.904 sec\n"];
+"vdo_odom" -> "vdo_camera_link"[label="Broadcaster: /ros_vdoslam\nAverage rate: 14.754 Hz\nMost recent transform: 1533015649.703 ( -1533015600.540 sec old)\nBuffer length: 4.067 sec\n"];
 edge [style=invis];
  subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
-"Recorded at time: 1612677892.106"[ shape=plaintext ] ;
+"Recorded at time: 49.162"[ shape=plaintext ] ;
  }->"map";
 edge [style=invis];
  subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
-"Recorded at time: 1612677892.106"[ shape=plaintext ] ;
+"Recorded at time: 49.162"[ shape=plaintext ] ;
  }->"base_footprint";
 }
