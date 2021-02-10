@@ -24,8 +24,13 @@
 #include <algorithm>
 #include <map>
 
-float odom_x_offset = -127.7;
-float odom_y_offset = -90.88;
+//for a1_video_full
+// float odom_x_offset = -127.7;
+// float odom_y_offset = -90.88;
+
+//for al_video_begin
+float odom_x_offset = -13.10091;
+float odom_y_offset = 4.18042;
 
 nav_msgs::Odometry odom_new;
 

@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   geometry_msgs
   visualization_msgs
+  image_transport
   roscpp
   rospy
   std_msgs
@@ -19,12 +20,14 @@ find_package(catkin REQUIRED COMPONENTS
 )
 catkin_python_setup()
 
+find_package(OpenCV)
+
 
 include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
+    include
+    ${catkin_INCLUDE_DIRS}
+	${OpenCV_INCLUDE_DIRS}
 )
-
 
 
 #add_service_files(
@@ -43,6 +46,25 @@ catkin_package(
   CATKIN_DEPENDS rospy std_msgs message_runtime
 #  DEPENDS system_lib
 )
+
+add_executable(vdo_orb_test_node
+		src/vdo_orb_test.cpp
+		)
+
+
+
+target_link_libraries(vdo_orb_test_node
+		${catkin_LIBRARIES}
+		${OpenCV_LIBS}
+    -lvdo_slam
+		)
+
+if(catkin_EXPORTED_LIBRARIES)
+  add_dependencies(image_preprocessing_node
+		  ${catkin_EXPORTED_LIBRARIES}
+		  ${catkin_LIBRARIES}
+		  ${OpenCV_LIBS})
+endif()
 
 install(DIRECTORY
     #controller

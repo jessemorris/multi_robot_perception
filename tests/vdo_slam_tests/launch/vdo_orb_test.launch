@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="vdo_slam_tests" type="vdo_orb_test_node" name="vdo_orb_test" output="screen" />
+</launch>

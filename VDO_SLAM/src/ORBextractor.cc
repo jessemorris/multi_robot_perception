@@ -402,6 +402,14 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
     nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),
     iniThFAST(_iniThFAST), minThFAST(_minThFAST)
 {
+    
+    //make cv orb detectors
+    detector = cv::ORB::create();
+    descriptor = cv::ORB::create();
+    matcher = cv::DescriptorMatcher::create ( "BruteForce-Hamming" );
+
+
+
     mvScaleFactor.resize(nlevels);
     mvLevelSigma2.resize(nlevels);
     mvScaleFactor[0]=1.0f;
@@ -1028,6 +1036,15 @@ static void computeDescriptors(const Mat& image, vector<KeyPoint>& keypoints, Ma
 
     for (size_t i = 0; i < keypoints.size(); i++)
         computeOrbDescriptor(keypoints[i], image, &pattern[0], descriptors.ptr((int)i));
+}
+
+void ORBextractor::detect_features(cv::InputArray image, cv::InputArray mask,
+        std::vector<cv::KeyPoint>& keypoints,
+        cv::OutputArray descriptors)
+{
+    detector->detect (image,keypoints);
+    descriptor->compute (image, keypoints, descriptors);
+
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

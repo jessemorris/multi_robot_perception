@@ -12,8 +12,8 @@ Camera.cy: 238.71953562913907
 
 Camera.k1: -0.089289
 Camera.k2: 0.001958
-Camera.p1: 0.0
-Camera.p2: 0.0
+Camera.p1: -0.024592
+Camera.p2: 0.009591
 Camera.k3: 0.0
 
 Camera.width: 640
@@ -24,7 +24,7 @@ Camera.fps: 24
 
 # IR projector baseline times fx (aprox.)
 # Camera.bf: 387.5744
-Camera.bf: 396.70760099999995
+Camera.bf: 0
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
@@ -37,12 +37,12 @@ Camera.RGB: 1
 ChooseData: 2
 
 # Deptmap values factor
-DepthMapFactor: 280
+DepthMapFactor: 500
 
 # Close/Far Depth threshold
 #ThDepthBG: 40.0
-ThDepthBG: 60
-ThDepthOBJ: 45
+ThDepthBG: 40
+ThDepthOBJ: 25
 
 # Max Tracking Points on Background and Object in each frame
 MaxTrackPointBG: 1500 # 1200

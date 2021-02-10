@@ -100,7 +100,8 @@ target_link_libraries(
    # for mac os (default)
    #${PROJECT_SOURCE_DIR}/dependencies/g2o/lib/libg2o.dylib
    # for linux (ubuntu)
-   ${PROJECT_SOURCE_DIR}/dependencies/g2o/lib/libg2o.so
+   #${PROJECT_SOURCE_DIR}/dependencies/g2o/lib/libg2o.so
+   -lvdoslam_g2o
 )
 
 # Configure target warnings (PRIVATE doesn't pass on options to targets linking to target)

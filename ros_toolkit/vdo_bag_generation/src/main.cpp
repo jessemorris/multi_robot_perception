@@ -56,8 +56,10 @@ class VdoBagPlayback {
             //the frist time is actually when we start so dt should be 0 and video timing becomes now
             // everything else is relative to this
             if (!timing_info->data_recieved) {
-                dt = ros::Duration(0);
+                dt = ros::Duration(0.01);
+                ROS_INFO_STREAM("here");
                 timing_info->video_time = ros::Time::now();
+                ROS_INFO_STREAM("here1");
 
                 if (timing_info->video_time <= ros::TIME_MIN) {
                     timing_info->video_time = ros::TIME_MIN;
@@ -72,9 +74,11 @@ class VdoBagPlayback {
 
             ros::Time save_time = timing_info->video_time + dt;
 
+            if (save_time <= ros::TIME_MIN) {
+                save_time = ros::TIME_MIN;
+            } 
             timing_info->video_time = save_time;
             timing_info->prev_msg_time = msg_time;
-
             return save_time;
         }
 

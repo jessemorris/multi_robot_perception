@@ -38,12 +38,19 @@ You can use the __vdo_bag_generation__ node to generate a bag file with all the 
 
 Currently, this node has been structured to generate data using the USYD Campus Dataset (http://its.acfr.usyd.edu.au/datasets/usyd-campus-dataset/) and so will not work with any input data.
 
-See https://drive.google.com/drive/folders/1qOocuHTlipVPB4-kU1hPvRlmEGeXkUja?usp=sharing for an already preprocessed bagfile.
+See https://drive.google.com/drive/folders/1qOocuHTlipVPB4-kU1hPvRlmEGeXkUja?usp=sharing for an already preprocessed bagfile. 
+
+Note: In order to synch the time stamps properly you must tell ROS to use simulated time from the bagfile rather than the walltime.
+
+Set:
+```
+$ rosparam set use_sim_time True
+```
 
 ```
 $ roslaunch python_service_starter python_service_starter.launch
 $ roslaunch realtime_vdo_slam realtime_vdo_slam_launch.launch 
-$ rosbag play <path_to_file>.bag
+$ rosbag play <path_to_file>.bag --clock
 ```
 
 

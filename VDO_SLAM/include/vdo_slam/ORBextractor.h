@@ -12,6 +12,8 @@
 #include <vector>
 #include <list>
 #include <opencv/cv.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
 
 
 namespace VDO_SLAM
@@ -47,6 +49,10 @@ public:
     void operator()( cv::InputArray image, cv::InputArray mask,
       std::vector<cv::KeyPoint>& keypoints,
       cv::OutputArray descriptors);
+
+    void detect_features(cv::InputArray image, cv::InputArray mask,
+        std::vector<cv::KeyPoint>& keypoints,
+        cv::OutputArray descriptors);
 
     int inline GetLevels(){
         return nlevels;}
@@ -96,6 +102,11 @@ protected:
     std::vector<float> mvInvScaleFactor;
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
+
+private:
+    cv::Ptr<cv::FeatureDetector> detector;
+    cv::Ptr<cv::DescriptorExtractor> descriptor;
+    cv::Ptr<cv::DescriptorMatcher> matcher;
 };
 
 } //namespace VDO_SLAM
