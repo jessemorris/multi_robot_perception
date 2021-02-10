@@ -38,7 +38,7 @@ Camera.RGB: 1
 ChooseData: 2
 
 # Deptmap values factor
-DepthMapFactor: 399
+DepthMapFactor: 300
 
 # Close/Far Depth threshold
 #ThDepthBG: 40.0
