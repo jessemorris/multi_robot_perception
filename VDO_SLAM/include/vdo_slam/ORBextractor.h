@@ -50,9 +50,9 @@ public:
       std::vector<cv::KeyPoint>& keypoints,
       cv::OutputArray descriptors);
 
-    void detect_features(cv::InputArray image, cv::InputArray mask,
+    void detect_features(const cv::Mat& image, cv::Mat& mask,
         std::vector<cv::KeyPoint>& keypoints,
-        cv::OutputArray descriptors);
+        cv::Mat& descriptors);
 
     int inline GetLevels(){
         return nlevels;}

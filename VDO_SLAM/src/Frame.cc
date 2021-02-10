@@ -97,26 +97,35 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
     if(mvKeys.empty())
         return;
 
+    std::map<int, bool> mask_id_map;
+
     if (UseSampleFea==0)
     {
+        std::cout << "Using Sampled features" << std::endl;
         // // // Option I: ~~~~~~~ use detected features ~~~~~~~~~~ // // //
         for (int i = 0; i < mvKeys.size(); ++i)
         {
             int x = mvKeys[i].pt.x;
             int y = mvKeys[i].pt.y;
 
-            if (maskSEM.at<int>(y,x)!=0)  // new added in Jun 13 2019
+            if (maskSEM.at<int>(y,x)!=0) {  // new added in Jun 13 2019
+                if (mask_id_map.find(maskSEM.at<int>(y,x)) == mask_id_map.end()) {
+                    mask_id_map[maskSEM.at<int>(y,x)] = true;
+                    std::cout << "Found id " <<   maskSEM.at<int>(y,x) << std::endl;
+                }
                 continue;
+            }
 
-            if (imDepth.at<float>(y,x)>mThDepth || imDepth.at<float>(y,x)<=0)  // new added in Aug 21 2019
+            if (imDepth.at<float>(y,x)>mThDepth || imDepth.at<float>(y,x)<=0)  {// new added in Aug 21 2019
                 std::cout << "Depth was bad " << imDepth.at<float>(y,x) << std::endl;
                 continue;
+            }
 
             float flow_xe = imFlow.at<cv::Vec2f>(y,x)[0];
             float flow_ye = imFlow.at<cv::Vec2f>(y,x)[1];
 
-            // std::cout << "flow xe " << flow_xe << std::endl;
-            // std::cout << "flow ye " << flow_ye << std::endl;
+            std::cout << "flow xe " << flow_xe << std::endl;
+            std::cout << "flow ye " << flow_ye << std::endl;
 
 
             if(flow_xe!=0 && flow_ye!=0)
@@ -143,7 +152,6 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
         fea_det_time = (double)(e_1-s_1)/CLOCKS_PER_SEC*1000;
         std::cout << "feature detection time: " << fea_det_time << std::endl;
 
-        std::map<int, bool> mask_id_map;
 
         for (int i = 0; i < mvKeysSamp.size(); ++i)
         {
@@ -299,7 +307,9 @@ void Frame::AssignFeaturesToGrid()
 void Frame::ExtractORB(int flag, const cv::Mat &im)
 {
     if(flag==0){
-        mpORBextractorLeft->detect_features(im, cv::Mat(), mvKeys, mDescriptors);
+        std::cout << "Using CV Orb" << std::endl;
+        cv::Mat mask;
+        mpORBextractorLeft->detect_features(im, mask, mvKeys, mDescriptors);
         // (*mpORBextractorLeft)(im,cv::Mat(),mvKeys,mDescriptors);
         // cv::Ptr<cv::Feature2D> f2d = cv::xfeatures2d::SURF::create(400);
         // cv::Ptr<cv::Feature2D> f2d = cv::xfeatures2d::SIFT::create();

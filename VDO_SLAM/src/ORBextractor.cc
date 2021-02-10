@@ -1038,9 +1038,9 @@ static void computeDescriptors(const Mat& image, vector<KeyPoint>& keypoints, Ma
         computeOrbDescriptor(keypoints[i], image, &pattern[0], descriptors.ptr((int)i));
 }
 
-void ORBextractor::detect_features(cv::InputArray image, cv::InputArray mask,
+void ORBextractor::detect_features(const cv::Mat& image, cv::Mat& mask,
         std::vector<cv::KeyPoint>& keypoints,
-        cv::OutputArray descriptors)
+        cv::Mat& descriptors)
 {
     detector->detect (image,keypoints);
     descriptor->compute (image, keypoints, descriptors);
