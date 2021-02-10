@@ -307,10 +307,10 @@ void Frame::AssignFeaturesToGrid()
 void Frame::ExtractORB(int flag, const cv::Mat &im)
 {
     if(flag==0){
-        std::cout << "Using CV Orb" << std::endl;
+        // std::cout << "Using CV Orb" << std::endl;
         cv::Mat mask;
-        mpORBextractorLeft->detect_features(im, mask, mvKeys, mDescriptors);
-        // (*mpORBextractorLeft)(im,cv::Mat(),mvKeys,mDescriptors);
+        // mpORBextractorLeft->detect_features(im, mask, mvKeys, mDescriptors);
+        (*mpORBextractorLeft)(im,cv::Mat(),mvKeys,mDescriptors);
         // cv::Ptr<cv::Feature2D> f2d = cv::xfeatures2d::SURF::create(400);
         // cv::Ptr<cv::Feature2D> f2d = cv::xfeatures2d::SIFT::create();
         // f2d->compute(im, mvKeys, mSift);

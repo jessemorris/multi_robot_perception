@@ -148,11 +148,11 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         handle(n),
         ros_scene_manager(handle),
         mask_rcnn_interface(n),
-        raw_img(handle,"/camera/rgb/image_raw", 5),
-        mask_img(handle,"/camera/mask/image_raw", 5),
-        flow_img(handle,"/camera/flow/image_raw", 5),
-        depth_img(handle,"/camera/depth/image_raw", 5),
-        sync(raw_img, mask_img, flow_img, depth_img, 10)
+        raw_img(handle,"/camera/rgb/image_raw", 100),
+        mask_img(handle,"/camera/mask/image_raw", 100),
+        flow_img(handle,"/camera/flow/image_raw", 100),
+        depth_img(handle,"/camera/depth/image_raw", 100),
+        sync(raw_img, mask_img, flow_img, depth_img, 100)
 
     {
         handle.getParam("/global_optim_trigger", global_optim_trigger);

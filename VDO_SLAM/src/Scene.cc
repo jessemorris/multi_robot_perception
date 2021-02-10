@@ -48,8 +48,8 @@ void VDO_SLAM::Scene::add_scene_object(VDO_SLAM::SceneObject _object) {
 void VDO_SLAM::Scene::update_camera_pos(cv::Mat& pos_matrix) {
     //take translation part of matrix
     camera_pos_translation.x = pos_matrix.at<float>(0,3);
-    camera_pos_translation.y = pos_matrix.at<float>(2,3);
-    camera_pos_translation.z = pos_matrix.at<float>(1,3);
+    camera_pos_translation.y = pos_matrix.at<float>(1,3);
+    camera_pos_translation.z = pos_matrix.at<float>(2,3);
 
     std::cout << "Cam pos " << camera_pos_translation << std::endl;
 

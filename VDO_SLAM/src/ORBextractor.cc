@@ -404,9 +404,9 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
 {
     
     //make cv orb detectors
-    detector = cv::ORB::create();
-    descriptor = cv::ORB::create();
-    matcher = cv::DescriptorMatcher::create ( "BruteForce-Hamming" );
+    // detector = cv::ORB::create(nfeatures, scaleFactor, nlevels);
+    // descriptor = cv::ORB::create(nfeatures, scaleFactor, nlevels);
+    // matcher = cv::DescriptorMatcher::create ( "BruteForce-Hamming" );
 
 
 

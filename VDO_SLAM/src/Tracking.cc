@@ -537,8 +537,8 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         cout << "Made cam pos" << endl;
 
         //x is 0, 3 y is 2,3?
-        int x = int(CamPos.at<float>(0,3)*scale) + sta_x;
-        int y = int(CamPos.at<float>(2,3)*scale) + sta_y;
+        int y = int(CamPos.at<float>(0,3)*scale) + sta_x;
+        int x = int(CamPos.at<float>(1,3)*scale) + sta_y;
         // cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(255,0,0), thic);
         cv::rectangle(imTraj, cv::Point(x, y), cv::Point(x+10, y+10), cv::Scalar(0,0,255),1);
         cv::rectangle(imTraj, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
@@ -564,12 +564,12 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                 continue;
             }
 
-            //rotate 90 deg clockwise (x,y) -> (y, -x)
-            int x = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,0)*scale) + sta_x;
-            int y = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,2)*scale) + sta_y;
+            //flipped x and y to test viz
+            int y = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,0)*scale) + sta_x;
+            int x = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,1)*scale) + sta_y;
 
             float world_x = mCurrentFrame.vObjCentre3D[i].at<float>(0,0);
-            float world_y = mCurrentFrame.vObjCentre3D[i].at<float>(0,2);
+            float world_y = mCurrentFrame.vObjCentre3D[i].at<float>(0,1);
 
             float vel_x = mCurrentFrame.vSpeed[i].x/36;
             float vel_y = mCurrentFrame.vSpeed[i].y/36;
@@ -1266,7 +1266,7 @@ void Tracking::Track()
         {
             // Get Full Batch Optimization
             // Optimizer::FullBatchOptimization(mpMap,mK);
-            Optimizer::PartialBatchOptimization(mpMap,mK,f_id);
+            Optimizer::PartialBatchOptimization(mpMap,mK,f_id-nWINDOW_SIZE);
 
             // Metric Error AFTER Optimization
             // GetMetricError(mpMap->vmCameraPose_RF,mpMap->vmRigidMotion_RF, mpMap->vmObjPosePre,

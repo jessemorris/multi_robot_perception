@@ -4,7 +4,8 @@
   <!-- <include file="$(find python_service_starter)/launch/python_service_starter.launch"/> -->
   <rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg config_file)"/>
   <param name="frame_id" value="vdo_camera_link" />
-  <param name="global_optim_trigger" value="30" />
+  <param name="global_optim_trigger" value="100" />
+  <!-- <param name="skip_frames" value="5" /> -->
 
   <node pkg="realtime_vdo_slam" type="ros_vdoslam_node" name="ros_vdoslam" output="screen">
     <!-- Remap if needed from vdo generated topics to vdo_slam expected topics. These are the same as the ImageProcessing node -->

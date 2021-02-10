@@ -96,8 +96,8 @@ int main(int argc, char **argv)
     static_broadcaster.sendTransform(transform_stamped);
     ros::spinOnce();
 
-    ros::Rate r(10);
     RosVdoSlam ros_vdo_slam(n);
+    ros::Rate r(10);
 
     // ROS_INFO_STREAM("Waiting for /odom for initalisation");
     // nav_msgs::OdometryConstPtr odom = ros::topic::waitForMessage<nav_msgs::Odometry>("/odom");

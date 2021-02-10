@@ -141,6 +141,8 @@ class RosVdoSlam {
         //ros time synchronizers for all input data
 
         int global_optim_trigger;
+        // int skip_frames;
+        // int frame_count;
         //VdoSlam
         VDO_SLAM::RosSceneManager ros_scene_manager;
         std::unique_ptr<VDO_SLAM::RosScene> ros_scene;
