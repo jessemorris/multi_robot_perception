@@ -30,16 +30,42 @@ ImagePrepcoessing::ImagePrepcoessing(ros::NodeHandle& n) :
     handler.param<bool>("/run_mono_depth", run_mono_depth, false);
 
     if (undistord_images) {
-        ROS_INFO_STREAM("Waiting for camera info topic: " << input_camera_topic);
-        auto info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(input_camera_info_topic);
-        camera_info.intrinsics = (cv::Mat_<double>(3,3) << info->K[0], info->K[1], info->K[2], 
-                                                         info->K[3], info->K[4], info->K[5], 
-                                                         info->K[6], info->K[7], info->K[8]);
-        
-        camera_info.dist_coeffs = cv::Mat_<double>(1,info->D.size());
-        memcpy(camera_info.dist_coeffs.data, info->D.data(), info->D.size()*sizeof(double));
+        ROS_INFO_STREAM("Waiting for camera info topic: " << input_camera_info_topic);
+        sensor_msgs::CameraInfoConstPtr info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(input_camera_info_topic);
 
-        ROS_INFO_STREAM(camera_info.dist_coeffs);
+        //for undistortion
+        camera_info.camera_info_msg = *info;
+
+        uint32_t image_width = camera_info.camera_info_msg.width;
+        uint32_t image_height = camera_info.camera_info_msg.height;
+
+        cv::Size image_size = cv::Size(image_width, image_height);
+
+        if (camera_info.camera_info_msg.distortion_model == "rational_polynomial") {
+            camera_info.camera_matrix = cv::Mat(3, 3, CV_64F, &camera_info.camera_info_msg.K[0]);
+            camera_info.dist_coeffs = cv::Mat(4, 1, CV_64F, &camera_info.camera_info_msg.D[0]);
+        }
+        else if (camera_info.camera_info_msg.distortion_model == "equidistant") {
+            camera_info.camera_matrix = cv::Mat(3, 3, CV_64F, &camera_info.camera_info_msg.K[0]);
+            camera_info.dist_coeffs = cv::Mat(4, 1, CV_64F, &camera_info.camera_info_msg.D[0]);
+
+            //cv::Mat scaled_camera_matrix = camera_matrix *
+            // camera_info.camera_matrix.at<double>(2, 2) = 1.;
+
+            //cv::Mat output_image;
+            cv::Mat identity_mat = cv::Mat::eye(3, 3, CV_64F);
+
+            cv::fisheye::estimateNewCameraMatrixForUndistortRectify(camera_info.camera_matrix, camera_info.dist_coeffs, image_size,
+                                                                    identity_mat, camera_info.modified_camera_matrix);
+
+            cv::fisheye::initUndistortRectifyMap(camera_info.camera_matrix,
+                                                camera_info.dist_coeffs,
+                                                identity_mat,
+                                                camera_info.modified_camera_matrix,
+                                                image_size,
+                                                CV_16SC2,
+                                                camera_info.map1, camera_info.map2);
+        }
     }
 
 
@@ -105,14 +131,17 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGB8);
     cv::Mat distored = cv_ptr->image;
     cv::Mat undistorted;
-    distored.copyTo(undistorted);
-
+    // distored.copyTo(undistorted);
+    
+    cv::Mat image;
     if (undistord_images) {
         undistortImage(distored, undistorted);
+        image = undistorted;
+    }
+    else {
+        image = distored;
     }
 
-
-    cv::Mat image = undistorted;
     std_msgs::Header original_header = msg->header;
 
     std::vector<std::string> mask_rcnn_labels;
@@ -186,6 +215,12 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 
 
 void ImagePrepcoessing::undistortImage(cv::Mat& input, cv::Mat& undistorted) {
-    cv::undistort(input, undistorted, camera_info.intrinsics, camera_info.dist_coeffs);
+    if (camera_info.camera_info_msg.distortion_model == "rational_polynomial") {
+        cv::undistort(input, undistorted, camera_info.camera_matrix, camera_info.dist_coeffs);
+    }
+    else if (camera_info.camera_info_msg.distortion_model == "equidistant") {
+        cv::remap(input, undistorted, camera_info.map1, camera_info.map2, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
+    }
+
 }
 

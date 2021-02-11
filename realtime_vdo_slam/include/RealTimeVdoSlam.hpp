@@ -29,6 +29,7 @@
 
 
 #include "MaskRcnnInterface.hpp"
+#include "RosScene.hpp"
 
 #include <string>
 #include <vector>
@@ -39,60 +40,6 @@
 #include <mutex>
 #include <thread>
 
-
-namespace VDO_SLAM {
-
-    class RosSceneObject: public SceneObject {
-
-        public:
-            RosSceneObject(SceneObject& _object,  ros::Time& _time, int _uid);
-            ros::Time time;
-            int uid;
-    };
-
-    
-    class RosScene : public Scene {
-
-
-        public:
-            RosScene(Scene& _object, ros::Time _time);
-
-            const nav_msgs::Odometry& odom_msg() const;
-            const geometry_msgs::TransformStamped& tf_transform_msg() const;
-            void make_vizualisation(visualization_msgs::MarkerArray& marker_array);
-
-        private:
-            ros::Time time;
-
-            nav_msgs::Odometry odom;
-            geometry_msgs::TransformStamped transform_stamped;
-
-        
-    };
-
-    class RosSceneManager {
-
-        public:
-            RosSceneManager(ros::NodeHandle& _nh);
-            void display_scene(std::unique_ptr<VDO_SLAM::RosScene>& scene);
-
-        private:
-            ros::NodeHandle nh;
-            ros::Publisher visualiser;
-            ros::Publisher odom_pub;
-            tf2_ros::TransformBroadcaster broadcaster;
-            std::string child_frame_id;
-
-        
-
-            static int vis_count; //used for marker visualisation
-
-    };
-
-
-};
-
-typedef std::unique_ptr<VDO_SLAM::RosScene> RosScenePtr;
 
 
 struct VdoSlamInput {

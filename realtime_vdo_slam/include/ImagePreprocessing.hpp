@@ -7,6 +7,7 @@
 #include <nodelet/loader.h>
 
 #include <cv_bridge/cv_bridge.h>
+#include <opencv2/opencv.hpp>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
@@ -43,9 +44,10 @@ struct CameraInformation {
     typedef std::unique_ptr<CameraInformation> CameraInformationPtr;
 
     std::string topic;
-    cv::Mat intrinsics;
+    cv::Mat camera_matrix;
     cv::Mat dist_coeffs;
-    sensor_msgs::CameraInfoConstPtr camera_info_msg;
+    cv::Mat map1, map2, modified_camera_matrix;
+    sensor_msgs::CameraInfo camera_info_msg;
 
 };
 
@@ -124,6 +126,9 @@ namespace VDO_SLAM {
 
         ros::Time previous_time;
         ros::Time current_time;
+
+        //for rectification purposes
+
 
 
 

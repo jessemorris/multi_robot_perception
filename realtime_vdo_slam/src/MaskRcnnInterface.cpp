@@ -7,8 +7,16 @@
 #include <python_service_starter/StartMaskRcnn.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/core.hpp>
-#include <iostream>
+#include <nlohmann/json.hpp>
+#include <ros/package.h>
 
+#include <iostream>
+#include <fstream>
+
+using json = nlohmann::json;
+
+
+std::string MaskRcnnInterface::coco_file_name = "";
 
 //TOOD put in utils file for PytonServicesInterface
 MaskRcnnInterface::MaskRcnnInterface(ros::NodeHandle& n) :
@@ -17,6 +25,9 @@ MaskRcnnInterface::MaskRcnnInterface(ros::NodeHandle& n) :
     {
       
     mask_rcnn_start = nh.serviceClient<python_service_starter::StartMaskRcnn>("start_mask_rcnn");
+    nh.getParam("/mask_rcnn_interface/coco_dataset", MaskRcnnInterface::coco_file_name );
+
+    ROS_INFO_STREAM("Dataset file name: " << MaskRcnnInterface::coco_file_name );
 
     }
 
@@ -117,22 +128,43 @@ bool MaskRcnnInterface::set_mask_labels(ros::NodeHandle& nh, ros::Duration timeo
         return true;
     }
 
-
-    if(!ros::service::waitForService("mask_rcnn_label_list", timeout)) {
+    std::string labels_print;
+    if(ros::service::waitForService("mask_rcnn_label_list", timeout)) {
         ROS_WARN_STREAM("Label service [mask_rcnn_label_list] not active. Waited for duration: " << timeout.sec);
-        return false;
-    }
-    ros::ServiceClient mask_rcnn_labels_list = nh.serviceClient<mask_rcnn::MaskRcnnLabelList>("mask_rcnn_label_list");
-    mask_rcnn::MaskRcnnLabelList all_labels;
-    if (mask_rcnn_labels_list.call(all_labels)) {
-        mask_labels = all_labels.response.labels;
-        std::string labels_print;
-        for (std::string& label : mask_labels) {
-            labels_print += label += ", ";
+        ros::ServiceClient mask_rcnn_labels_list = nh.serviceClient<mask_rcnn::MaskRcnnLabelList>("mask_rcnn_label_list");
+        mask_rcnn::MaskRcnnLabelList all_labels;
+
+        if (mask_rcnn_labels_list.call(all_labels)) {
+            mask_labels = all_labels.response.labels;
+            for (std::string& label : mask_labels) {
+                labels_print += label += ", ";
+            }
+            ROS_INFO_STREAM("Setting mask labels: " << labels_print);
+            MaskRcnnInterface::labels_found = true;
+            return true;
         }
-        ROS_INFO_STREAM("Setting mask labels: " << labels_print);
-        MaskRcnnInterface::labels_found = true;
-        return true;
+    }
+    else {
+         //try to load from source in config folder
+        std::string path = ros::package::getPath("realtime_vdo_slam");
+        std::string ms_coco_classnames_file = path + "/config/" + coco_file_name;
+        ROS_INFO_STREAM("Trying to load dataset class names from: " << ms_coco_classnames_file);
+        json json_file;
+
+        std::ifstream file;
+        file.exceptions (std::ifstream::badbit);
+
+        try {
+            file.open(ms_coco_classnames_file);
+            file >> json_file;
+        }
+        catch (const std::ifstream::failure& e) {
+            ROS_WARN_STREAM("Could not load dataset class file.");
+            return false;
+        }
+
+
     }
     return false;
+
 }

@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
 	sensor_msgs)
 
 find_package(OpenCV)
+find_package(nlohmann_json 3.2.0 REQUIRED)
 
 ## Setup include directories
 #include_directories(${catkin_INCLUDE_DIRS},
@@ -166,12 +167,14 @@ add_library(${PROJECT_NAME}
 	src/RealTimeVdoSlam.cpp
 	src/MaskRcnnInterface.cpp
 	src/SceneFlow.cpp
-	src/MonoDepth.cpp)
+	src/MonoDepth.cpp
+	src/RosScene.cpp)
 
 
 target_link_libraries(${PROJECT_NAME}
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
+		nlohmann_json::nlohmann_json
 		${PROJECT_SOURCE_DIR}/../VDO_SLAM/lib/libvdo_slam.so)
 
 

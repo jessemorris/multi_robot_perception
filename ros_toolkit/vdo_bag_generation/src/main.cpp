@@ -4,11 +4,16 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <nav_msgs/Odometry.h>
+
 #include <tf2_msgs/TFMessage.h>
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <functional>
+#include <opencv2/core.hpp>
 
 
 #include <string>
@@ -22,27 +27,30 @@ class VdoBagPlayback {
 
     public:
         VdoBagPlayback(std::string& _out_file):
-            out_file(_out_file) {
-                bag.open(out_file, rosbag::bagmode::Write);
-                ROS_INFO_STREAM("Making output bag file: " << out_file);
+            out_file(_out_file) 
+        {
+            bag.open(out_file, rosbag::bagmode::Write);
+            ROS_INFO_STREAM("Making output bag file: " << out_file);
 
-                std::vector<std::string> topics{"/map", "/odom", "/tf", "/tf_static", "/camera/camera_info", "/camera/sync"};
+            std::vector<std::string> topics{"/map", "/odom", "/tf", "/tf_static", "/camera/camera_info", "/camera/sync"};
 
-                ros::Time time = ros::Time::now();
+            ros::Time time = ros::Time::now();
 
-                for (int i = 0; i < topics.size(); i++) {
-                    std::string topic = topics[i];
-                    TimingInfoPtr timing_info = std::make_shared<TimingInfo>();
+            for (int i = 0; i < topics.size(); i++) {
+                std::string topic = topics[i];
+                TimingInfoPtr timing_info = std::make_shared<TimingInfo>();
 
-                    topic_timing_map.emplace(topic, timing_info);
-                }
+                topic_timing_map.emplace(topic, timing_info);
+            }
 
 
-            };
+        }
 
         ~VdoBagPlayback() {
             close();
         }
+
+        
 
         void close() {
             bag.close();
@@ -108,9 +116,8 @@ class VdoBagPlayback {
         }
 
         void image_synch_callback(ImageConst raw_image, ImageConst mask, ImageConst mask_viz, ImageConst flow, ImageConst flow_viz, ImageConst depth) {
+
             ROS_INFO_STREAM("Synch callback time " << raw_image->header.stamp);
-            // ros::Duration dt = (raw_image->header.stamp - previous_msg_time);
-            // ros::Time save_time = video_time + dt;  
             ros::Time save_time = get_timing("/camera/sync", raw_image->header.stamp);
             ROS_INFO_STREAM("Synch callback time now " << save_time);   
             bag.write("/camera/rgb/image_raw",save_time, *raw_image);
@@ -158,6 +165,7 @@ class VdoBagPlayback {
         std::map<std::string, VdoBagPlayback::TimingInfoPtr> topic_timing_map;
 
         ros::Time update_timing(const std::string& topic, const ros::Time& msg_time);
+
 
 
 };
