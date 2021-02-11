@@ -203,8 +203,8 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             }
         }
 
-        // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
-        input_image.publish(msg);
+        sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
+        input_image.publish(img_msg);
 
         previous_image = current_image;
 
@@ -219,7 +219,8 @@ void ImagePrepcoessing::undistortImage(cv::Mat& input, cv::Mat& undistorted) {
         cv::undistort(input, undistorted, camera_info.camera_matrix, camera_info.dist_coeffs);
     }
     else if (camera_info.camera_info_msg.distortion_model == "equidistant") {
-        cv::remap(input, undistorted, camera_info.map1, camera_info.map2, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
+        // cv::remap(input, undistorted, camera_info.map1, camera_info.map2, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
+        cv::fisheye::undistortImage(input, undistorted, camera_info.camera_matrix, camera_info.dist_coeffs, camera_info.modified_camera_matrix);
     }
 
 }

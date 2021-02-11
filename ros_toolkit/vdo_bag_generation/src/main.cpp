@@ -65,9 +65,7 @@ class VdoBagPlayback {
             // everything else is relative to this
             if (!timing_info->data_recieved) {
                 dt = ros::Duration(0.01);
-                ROS_INFO_STREAM("here");
                 timing_info->video_time = ros::Time::now();
-                ROS_INFO_STREAM("here1");
 
                 if (timing_info->video_time <= ros::TIME_MIN) {
                     timing_info->video_time = ros::TIME_MIN;

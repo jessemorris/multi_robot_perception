@@ -530,21 +530,21 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     if (mTestData==KITTI && !mCurrentFrame.mTcw.empty())
     {
         cout << "Showing trajectory results on KITTi" << endl;
-        int sta_x = 300, sta_y = 300, radi = 2, thic = 5;  // (160/120/2/5)
+        int sta_x = 150, sta_y = 150, radi = 2, thic = 5;  // (160/120/2/5)
         float scale = 6; // 6
         cout << "mTcw shape: rows " << mCurrentFrame.mTcw.rows << " cols " <<mCurrentFrame.mTcw.cols << endl;
         cv::Mat CamPos = Converter::toInvMatrix(mCurrentFrame.mTcw);
         cout << "Made cam pos" << endl;
 
         //x is 0, 3 y is 2,3?
-        int y = int(CamPos.at<float>(0,3)*scale) + sta_x;
-        int x = int(CamPos.at<float>(1,3)*scale) + sta_y;
+        int x = int(CamPos.at<float>(0,3)*scale) + sta_x;
+        int y = int(CamPos.at<float>(1,3)*scale) + sta_y;
         // cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(255,0,0), thic);
         cv::rectangle(imTraj, cv::Point(x, y), cv::Point(x+10, y+10), cv::Scalar(0,0,255),1);
         cv::rectangle(imTraj, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
         cv::putText(imTraj, "Camera Trajectory (RED SQUARE)", cv::Point(10, 30), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
         char text[100];
-        sprintf(text, "x = %02fm y = %02fm z = %02fm", CamPos.at<float>(0,3), CamPos.at<float>(2,3), CamPos.at<float>(1,3));
+        sprintf(text, "x = %02fm y = %02fm z = %02fm", CamPos.at<float>(0,3), CamPos.at<float>(1,3), CamPos.at<float>(2,3));
 
         //we take the final column becuase I assume matrix is in R | t form
         scene->update_camera_pos(CamPos);
@@ -560,13 +560,13 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         // cout << "v obj center " << mCurrentFrame.vObjCentre3D.size() << endl;
         for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
         {
-            if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0) {
+            if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,1)==0) {
                 continue;
             }
 
             //flipped x and y to test viz
-            int y = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,0)*scale) + sta_x;
-            int x = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,1)*scale) + sta_y;
+            int x = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,0)*scale) + sta_x;
+            int y = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,1)*scale) + sta_y;
 
             float world_x = mCurrentFrame.vObjCentre3D[i].at<float>(0,0);
             float world_y = mCurrentFrame.vObjCentre3D[i].at<float>(0,1);
@@ -1266,7 +1266,14 @@ void Tracking::Track()
         {
             // Get Full Batch Optimization
             // Optimizer::FullBatchOptimization(mpMap,mK);
-            Optimizer::PartialBatchOptimization(mpMap,mK,f_id-nWINDOW_SIZE);
+            clock_t s_5, e_5;
+            double loc_ba_time;
+            s_5 = clock();
+            // Get Partial Batch Optimization
+            Optimizer::PartialBatchOptimization(mpMap,mK,f_id);
+            e_5 = clock();
+            loc_ba_time = (double)(e_5-s_5)/CLOCKS_PER_SEC*1000;
+            mpMap->fLBA_time.push_back(loc_ba_time);
 
             // Metric Error AFTER Optimization
             // GetMetricError(mpMap->vmCameraPose_RF,mpMap->vmRigidMotion_RF, mpMap->vmObjPosePre,

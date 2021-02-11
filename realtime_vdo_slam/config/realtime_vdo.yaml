@@ -15,7 +15,7 @@ run_mono_depth: True
 #for now so I can just select one camera
 camera_selection: "A1"
 
-global_optim_trigger: 1000 #for now we want this to triggger the get dynamic and static tracklets
+global_optim_trigger: 300 #for now we want this to triggger the get dynamic and static tracklets
 
 
 camera_topics_prefixes:
