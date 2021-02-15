@@ -123,7 +123,6 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
         transform_stamped.transform.translation.z = 0;
 
         tf2::Quaternion quat;
-        ROS_INFO_STREAM("making transform");
         tf2::Matrix3x3 rotation_matrix_pos(camera_pos_rotation.at<float>(0, 0), camera_pos_rotation.at<float>(0, 1), camera_pos_rotation.at<float>(0, 2),
                                            camera_pos_rotation.at<float>(1, 0), camera_pos_rotation.at<float>(1, 1), camera_pos_rotation.at<float>(1, 2),
                                            camera_pos_rotation.at<float>(2, 0), camera_pos_rotation.at<float>(2, 1), camera_pos_rotation.at<float>(2, 2));

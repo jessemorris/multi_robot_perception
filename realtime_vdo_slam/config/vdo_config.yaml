@@ -39,12 +39,12 @@ Camera.RGB: 1
 ChooseData: 2
 
 # Deptmap values factor
-DepthMapFactor: 150
+DepthMapFactor: 250
 
 # Close/Far Depth threshold
 #ThDepthBG: 40.0
-ThDepthBG: 80
-ThDepthOBJ: 60
+ThDepthBG: 90
+ThDepthOBJ: 70
 # Max Tracking Points on Background and Object in each frame
 MaxTrackPointBG: 1700 # 1200
 MaxTrackPointOBJ: 800 # 800
@@ -56,8 +56,8 @@ SFDsThres: 0.3 # 0.99 #0.3
 # Window Size and Overlapping Size for Local Batch Optimization
 # WINDOW_SIZE: 20
 # OVERLAP_SIZE: 4
-WINDOW_SIZE: 50
-OVERLAP_SIZE: 10
+WINDOW_SIZE: 20
+OVERLAP_SIZE: 4
 
 # Use sampled feature or detected feature for background (1: sampled, 0: detected)
 UseSampleFeature: 0

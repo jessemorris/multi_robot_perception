@@ -197,10 +197,12 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                     // imD.at<float>(i,j) = mbf/(imD.at<float>(i,j)/mDepthMapFactor);
                     // --- for monocular depth map ---
                     // imD.at<float>(i,j) = imD.at<float>(i,j)/500.0;
+                    // std::cout <<  imD.at<float>(i,j) << " ";
                     imD.at<float>(i,j) = imD.at<float>(i,j)/mDepthMapFactor;
                 }
             }
         }
+        // std::cout << std::endl;
     }
 
     cv::Mat imDepth = imD;

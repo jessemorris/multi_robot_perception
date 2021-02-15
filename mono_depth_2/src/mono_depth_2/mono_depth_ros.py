@@ -140,6 +140,7 @@ class MonoDepth2Ros(RosCppCommunicator):
 
 
         disp = outputs[("disp", 0)]
+        _, disp = disp_to_depth(disp, 0.1, 100)
         disp_resized = torch.nn.functional.interpolate(
             disp, (original_height, original_width), mode="bilinear", align_corners=False)
 

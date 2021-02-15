@@ -75,9 +75,9 @@ namespace VDO_SLAM {
             tf2_ros::TransformBroadcaster broadcaster;
             std::string child_frame_id;
 
-            const int x_offset = 150;
-            const int y_offset = 150;
-            const int scale = 10;
+            const int x_offset = 300;
+            const int y_offset = 300;
+            const int scale = 3;
 
         
 
