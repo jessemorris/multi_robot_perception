@@ -60,14 +60,24 @@ namespace VDO_SLAM {
         public:
             RosSceneManager(ros::NodeHandle& _nh);
             void display_scene(std::unique_ptr<VDO_SLAM::RosScene>& scene);
-            void to_cv_mat(cv::Mat& display);
+            void update_display_mat(std::unique_ptr<VDO_SLAM::RosScene>& scene);
+            cv::Mat& get_display_mat();
+
+            void odom_repub_callback(const nav_msgs::OdometryConstPtr& msg);
 
         private:
             ros::NodeHandle nh;
             ros::Publisher visualiser;
             ros::Publisher odom_pub;
+            ros::Subscriber odom_repub_sub;
+            cv::Mat display;
+
             tf2_ros::TransformBroadcaster broadcaster;
             std::string child_frame_id;
+
+            const int x_offset = 150;
+            const int y_offset = 150;
+            const int scale = 10;
 
         
 

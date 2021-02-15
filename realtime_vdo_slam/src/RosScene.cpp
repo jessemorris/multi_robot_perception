@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <nav_msgs/Odometry.h>
 #include <opencv2/core.hpp>
-
+#include <vdo_slam/Scene.h>
 
 
 int VDO_SLAM::RosSceneManager::vis_count = 0;
@@ -28,7 +28,10 @@ VDO_SLAM::RosSceneManager::RosSceneManager(ros::NodeHandle& _nh) :
     {
         visualiser = nh.advertise<visualization_msgs::MarkerArray>("vdoslam/visualization", 20 );
         odom_pub = nh.advertise<nav_msgs::Odometry>("vdoslam/odom", 20);
+        odom_repub_sub = nh.subscribe<nav_msgs::Odometry>("/odom_repub", 100, &RosSceneManager::odom_repub_callback, this);
         nh.getParam("/frame_id", child_frame_id);
+
+        display = cv::Mat::zeros(800, 800, CV_8UC3);
     }
 
 void VDO_SLAM::RosSceneManager::display_scene(RosScenePtr& scene) {
@@ -44,7 +47,53 @@ void VDO_SLAM::RosSceneManager::display_scene(RosScenePtr& scene) {
 
 }
 
-void VDO_SLAM::RosSceneManager::to_cv_mat(cv::Mat& display) {
+void VDO_SLAM::RosSceneManager::odom_repub_callback(const nav_msgs::OdometryConstPtr& msg) {
+
+    //here we update the odom repub to the display mat
+    //we use 10 for scale
+    int x = (msg->pose.pose.position.x * scale) + x_offset;
+    int y = (msg->pose.pose.position.y * scale) + y_offset;
+    //add odom to cv mat
+    cv::rectangle(display, cv::Point(y, x), cv::Point(y+10, x+10), cv::Scalar(0,255,0),1);
+    // cv::rectangle(display, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
+}
+
+cv::Mat& VDO_SLAM::RosSceneManager::get_display_mat() {
+    return display;
+}
+
+void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::RosScene>& scene) {
+    const nav_msgs::Odometry odom = scene->odom_msg();
+    double x = odom.pose.pose.position.x;
+    double y = odom.pose.pose.position.y;
+    double z = odom.pose.pose.position.z;
+
+    //800 is height of cv mat and we want to draw from bottom left
+    int x_display =  static_cast<int>(x*scale) + x_offset;
+    int y_display =  static_cast<int>(y*scale) + y_offset;
+    ROS_INFO_STREAM("x display " << x_display << " y display " << y_display);
+    //add odom to cv mat
+    cv::rectangle(display, cv::Point(x_display, y_display), cv::Point(x_display+10, y_display+10), cv::Scalar(0,0,255),1);
+    cv::rectangle(display, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
+    cv::putText(display, "Camera Trajectory (RED SQUARE)", cv::Point(10, 30), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
+    char text[100];
+    sprintf(text, "x = %02fm y = %02fm z = %02fm", x, y, z);
+    cv::putText(display, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
+
+
+    //draw each object
+    std::vector<SceneObject> scene_objects = scene->get_scene_objects();
+
+    for(SceneObject& scene_object : scene_objects) {
+        int x = scene_object.pose.x;
+        int y = scene_object.pose.y;
+
+        int x_display =  static_cast<int>(x*scale) + x_offset;
+        int y_display =  static_cast<int>(y*scale) + y_offset;
+        cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5); // orange
+
+    }
+
 
 }
 
@@ -69,8 +118,8 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
         transform_stamped.header.frame_id = "vdo_odom";
         //TODO: want this to be param eventaully but lazy design currently and lack of time to refactor
         transform_stamped.child_frame_id = "vdo_camera_link";
-        transform_stamped.transform.translation.x = -camera_pos_translation.x;
-        transform_stamped.transform.translation.y = -camera_pos_translation.y;
+        transform_stamped.transform.translation.x = camera_pos_translation.x;
+        transform_stamped.transform.translation.y = camera_pos_translation.y;
         transform_stamped.transform.translation.z = 0;
 
         tf2::Quaternion quat;
@@ -92,8 +141,8 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
         odom.header.stamp = time;
         odom.header.frame_id = "vdo_odom";
         odom.child_frame_id = "vdo_camera_link";
-        odom.pose.pose.position.x = -camera_pos_translation.x;
-        odom.pose.pose.position.y = -camera_pos_translation.y;
+        odom.pose.pose.position.x = camera_pos_translation.x;
+        odom.pose.pose.position.y = camera_pos_translation.y;
         odom.pose.pose.position.z = 0;
 
         odom.pose.pose.orientation.x = quat.x();
@@ -126,8 +175,8 @@ void VDO_SLAM::RosScene::make_vizualisation(visualization_msgs::MarkerArray& mar
         // marker.type = visualization_msgs::Marker::SPHERE;
         marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
         marker.action = visualization_msgs::Marker::ADD;
-        marker.pose.position.x = -scene_object.pose.x;
-        marker.pose.position.y = -scene_object.pose.y;
+        marker.pose.position.x = scene_object.pose.x;
+        marker.pose.position.y = scene_object.pose.y;
         marker.pose.position.z = 0;
 
 
