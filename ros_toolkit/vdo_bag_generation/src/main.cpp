@@ -10,6 +10,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <functional>

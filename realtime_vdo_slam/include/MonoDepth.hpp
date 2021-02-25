@@ -30,6 +30,7 @@ class MonoDepth {
 
         bool analyse_image(cv::Mat& current_image, cv::Mat& dst);
         bool start_service();
+        static bool wait_for_mono_services(ros::Duration timeout = ros::Duration(-1));
 
     private:
         ros::NodeHandle nh;

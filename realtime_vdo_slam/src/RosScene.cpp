@@ -48,14 +48,23 @@ void VDO_SLAM::RosSceneManager::display_scene(RosScenePtr& scene) {
 }
 
 void VDO_SLAM::RosSceneManager::odom_repub_callback(const nav_msgs::OdometryConstPtr& msg) {
-
+    double x = msg->pose.pose.position.x;
+    double y = msg->pose.pose.position.y;
+    double z = msg->pose.pose.position.z;
     //here we update the odom repub to the display mat
     //we use 10 for scale
-    int x = (msg->pose.pose.position.x * scale) + x_offset;
-    int y = (msg->pose.pose.position.y * scale) + y_offset;
+    
+    int x_display = (x * scale) + x_offset;
+    int y_display = (y * scale) + y_offset;
     //add odom to cv mat
-    cv::rectangle(display, cv::Point(y, x), cv::Point(y+10, x+10), cv::Scalar(0,255,0),1);
+    display_mutex.lock();
+    cv::rectangle(display, cv::Point(x_display, y_display), cv::Point(x_display+10, y_display+10), cv::Scalar(0,255,0),1);
     // cv::rectangle(display, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
+    // cv::putText(display, "Camera GT Trajectory (GREEN SQUARE)", cv::Point(10, 100), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
+    // char text[100];
+    // sprintf(text, "x = %02fm y = %02fm z = %02fm", x, y, z);
+    // cv::putText(display, text, cv::Point(10, 120), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
+    display_mutex.unlock();
 }
 
 cv::Mat& VDO_SLAM::RosSceneManager::get_display_mat() {
@@ -73,12 +82,14 @@ void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::Ros
     int y_display =  static_cast<int>(y*scale) + y_offset;
     ROS_INFO_STREAM("x display " << x_display << " y display " << y_display);
     //add odom to cv mat
+    display_mutex.lock();
     cv::rectangle(display, cv::Point(x_display, y_display), cv::Point(x_display+10, y_display+10), cv::Scalar(0,0,255),1);
     cv::rectangle(display, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
     cv::putText(display, "Camera Trajectory (RED SQUARE)", cv::Point(10, 30), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
     char text[100];
     sprintf(text, "x = %02fm y = %02fm z = %02fm", x, y, z);
     cv::putText(display, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
+    display_mutex.unlock();
 
 
     //draw each object
@@ -120,7 +131,7 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
         transform_stamped.child_frame_id = "vdo_camera_link";
         transform_stamped.transform.translation.x = camera_pos_translation.x;
         transform_stamped.transform.translation.y = camera_pos_translation.y;
-        transform_stamped.transform.translation.z = 0;
+        transform_stamped.transform.translation.z = camera_pos_translation.z;
 
         tf2::Quaternion quat;
         tf2::Matrix3x3 rotation_matrix_pos(camera_pos_rotation.at<float>(0, 0), camera_pos_rotation.at<float>(0, 1), camera_pos_rotation.at<float>(0, 2),
@@ -142,7 +153,7 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
         odom.child_frame_id = "vdo_camera_link";
         odom.pose.pose.position.x = camera_pos_translation.x;
         odom.pose.pose.position.y = camera_pos_translation.y;
-        odom.pose.pose.position.z = 0;
+        odom.pose.pose.position.z = camera_pos_translation.z;
 
         odom.pose.pose.orientation.x = quat.x();
         odom.pose.pose.orientation.y = quat.y();

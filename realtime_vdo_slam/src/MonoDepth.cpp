@@ -27,6 +27,10 @@ bool MonoDepth::start_service() {
     
 }
 
+bool MonoDepth::wait_for_mono_services(ros::Duration timeout) {
+    return ros::service::waitForService("mono_depth_service", timeout);
+}
+
 
 bool MonoDepth::analyse_image(cv::Mat& current_image, cv::Mat& dst) {
 

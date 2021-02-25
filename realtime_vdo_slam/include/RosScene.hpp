@@ -22,6 +22,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <nav_msgs/Odometry.h>
+#include <mutex>
 
 #include <vdo_slam.hpp>
 
@@ -71,6 +72,7 @@ namespace VDO_SLAM {
             ros::Publisher odom_pub;
             ros::Subscriber odom_repub_sub;
             cv::Mat display;
+            std::mutex display_mutex;
 
             tf2_ros::TransformBroadcaster broadcaster;
             std::string child_frame_id;

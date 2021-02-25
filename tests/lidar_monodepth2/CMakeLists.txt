@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(realtime_vdo_slam)
+project(lidar_monodepth2)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -21,13 +21,14 @@ find_package(catkin REQUIRED COMPONENTS
 	python_service_starter
 	visualization_msgs
 	message_generation
+	lidar_camera_projection
+	realtime_vdo_slam
 	std_msgs
 	cv_bridge
 	nav_msgs
 	sensor_msgs)
 
 find_package(OpenCV)
-find_package(nlohmann_json 3.2.0 REQUIRED)
 
 ## Setup include directories
 #include_directories(${catkin_INCLUDE_DIRS},
@@ -158,58 +159,22 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS}
-	${PROJECT_SOURCE_DIR}/../VDO_SLAM/include/
-	${PROJECT_SOURCE_DIR}/../VDO_SLAM/
 )
 
-add_library(${PROJECT_NAME}
-	src/ImagePreprocessing.cpp
-	src/RealTimeVdoSlam.cpp
-	src/MaskRcnnInterface.cpp
-	src/SceneFlow.cpp
-	src/MonoDepth.cpp
-	src/RosScene.cpp)
+
+add_executable(${PROJECT_NAME}_node
+		src/main.cpp)
 
 
-target_link_libraries(${PROJECT_NAME}
+
+target_link_libraries(${PROJECT_NAME}_node
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
-		nlohmann_json::nlohmann_json
-		${PROJECT_SOURCE_DIR}/../VDO_SLAM/lib/libvdo_slam.so)
-
-
-add_executable(ros_vdoslam_node
-		src/RosVdoSlam.cpp)
-
-target_link_libraries(ros_vdoslam_node
-		${catkin_LIBRARIES}
-		${OpenCV_LIBS}
-		${PROJECT_NAME}
+		yaml-cpp
 		)
 
 if(catkin_EXPORTED_LIBRARIES)
-  add_dependencies(ros_vdoslam_node
-		  ${catkin_EXPORTED_LIBRARIES}
-		  ${catkin_LIBRARIES}
-		  ${OpenCV_LIBS})
-endif()
-
-
-
-add_executable(image_preprocessing_node
-		src/ImagePreprocessingNode.cpp
-		)
-
-
-
-target_link_libraries(image_preprocessing_node
-		${catkin_LIBRARIES}
-		${OpenCV_LIBS}
-		${PROJECT_NAME}
-		)
-
-if(catkin_EXPORTED_LIBRARIES)
-  add_dependencies(image_preprocessing_node
+  add_dependencies(${PROJECT_NAME}_node
 		  ${catkin_EXPORTED_LIBRARIES}
 		  ${catkin_LIBRARIES}
 		  ${OpenCV_LIBS})
@@ -258,17 +223,9 @@ endif()
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS ros_vdoslam_node image_preprocessing_node
+install(TARGETS ${PROJECT_NAME}_node
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-
-install(TARGETS ${PROJECT_NAME}
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
-install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
