@@ -12,6 +12,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
@@ -32,6 +33,18 @@
 
 typedef const sensor_msgs::ImageConstPtr ImageConstPtr;
 typedef const lidar_camera_projection::ImagePixelDepthConstPtr ImagePixelDepthConstPtr;
+
+//wrapper for camera information
+struct CameraInformation {
+    typedef std::unique_ptr<CameraInformation> CameraInformationPtr;
+
+    std::string topic;
+    cv::Mat camera_matrix;
+    cv::Mat dist_coeffs;
+    cv::Mat map1, map2, modified_camera_matrix;
+    sensor_msgs::CameraInfo camera_info_msg;
+
+};
 
 class DepthAnalyser {
 
@@ -87,6 +100,12 @@ class DepthAnalyser {
 
         std::string yaml_file;
         YAML::Node node;
+        
+        CameraInformation camera_info;
+        
+        void init_distortion_params();
+        void undistort_depth_image(const cv::Mat& depth, cv::Mat& depth_undistorted);
+        void undistort_lidar_points(const cv::Mat& points, cv::Mat& undistorted_points);
     
 
         
@@ -119,6 +138,7 @@ DepthAnalyser::DepthAnalyser(std::string& _video_namespace, ros::NodeHandle& _nh
 
         ROS_INFO_STREAM("Saving results to " << yaml_file);
 
+        init_distortion_params();
 
         mono_depth.start_service();
         MonoDepth::wait_for_mono_services();
@@ -150,6 +170,7 @@ void DepthAnalyser::depth_pixel_callback(ImageConstPtr& image_msg, ImagePixelDep
 
         src = cv_ptr->image;
 
+        undistort_depth_image(src, src);
 
         ImagePixelDepthStruct image_depth_info;
         image_depth_info.frame_id = count;
@@ -169,10 +190,26 @@ void DepthAnalyser::depth_pixel_callback(ImageConstPtr& image_msg, ImagePixelDep
                                                 depth_struct.lidar_y *  depth_struct.lidar_y + 
                                                 depth_struct.lidar_z *  depth_struct.lidar_z);
 
-            depth_struct.pixel_x = info.pixel_x;
-            depth_struct.pixel_y = info.pixel_y;
+            cv::Mat points = (cv::Mat_<int>(1,2) << info.pixel_x, info.pixel_y);
+            cv::Mat undistort_points  = (cv::Mat_<int>(1,2) << -1, -1);
 
-            u_int16_t depth = dst.at<u_int16_t>(info.pixel_x, info.pixel_y);
+            undistort_lidar_points(points, undistort_points);
+
+
+            int x = std::abs(undistort_points.at<int>(0,0));
+            int y = std::abs(undistort_points.at<int>(0,1));
+            // ROS_INFO_STREAM(x << " " << y);
+
+            //becasue x and y are now on the undistorted image we can only take those within the bounds of the original set of points
+            // as undistorting will shrink the frame
+            if (x >= dst.rows || y >= dst.cols || x < 0 || y < 0) {
+                continue;
+            }
+
+            depth_struct.pixel_x = x;
+            depth_struct.pixel_y = y;
+
+            u_int16_t depth = dst.at<u_int16_t>(x, y);
             depth_struct.mono_depth = depth;
 
             image_depth_info.pixel_depths.push_back(depth_struct);
@@ -194,6 +231,73 @@ void DepthAnalyser::save_data() {
     fout << node;
     ROS_INFO_STREAM("saved data");
 }
+
+void DepthAnalyser::init_distortion_params() {
+    std::string input_camera_info_topic = video_namespace + std::string("camera_info");
+    ROS_INFO_STREAM("Waiting for camera info topic: " << input_camera_info_topic);
+    sensor_msgs::CameraInfoConstPtr info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(input_camera_info_topic);
+
+    //for undistortion
+    camera_info.camera_info_msg = *info;
+
+    uint32_t image_width = camera_info.camera_info_msg.width;
+    uint32_t image_height = camera_info.camera_info_msg.height;
+
+    cv::Size image_size = cv::Size(image_width, image_height);
+
+    if (camera_info.camera_info_msg.distortion_model == "rational_polynomial") {
+        camera_info.camera_matrix = cv::Mat(3, 3, CV_64F, &camera_info.camera_info_msg.K[0]);
+        camera_info.dist_coeffs = cv::Mat(4, 1, CV_64F, &camera_info.camera_info_msg.D[0]);
+    }
+    else if (camera_info.camera_info_msg.distortion_model == "equidistant") {
+        camera_info.camera_matrix = cv::Mat(3, 3, CV_64F, &camera_info.camera_info_msg.K[0]);
+        camera_info.dist_coeffs = cv::Mat(4, 1, CV_64F, &camera_info.camera_info_msg.D[0]);
+
+        //cv::Mat scaled_camera_matrix = camera_matrix *
+        // camera_info.camera_matrix.at<double>(2, 2) = 1.;
+
+        //cv::Mat output_image;
+        cv::Mat identity_mat = cv::Mat::eye(3, 3, CV_64F);
+
+        cv::fisheye::estimateNewCameraMatrixForUndistortRectify(camera_info.camera_matrix, camera_info.dist_coeffs, image_size,
+                                                                identity_mat, camera_info.modified_camera_matrix);
+
+        cv::fisheye::initUndistortRectifyMap(camera_info.camera_matrix,
+                                            camera_info.dist_coeffs,
+                                            identity_mat,
+                                            camera_info.modified_camera_matrix,
+                                            image_size,
+                                            CV_16SC2,
+                                            camera_info.map1, camera_info.map2);
+        cv::convertMaps(camera_info.map1, camera_info.map2, camera_info.map1, camera_info.map2, CV_32FC1);
+    }
+}
+
+void DepthAnalyser::undistort_depth_image(const cv::Mat& depth, cv::Mat& depth_undistorted) {
+     if (camera_info.camera_info_msg.distortion_model == "rational_polynomial") {
+        cv::undistort(depth, depth_undistorted, camera_info.camera_matrix, camera_info.dist_coeffs);
+    }
+    else if (camera_info.camera_info_msg.distortion_model == "equidistant") {
+        // cv::remap(input, undistorted, camera_info.map1, camera_info.map2, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
+        cv::fisheye::undistortImage(depth, depth_undistorted, camera_info.camera_matrix, camera_info.dist_coeffs, camera_info.modified_camera_matrix);
+    }
+
+}
+
+/**
+ * @brief Undistort as set of points so we can map the undisroted depth map to the points from the lidar
+ * which are distorted. Dst is the undistorted image and src is the original set of points from the lidar (distorted).
+ * 
+ * dst(x,y) = src(map1(x,y), map2(x,y)) so out undisroted points will be (map1(x,y), map2(x,y))
+ * 
+ * @param points 
+ * @param undistorted_points 
+ */
+void DepthAnalyser::undistort_lidar_points(const cv::Mat& points, cv::Mat& undistorted_points) {
+    undistorted_points.at<int>(0,0) = static_cast<int>(camera_info.map1.at<float>(points.at<int>(0,0), points.at<int>(0,1)));
+    undistorted_points.at<int>(0,1) = static_cast<int>(camera_info.map2.at<float>(points.at<int>(0,0), points.at<int>(0,1)));
+}
+    
 
 namespace YAML {
     template<>

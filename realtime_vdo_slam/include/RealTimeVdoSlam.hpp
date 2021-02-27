@@ -52,12 +52,14 @@ struct VdoSlamInput {
     VdoSlamInput(cv::Mat& _raw, cv::Mat& _flow, cv::Mat& _depth, cv::Mat& _mask, double _time_diff, ros::Time& _image_time) : 
         raw(_raw),
         flow(_flow),
+        depth(_depth),
         time_diff(_time_diff),
         image_time(_image_time)
 
     {
         ground_truth = cv::Mat::eye(4,4,CV_32F);
-        _depth.convertTo(depth, CV_32F);
+        // _depth.convertTo(depth, CV_32F);
+        // _depth.convertTo(depth, CV_16UC1);
         _mask.convertTo(mask, CV_32SC1);
     }
 

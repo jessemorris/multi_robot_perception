@@ -101,7 +101,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
 
     if (UseSampleFea==0)
     {
-        std::cout << "Using Sampled features" << std::endl;
+        std::cout << "Using detected features" << std::endl;
         // // // Option I: ~~~~~~~ use detected features ~~~~~~~~~~ // // //
         for (int i = 0; i < mvKeys.size(); ++i)
         {
@@ -142,7 +142,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
     else
     {
         // // // Option II: ~~~~~~~ use sampled features ~~~~~~~~~~ // // //
-
+        cout << imFlow.size() << endl;
         clock_t s_1, e_1;
         double fea_det_time;
         s_1 = clock();

@@ -19,15 +19,29 @@ This data is saved into a yaml file in `$(lidar_monodepth)/results/depth_mod.yam
 image_id: 0 - no_images
     time: in seconds
     data: 
-        lidar_x: float
-        lidar_y: float
-        lidar_z: float
-        pixel_x: int
-        pixel_y: int
-        lidar_depth: float
-        mono_depth: uint16
+        [   lidar_x: float
+            lidar_y: float
+            lidar_z: float
+            pixel_x: int
+            pixel_y: int
+            lidar_depth: float
+            mono_depth: uint16,
+
+            lidar_x: float
+            lidar_y: float ...
+        ]
+        
 ```
 
 The output of the monodepth analysis is saved as a uint16_t value as the ROS encoding used is `sensor_encodings::MONO16`.
+
+### To Run
+
+```
+$ roslaunch python_service_starter python_service_starter.launch
+$ roslaunch lidar_monodepth2 lidar_monodepth2.launch
+$ roslaunch multi_camera_lidar multi_camera_lidar.launch bag_file_name:=<bag_file_name>
+```
+
 
 ## Python Script for resulting scaling optimization

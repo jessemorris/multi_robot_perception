@@ -179,14 +179,15 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     }
 
     mImGray = imRGB;
-
+    mDepthMap = cv::Mat::zeros(imD.size(), CV_32F);
+    std::cout << imD.size() << std::endl;
     // preprocess depth  !!! important for kitti and oxford dataset
     for (int i = 0; i < imD.rows; i++)
     {
         for (int j = 0; j < imD.cols; j++)
         {
-            if (imD.at<float>(i,j)<0)
-                imD.at<float>(i,j)=0;
+            if (imD.at<u_int16_t>(i,j)<0)
+                imD.at<u_int16_t>(i,j)=0;
             else
             {
                 if (mTestData==OMD)
@@ -194,18 +195,21 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                 else if (mTestData==KITTI)
                 {
                     // --- for stereo depth map ---
-                    // imD.at<float>(i,j) = mbf/(imD.at<float>(i,j)/mDepthMapFactor);
+                    // mDepthMap.at<float>(i,j) = mbf/(imD.at<uint16_t>(i,j)/mDepthMapFactor);
                     // --- for monocular depth map ---
                     // imD.at<float>(i,j) = imD.at<float>(i,j)/500.0;
                     // std::cout <<  imD.at<float>(i,j) << " ";
-                    imD.at<float>(i,j) = imD.at<float>(i,j)/mDepthMapFactor;
+
+                    float value = imD.at<u_int16_t>(i,j)/mDepthMapFactor;
+                    mDepthMap.at<float>(i,j) = (value);
+                    std::cout <<  mDepthMap.at<float>(i,j) << " ";
                 }
             }
         }
         // std::cout << std::endl;
     }
 
-    cv::Mat imDepth = imD;
+    cv::Mat imDepth = mDepthMap;
 
     // Transfer color image to grey image
     if(mImGray.channels()==3)
@@ -224,7 +228,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     }
 
     // Save map in the tracking head (new added Nov 14 2019)
-    mDepthMap = imD;
+    // mDepthMap = imD;
     mFlowMap = imFlow;
     mSegMap = maskSEM;
 
@@ -540,7 +544,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
 
         //x is 0, 3 y is 2,3?
         int x = int(CamPos.at<float>(0,3)*scale) + sta_x;
-        int y = int(CamPos.at<float>(2,3)*scale) + sta_y;
+        int y = int(CamPos.at<float>(1,3)*scale) + sta_y;
         // cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(255,0,0), thic);
         cv::rectangle(imTraj, cv::Point(x, y), cv::Point(x+10, y+10), cv::Scalar(0,0,255),1);
         cv::rectangle(imTraj, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
@@ -1143,7 +1147,7 @@ void Tracking::Track()
         cv::Mat CameraMotionTmp = Converter::toInvMatrix(mVelocity);
         cout << "camera motion tmp " << CameraMotionTmp << endl;
         Mot_Tmp.push_back(CameraMotionTmp);
-        // ObjPose_Tmp.push_back(CameraMotionTmp); -> jesse comments this -> just looks like it shouldn't be here...?
+        ObjPose_Tmp.push_back(CameraMotionTmp); //-> jesse comments this -> just looks like it shouldn't be here...?
         Mot_Lab_Tmp.push_back(0);
         Sem_Lab_Tmp.push_back(0);
         Obj_Stat_Tmp.push_back(true);
@@ -1239,7 +1243,7 @@ void Tracking::Track()
         double loc_ba_time;
         s_5 = clock();
         // Get Partial Batch Optimization
-        Optimizer::PartialBatchOptimization(mpMap,mK,nWINDOW_SIZE);
+        // Optimizer::PartialBatchOptimization(mpMap,mK,nWINDOW_SIZE);
         e_5 = clock();
         loc_ba_time = (double)(e_5-s_5)/CLOCKS_PER_SEC*1000;
         mpMap->fLBA_time.push_back(loc_ba_time);
@@ -1283,7 +1287,7 @@ void Tracking::Track()
             
             // GetVelocityError(mpMap->vmRigidMotion_RF, mpMap->vp3DPointDyn, mpMap->vnFeatLabel,
             //                  mpMap->vnRMLabel, mpMap->vfAllSpeed_GT, mpMap->vnAssoDyn, mpMap->vbObjStat);
-            f_id = 0; //14.1.2020 Jesse add -> need to reset fid so we optimize again for streaming
+            // f_id = 0; //14.1.2020 Jesse add -> need to reset fid so we optimize again for streaming
             // mState = NO_IMAGES_YET;
         }
         else {

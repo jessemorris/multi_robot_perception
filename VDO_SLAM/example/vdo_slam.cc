@@ -16,7 +16,8 @@
 #include<opencv2/core/core.hpp>
 #include<opencv2/optflow.hpp>
 
-#include<System.h>
+#include <vdo_slam/System.h>
+
 
 using namespace std;
 
@@ -81,7 +82,7 @@ int main(int argc, char **argv)
     }
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    VDO_SLAM::System SLAM(,VDO_SLAM::System::RGBD);
+    VDO_SLAM::System SLAM(argv[1],VDO_SLAM::System::RGBD);
 
     cout << endl << "--------------------------------------------------------------------------" << endl;
     cout << "Start processing sequence ..." << endl;
@@ -101,19 +102,27 @@ int main(int argc, char **argv)
         cout << "Processing Frame: " << ni << endl;
 
         // Read imreadmage and depthmap from file
+        cout << vstrFilenamesRGB[ni] << endl;
         imRGB = cv::imread(vstrFilenamesRGB[ni],CV_LOAD_IMAGE_UNCHANGED);
         imD   = cv::imread(vstrFilenamesDEP[ni],CV_LOAD_IMAGE_UNCHANGED);
         cv::Mat imD_f, imD_r;
         // cv::resize(imD, imD_r, cv::Size(1242,375));
-        imD.convertTo(imD_f, CV_32F);
+        // imD.convertTo(imD_f, CV_32F);
+        imD.convertTo(imD_f, CV_16UC1);
+        cout << "Loaded depth: "<<  endl;
 
         // Load flow matrix
+        cout << vstrFilenamesFLO[ni] << endl;
         cv::Mat imFlow = cv::optflow::readOpticalFlow(vstrFilenamesFLO[ni]);
         // FlowShow(imFlow);
+        cout << "Loaded flow: "<<  endl;
 
         // Load semantic mask
+        cout << vstrFilenamesSEM[ni] << endl;
+        cout << imRGB.size() << endl;
         cv::Mat imSem(imRGB.rows, imRGB.cols, CV_32SC1);
         LoadMask(vstrFilenamesSEM[ni],imSem);
+        cout << "Loaded mask: "<<  endl;
 
         double tframe = vTimestamps[ni];
         mTcw_gt = vPoseGT[ni];
@@ -128,9 +137,9 @@ int main(int argc, char **argv)
             cerr << endl << "Failed to load image at: " << vstrFilenamesRGB[ni] << endl;
             return 1;
         }
-
+        cout << "Running slam" << endl;
         // Pass the image to the SLAM system
-        SLAM.TrackRGBD(imRGB,imD_f,imFlow,imSem,mTcw_gt,vObjPose_gt,tframe,imTraj,nImages);
+        auto ptr = SLAM.TrackRGBD(imRGB,imD_f,imFlow,imSem,mTcw_gt,vObjPose_gt,tframe,imTraj,nImages);
 
     }
 

@@ -111,11 +111,11 @@ target_compile_options(${PACKAGE_NAME} PRIVATE -Wno-psabi)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example)
 
-#add_executable(vdo_slam
-#   example/vdo_slam.cc
-#)
+add_executable(vdo_slam_example
+  example/vdo_slam.cc
+)
 
-#target_link_libraries(vdo_slam ${PROJECT_NAME})
+target_link_libraries(vdo_slam_example ${PROJECT_NAME})
 
 
 

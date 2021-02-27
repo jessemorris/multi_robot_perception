@@ -29,6 +29,8 @@ find_package(catkin REQUIRED COMPONENTS
 	sensor_msgs)
 
 find_package(OpenCV)
+catkin_python_setup()
+
 
 ## Setup include directories
 #include_directories(${catkin_INCLUDE_DIRS},
@@ -226,6 +228,13 @@ endif()
 install(TARGETS ${PROJECT_NAME}_node
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+catkin_install_python(PROGRAMS
+    scripts/solver.py
+  
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
