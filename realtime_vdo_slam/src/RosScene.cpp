@@ -10,6 +10,9 @@
 #include <nav_msgs/Odometry.h>
 #include <opencv2/core.hpp>
 #include <vdo_slam/Scene.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+#include <geometry_msgs/PoseWithCovariance.h>
 
 
 int VDO_SLAM::RosSceneManager::vis_count = 0;
@@ -24,7 +27,8 @@ VDO_SLAM::RosSceneObject::RosSceneObject(SceneObject& _object, ros::Time& _time,
 
 
 VDO_SLAM::RosSceneManager::RosSceneManager(ros::NodeHandle& _nh) :
-        nh(_nh)
+        nh(_nh),
+        listener(tf_buffer)
     {
         visualiser = nh.advertise<visualization_msgs::MarkerArray>("vdoslam/visualization", 20 );
         odom_pub = nh.advertise<nav_msgs::Odometry>("vdoslam/odom", 20);
@@ -73,9 +77,35 @@ cv::Mat& VDO_SLAM::RosSceneManager::get_display_mat() {
 
 void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::RosScene>& scene) {
     const nav_msgs::Odometry odom = scene->odom_msg();
+
+    //camera is offset from the base link so try and orietnate 
+    geometry_msgs::TransformStamped transform_stamped;
+    geometry_msgs::Pose pose;
+    pose.position = odom.pose.pose.position;
+    pose.orientation = odom.pose.pose.orientation;
+
+    geometry_msgs::Pose transformed_pose;
+    
+    // try {
+	// 	transform_stamped = tf_buffer.lookupTransform("base_link", "vdo_camera_link", ros::Time(0));
+	// } catch (const tf2::TransformException& e) {
+	// 	ROS_WARN_STREAM("Skipping track_callback because lookup_transform failed with exception: " << e.what());
+	// 	return;
+	// }
+
+    tf2::doTransform(pose, transformed_pose, transform_stamped);
+
+
+
     double x = odom.pose.pose.position.x;
     double y = odom.pose.pose.position.y;
     double z = odom.pose.pose.position.z;
+    // double x = transformed_pose.position.x;
+    // double y = transformed_pose.position.y;
+    // double z = transformed_pose.position.z;
+
+
+    
 
     //800 is height of cv mat and we want to draw from bottom left
     int x_display =  static_cast<int>(x*scale) + x_offset;

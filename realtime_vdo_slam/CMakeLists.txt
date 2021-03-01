@@ -13,12 +13,15 @@ find_package(catkin REQUIRED COMPONENTS
 	#gmsl_frame_msg
 	roscpp
 	tf2_ros
+	tf2
 	tf2_sensor_msgs
 	image_transport
 	flow_net
 	mask_rcnn
 	mono_depth_2
 	python_service_starter
+	geometry_msgs
+	tf2_geometry_msgs
 	visualization_msgs
 	message_generation
 	std_msgs
@@ -136,9 +139,12 @@ catkin_package(
 	python_service_starter
 	std_msgs
 	tf2_ros
+	tf2
 	tf2_sensor_msgs
 	nav_msgs
 	sensor_msgs
+	geometry_msgs
+	tf2_geometry_msgs
 	cv_bridge
 	flow_net
 	mask_rcnn

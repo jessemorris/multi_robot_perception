@@ -64,6 +64,23 @@ class VdoUtils {
                 static_broadcaster.sendTransform(transform_stamped);
                 ros::spinOnce();
 
+                transform_stamped.child_frame_id = "vdo_odom";
+                //currently hardcoded -> this is the frame_id that the camera images are in which was gmsl_right_link
+                transform_stamped.header.frame_id = "base_link";
+                transform_stamped.transform.translation.x = 1.270;
+                transform_stamped.transform.translation.y = -0.096;
+                transform_stamped.transform.translation.z = 1.237;
+                
+                //must provide quaternion!
+                transform_stamped.transform.rotation.x = -0.294;
+                transform_stamped.transform.rotation.y = 0.642;
+                transform_stamped.transform.rotation.z = -0.636;
+                transform_stamped.transform.rotation.w = 0.311;
+                static_broadcaster.sendTransform(transform_stamped);
+                ros::spinOnce();
+                
+
+
             }
 
         void odom_repub_callback(const nav_msgs::OdometryConstPtr& msg) {

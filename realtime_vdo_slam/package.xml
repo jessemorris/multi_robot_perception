@@ -57,6 +57,8 @@
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2_geometry_msgs</depend>
   <depend>python_service_starter</depend>
   <depend>visualization_msgs</depend>
   <depend>darknet_ros_msgs</depend>
@@ -71,6 +73,7 @@
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
   <depend>tf2_ros</depend>
+  <depend>tf2</depend>
   <depend>tf2_sensor_msgs</depend>
 
 
