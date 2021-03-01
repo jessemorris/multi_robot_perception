@@ -128,8 +128,7 @@ if __name__ == '__main__':
     print("Average error using samples size {} and optimal _x {}: {}".format(sample_size, optimal_x, average_error))
     print("For divisor optimal_x is {}".format(1/optimal_x))
 
-    #lets use x = 0.00041480843832029246
-
+    #lets use x = 1515
 
 
 

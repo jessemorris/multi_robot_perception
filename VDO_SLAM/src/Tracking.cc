@@ -186,8 +186,8 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     {
         for (int j = 0; j < imD.cols; j++)
         {
-            if (imD.at<u_int16_t>(i,j)<0)
-                imD.at<u_int16_t>(i,j)=0;
+            if (imD.at<uint16_t>(i,j)<0)
+                mDepthMap.at<float>(i,j)=0;
             else
             {
                 if (mTestData==OMD)
@@ -200,9 +200,13 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                     // imD.at<float>(i,j) = imD.at<float>(i,j)/500.0;
                     // std::cout <<  imD.at<float>(i,j) << " ";
 
-                    float value = imD.at<u_int16_t>(i,j)/mDepthMapFactor;
-                    mDepthMap.at<float>(i,j) = (value);
-                    std::cout <<  mDepthMap.at<float>(i,j) << " ";
+                    // float value = mbf/(imD.at<uint16_t>(i,j)/mDepthMapFactor);
+
+                    //for monocular the input image does need to be reversed - the code actually inverts the depth map to "normal"
+                    // when it does mbf/depth/factor. 
+                    float value = (imD.at<uint16_t>(i,j)/mDepthMapFactor);
+                    mDepthMap.at<float>(i,j) = value;
+                    // std::cout <<  mDepthMap.at<float>(i,j) << " ";
                 }
             }
         }
@@ -210,6 +214,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     }
 
     cv::Mat imDepth = mDepthMap;
+    // cv::Mat imDepth = imD;
 
     // Transfer color image to grey image
     if(mImGray.channels()==3)
@@ -536,7 +541,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     if (mTestData==KITTI && !mCurrentFrame.mTcw.empty())
     {
         cout << "Showing trajectory results on KITTi" << endl;
-        int sta_x = 150, sta_y = 150, radi = 2, thic = 5;  // (160/120/2/5)
+        int sta_x = 300, sta_y = 100, radi = 2, thic = 5;  // (160/120/2/5)
         float scale = 6; // 6
         cout << "mTcw shape: rows " << mCurrentFrame.mTcw.rows << " cols " <<mCurrentFrame.mTcw.cols << endl;
         cv::Mat CamPos = Converter::toInvMatrix(mCurrentFrame.mTcw);
@@ -544,13 +549,13 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
 
         //x is 0, 3 y is 2,3?
         int x = int(CamPos.at<float>(0,3)*scale) + sta_x;
-        int y = int(CamPos.at<float>(1,3)*scale) + sta_y;
+        int y = int(CamPos.at<float>(2,3)*scale) + sta_y;
         // cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(255,0,0), thic);
         cv::rectangle(imTraj, cv::Point(x, y), cv::Point(x+10, y+10), cv::Scalar(0,0,255),1);
         cv::rectangle(imTraj, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
         cv::putText(imTraj, "Camera Trajectory (RED SQUARE)", cv::Point(10, 30), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
         char text[100];
-        sprintf(text, "x = %02fm y = %02fm z = %02fm", CamPos.at<float>(0,3), CamPos.at<float>(1,3), CamPos.at<float>(2,3));
+        sprintf(text, "x = %02fm y = %02fm z = %02fm", CamPos.at<float>(0,3), CamPos.at<float>(2,3), CamPos.at<float>(1,3));
 
         //we take the final column becuase I assume matrix is in R | t form
         scene->update_camera_pos(CamPos);
@@ -572,10 +577,10 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
 
             //flipped x and y to test viz
             int x = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,0)*scale) + sta_x;
-            int y = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,1)*scale) + sta_y;
+            int y = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,2)*scale) + sta_y;
 
             float world_x = mCurrentFrame.vObjCentre3D[i].at<float>(0,0);
-            float world_y = mCurrentFrame.vObjCentre3D[i].at<float>(0,1);
+            float world_y = mCurrentFrame.vObjCentre3D[i].at<float>(0,2);
 
             float vel_x = mCurrentFrame.vSpeed[i].x/36;
             float vel_y = mCurrentFrame.vSpeed[i].y/36;
@@ -1287,7 +1292,7 @@ void Tracking::Track()
             
             // GetVelocityError(mpMap->vmRigidMotion_RF, mpMap->vp3DPointDyn, mpMap->vnFeatLabel,
             //                  mpMap->vnRMLabel, mpMap->vfAllSpeed_GT, mpMap->vnAssoDyn, mpMap->vbObjStat);
-            // f_id = 0; //14.1.2020 Jesse add -> need to reset fid so we optimize again for streaming
+            f_id = 0; //14.1.2020 Jesse add -> need to reset fid so we optimize again for streaming
             // mState = NO_IMAGES_YET;
         }
         else {

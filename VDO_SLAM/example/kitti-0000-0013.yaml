@@ -36,12 +36,10 @@ Camera.RGB: 1
 ChooseData: 2
 
 # Deptmap values factor
-# DepthMapFactor: 256.0
-DepthMapFactor: 256
-
+DepthMapFactor: 256.0
 
 # Close/Far Depth threshold
-ThDepthBG: 40
+ThDepthBG: 40.0
 ThDepthOBJ: 25.0
 
 # Max Tracking Points on Background and Object in each frame
@@ -75,7 +73,3 @@ ORBextractor.nLevels: 8
 # ORB Extractor: Fast threshold
 ORBextractor.iniThFAST: 20
 ORBextractor.minThFAST: 7
-
-
-
-

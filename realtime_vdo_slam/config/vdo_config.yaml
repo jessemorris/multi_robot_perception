@@ -31,7 +31,7 @@ Camera.fps: 24
 
 # IR projector baseline times fx (aprox.)
 Camera.bf: 387.5744
-# Camera.bf: 1
+# Camera.bf: 3.9670760099999995
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
@@ -44,7 +44,7 @@ Camera.RGB: 1
 ChooseData: 2
 
 # Deptmap values factor
-DepthMapFactor: 2410
+DepthMapFactor: 1515
 # DepthMapFactor: 1500
 
 # Close/Far Depth threshold

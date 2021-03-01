@@ -96,8 +96,8 @@ void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::Ros
     std::vector<SceneObject> scene_objects = scene->get_scene_objects();
 
     for(SceneObject& scene_object : scene_objects) {
-        int x = scene_object.pose.x;
-        int y = scene_object.pose.y;
+        int x = -scene_object.pose.x;
+        int y = -scene_object.pose.y;
 
         int x_display =  static_cast<int>(x*scale) + x_offset;
         int y_display =  static_cast<int>(y*scale) + y_offset;
@@ -129,8 +129,8 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
         transform_stamped.header.frame_id = "vdo_odom";
         //TODO: want this to be param eventaully but lazy design currently and lack of time to refactor
         transform_stamped.child_frame_id = "vdo_camera_link";
-        transform_stamped.transform.translation.x = camera_pos_translation.x;
-        transform_stamped.transform.translation.y = camera_pos_translation.y;
+        transform_stamped.transform.translation.x = -camera_pos_translation.x;
+        transform_stamped.transform.translation.y = -camera_pos_translation.y;
         transform_stamped.transform.translation.z = camera_pos_translation.z;
 
         tf2::Quaternion quat;
@@ -151,8 +151,8 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
         odom.header.stamp = time;
         odom.header.frame_id = "vdo_odom";
         odom.child_frame_id = "vdo_camera_link";
-        odom.pose.pose.position.x = camera_pos_translation.x;
-        odom.pose.pose.position.y = camera_pos_translation.y;
+        odom.pose.pose.position.x = -camera_pos_translation.x;
+        odom.pose.pose.position.y = -camera_pos_translation.y;
         odom.pose.pose.position.z = camera_pos_translation.z;
 
         odom.pose.pose.orientation.x = quat.x();

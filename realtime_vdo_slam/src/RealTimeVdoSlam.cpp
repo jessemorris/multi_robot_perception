@@ -19,7 +19,7 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         mask_img(handle,"/camera/mask/image_raw", 100),
         flow_img(handle,"/camera/flow/image_raw", 100),
         depth_img(handle,"/camera/depth/image_raw", 100),
-        sync(raw_img, mask_img, flow_img, depth_img, 5)
+        sync(raw_img, mask_img, flow_img, depth_img, 100)
 
     {
         handle.getParam("/global_optim_trigger", global_optim_trigger);

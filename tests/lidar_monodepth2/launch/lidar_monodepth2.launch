@@ -2,7 +2,7 @@
   <!-- We use sim time so that time starts from 0 and not from the walltime. This means playabck should start immediately  -->
   <param name="/use_sim_time" value="False"/>
   <param name="video_stream_namespace" type="string" value="/gmsl/A1/" />
-  <param name="no_images" type="int" value="1"/>
-  <param name="time_delay" type="int" value="3"/>
+  <param name="no_images" type="int" value="3"/>
+  <param name="time_delay" type="int" value="4"/>
   <node pkg="lidar_monodepth2" type="lidar_monodepth2_node" name="lidar_monodepth2" output="screen" />
 </launch>
