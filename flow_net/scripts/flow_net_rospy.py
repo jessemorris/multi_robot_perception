@@ -24,6 +24,6 @@ import rospy
 
 
 if __name__ == '__main__':
-    rospy.init_node('flow_net_interface')
+    rospy.init_node('flow_net_ropsy')
     flow_net_ros = FlowNetRos()
     rospy.spin()
