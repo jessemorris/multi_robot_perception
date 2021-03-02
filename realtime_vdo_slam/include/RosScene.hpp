@@ -23,6 +23,10 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+#include <realtime_vdo_slam/VdoSlamScene.h>
+#include <realtime_vdo_slam/VdoSceneObject.h>
+
+
 
 
 #include <iostream>
@@ -37,7 +41,11 @@ namespace VDO_SLAM {
     class RosSceneObject: public SceneObject {
 
         public:
+            RosSceneObject(realtime_vdo_slam::VdoSceneObjectConstPtr& _msg);
             RosSceneObject(SceneObject& _object,  ros::Time& _time, int _uid);
+
+            realtime_vdo_slam::VdoSceneObjectPtr to_msg();
+
             ros::Time time;
             int uid;
     };
@@ -47,11 +55,15 @@ namespace VDO_SLAM {
 
 
         public:
+            RosScene(realtime_vdo_slam::VdoSlamSceneConstPtr& _msg);
+
             RosScene(Scene& _object, ros::Time _time);
 
             const nav_msgs::Odometry& odom_msg() const;
             const geometry_msgs::TransformStamped& tf_transform_msg() const;
             void make_vizualisation(visualization_msgs::MarkerArray& marker_array);
+
+            realtime_vdo_slam::VdoSlamScenePtr to_msg();
 
         private:
             ros::Time time;

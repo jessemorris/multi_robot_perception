@@ -25,9 +25,10 @@
 
 
 
-#include "SceneFlow.hpp"
-#include "MaskRcnnInterface.hpp"
-#include "MonoDepth.hpp"
+// #incl
+#include <mono_depth_2/MonoDepthInterface.hpp>
+#include <mask_rcnn/MaskRcnnInterface.hpp>
+#include <flow_net/FlowNetInterface.hpp>
 
 #include <string>
 #include <vector>
@@ -64,16 +65,12 @@ namespace VDO_SLAM {
 
     private:
         std::string input_camera_topic;
-        // // std::string topic_prefix;
-        // // std::string camera_suffix;
-        // // std::string info_msg_suffix;
 
-        // std::string camera_selection;
 
         ros::NodeHandle handler;
-        SceneFlow sceneflow;
-        MaskRcnnInterface mask_rcnn_interface;
-        MonoDepth mono_depth;
+        flow_net::FlowNetInterface sceneflow;
+        mask_rcnn::MaskRcnnInterface mask_rcnn_interface;
+        mono_depth_2::MonoDepthInterface mono_depth;
 
         bool run_scene_flow;
         bool run_mask_rcnn;

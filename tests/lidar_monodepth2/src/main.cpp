@@ -5,7 +5,6 @@
 #include <nav_msgs/Odometry.h>
 #include <lidar_camera_projection/ImagePixelDepth.h>
 // #include <MonoDepth.hpp>
-#include <MonoDepth.hpp>
 #include <tf2_msgs/TFMessage.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
@@ -22,7 +21,7 @@
 
 
 #include <ros/package.h>
-
+#include <mono_depth_2/MonoDepthInterface.hpp>
 
 #include <string>
 #include <vector>
@@ -91,7 +90,7 @@ class DepthAnalyser {
         // ros::Subscriber pixel_depth_sub;
 
         std::string video_namespace;
-        MonoDepth mono_depth;
+        mono_depth_2::MonoDepthInterface mono_depth;
 
         int no_images, time_delay;
 
@@ -141,7 +140,7 @@ DepthAnalyser::DepthAnalyser(std::string& _video_namespace, ros::NodeHandle& _nh
         init_distortion_params();
 
         mono_depth.start_service();
-        MonoDepth::wait_for_mono_services();
+        mono_depth_2::MonoDepthInterface::wait_for_services();
         last_image_captrure = ros::TIME_MIN;
         count = 0;
     }
@@ -176,7 +175,7 @@ void DepthAnalyser::depth_pixel_callback(ImageConstPtr& image_msg, ImagePixelDep
         image_depth_info.frame_id = count;
         image_depth_info.time = static_cast<int>(callback_time.toSec());
 
-        mono_depth.analyse_image(src, dst);
+        mono_depth.analyse(src, dst);
         //this is the same preprocessing we do in the VdoSlamInput struct (RealTimeVdoSlam.hpp)
         // dst.convertTo(dst, CV_32F);
         ROS_INFO_STREAM(dst.size());

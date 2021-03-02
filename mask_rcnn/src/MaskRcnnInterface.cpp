@@ -1,4 +1,4 @@
-#include "MaskRcnnInterface.hpp"
+#include "mask_rcnn/MaskRcnnInterface.hpp"
 
 #include <mask_rcnn/MaskRcnnVisualise.h>
 #include <mask_rcnn/MaskRcnnVdoSlam.h>
@@ -14,38 +14,50 @@
 #include <fstream>
 
 using json = nlohmann::json;
-
+using namespace mask_rcnn;
 
 std::string MaskRcnnInterface::coco_file_name = "";
 
 //TOOD put in utils file for PytonServicesInterface
 MaskRcnnInterface::MaskRcnnInterface(ros::NodeHandle& n) :
-        nh(n),
-        service_started(false)
+        ServiceStarterInterface(n)
     {
       
-    mask_rcnn_start = nh.serviceClient<python_service_starter::StartMaskRcnn>("start_mask_rcnn");
+    start_client = nh.serviceClient<python_service_starter::StartMaskRcnn>("start_mask_rcnn");
     nh.getParam("/mask_rcnn_interface/coco_dataset", MaskRcnnInterface::coco_file_name );
 
     ROS_INFO_STREAM("Dataset file name: " << MaskRcnnInterface::coco_file_name );
 
     }
 
-bool MaskRcnnInterface::start_service() {
+bool MaskRcnnInterface::start_service(bool wait_for_services) {
+
+    if (ros::service::exists("maskrcnn/analyse_image", true)) {
+        return true;
+    }
+
     python_service_starter::StartMaskRcnn srv;
     srv.request.start = true;
 
-    service_started = mask_rcnn_start.call(srv);
+    service_started = start_client.call(srv);
     ROS_INFO_STREAM("Start masrk rcnn service returned " << service_started);
     //must be initalised after call
-    mask_rcnn_client = nh.serviceClient<mask_rcnn::MaskRcnnVdoSlam>("mask_rcnn_service");
+    client = nh.serviceClient<mask_rcnn::MaskRcnnVdoSlam>("maskrcnn/analyse_image");
+
+    if (wait_for_services) {
+        MaskRcnnInterface::wait_for_services();
+    }
 
     return service_started;
     
 }
 
+bool MaskRcnnInterface::wait_for_services(ros::Duration timeout) {
+    return ros::service::waitForService("maskrcnn/analyse_image", timeout);
+}    
 
-bool MaskRcnnInterface::analyse_image(cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz,
+
+bool MaskRcnnInterface::analyse(cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz,
     std::vector<std::string>& labels, std::vector<int>& label_indexs) {
 
     if (!service_started) {
@@ -56,7 +68,7 @@ bool MaskRcnnInterface::analyse_image(cv::Mat& current_image, cv::Mat& dst, cv::
     mask_rcnn::MaskRcnnVdoSlam srv;
     srv.request.input_image = *current_image_msg;
 
-    if(mask_rcnn_client.call(srv)) {
+    if(client.call(srv)) {
 
         if (srv.response.success) {
             cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(srv.response.output_mask, sensor_msgs::image_encodings::MONO8);
@@ -129,9 +141,9 @@ bool MaskRcnnInterface::set_mask_labels(ros::NodeHandle& nh, ros::Duration timeo
     }
 
     std::string labels_print;
-    if(ros::service::waitForService("mask_rcnn_label_list", timeout)) {
-        ROS_WARN_STREAM("Label service [mask_rcnn_label_list] not active. Waited for duration: " << timeout.sec);
-        ros::ServiceClient mask_rcnn_labels_list = nh.serviceClient<mask_rcnn::MaskRcnnLabelList>("mask_rcnn_label_list");
+    if(ros::service::waitForService("maskrcnn/request_label_list", timeout)) {
+        ROS_INFO_STREAM("Label service [maskrcnn/request_label_list] active");
+        ros::ServiceClient mask_rcnn_labels_list = nh.serviceClient<mask_rcnn::MaskRcnnLabelList>("maskrcnn/request_label_list");
         mask_rcnn::MaskRcnnLabelList all_labels;
 
         if (mask_rcnn_labels_list.call(all_labels)) {

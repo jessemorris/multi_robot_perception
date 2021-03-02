@@ -3,6 +3,7 @@
 #include <thread>
 #include <sstream>
 #include <memory>
+#include <ros/package.h>
 
 #include "PythonServiceController.hpp"
 
@@ -12,12 +13,19 @@ PythonServiceController::PythonServiceController(ros::NodeHandle& _nh) :
     nh(_nh),
     flow_status(false),
     mask_rcnn_status(false),
-    run_output_threads(true),
-    python_flow_net_full_path("/home/jesse/Code/src/ros/src/multi_robot_perception/flow_net/scripts/flow_net_interface.py"),
-    python_mask_rcnn_full_path("/home/jesse/Code/src/ros/src/multi_robot_perception/mask_rcnn/scripts/mask_rcnn_interface.py"),
-    python_mono_depth_full_path("/home/jesse/Code/src/ros/src/multi_robot_perception/mono_depth_2/scripts/mono_depth_interface.py")
-
+    run_output_threads(true)
 {
+    std::string path;
+    path = ros::package::getPath("mono_depth_2");
+    python_mono_depth_full_path = path + std::string("/scripts/mono_depth_rospy.py");
+
+    path = ros::package::getPath("mask_rcnn");
+    python_mask_rcnn_full_path = path + std::string("/scripts/mask_rcnn_rospy.py");
+
+    path = ros::package::getPath("flow_net");
+    python_flow_net_full_path = path + std::string("/scripts/flow_net_rospy.py");
+
+
     start_flow_net_service = nh.advertiseService("start_flow_net", &PythonServiceController::init_flow_net, this);
     start_mask_rcnn_service = nh.advertiseService("start_mask_rcnn", &PythonServiceController::init_mask_rcnn, this);
     start_mono_depth_service = nh.advertiseService("start_mono_depth", &PythonServiceController::init_mono_depth, this);

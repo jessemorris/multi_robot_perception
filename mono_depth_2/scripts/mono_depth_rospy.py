@@ -9,6 +9,6 @@ import rospy
 
 
 if __name__ == '__main__':
-    rospy.init_node('mono_depth_interface')
+    rospy.init_node('mono_depth_rospy')
     mono_depth_ros = MonoDepth2Ros()
     rospy.spin()

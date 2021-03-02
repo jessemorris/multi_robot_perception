@@ -71,22 +71,20 @@ ImagePrepcoessing::ImagePrepcoessing(ros::NodeHandle& n) :
 
     if(run_mask_rcnn) {
         //first we check if the services exist so we dont start them again
-        if  (!ros::service::exists("mask_rcnn_service", true)) {
+        if  (!mask_rcnn::MaskRcnnInterface::wait_for_services()) {
             ROS_INFO_STREAM("starting mask rcnn service");
             mask_rcnn_interface.start_service();
-            ros::service::waitForService("mask_rcnn_service");
-            MaskRcnnInterface::set_mask_labels(handler);
+            mask_rcnn::MaskRcnnInterface::set_mask_labels(handler);
         }
         else {
             ROS_INFO_STREAM("Mask Rcnn already active");
         }
-        MaskRcnnInterface::set_mask_labels(handler);
+        mask_rcnn::MaskRcnnInterface::set_mask_labels(handler);
     }
     if(run_scene_flow) {
-        if  (!ros::service::exists("flow_net_service", true)) { 
+        if  (!flow_net::FlowNetInterface::wait_for_services()) { 
             ROS_INFO_STREAM("starting flow net service");
             sceneflow.start_service();
-            ros::service::waitForService("flow_net_service");
         }
         else {
             ROS_INFO_STREAM("Flow Net already active");
@@ -94,10 +92,9 @@ ImagePrepcoessing::ImagePrepcoessing(ros::NodeHandle& n) :
     }
 
     if(run_mono_depth) {
-        if  (!ros::service::exists("mono_depth_service", true)) { 
+        if  (!mono_depth_2::MonoDepthInterface::wait_for_services()) { 
             ROS_INFO_STREAM("starting mono_depth service");
             mono_depth.start_service();
-            ros::service::waitForService("mono_depth_service");
         }
         else {
             ROS_INFO_STREAM("MonoDepth already active");
@@ -160,7 +157,7 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         // //TODO: what should this be
         // original_header.frame_id = "base_link";
         if (run_scene_flow) {
-            scene_flow_success = sceneflow.analyse_image(current_image, previous_image, scene_flow_mat, scene_flow_viz);
+            scene_flow_success = sceneflow.analyse(current_image, previous_image, scene_flow_mat, scene_flow_viz);
 
             if (scene_flow_success) {
                 //#TODO: cannot fisplay until convert from scene flow to rgb               
@@ -176,7 +173,7 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         }
 
         if (run_mask_rcnn) {
-            mask_rcnn_success = mask_rcnn_interface.analyse_image(current_image, mask_rcnn_mat, mask_rcnn_viz, mask_rcnn_labels, mask_rcnn_label_indexs);
+            mask_rcnn_success = mask_rcnn_interface.analyse(current_image, mask_rcnn_mat, mask_rcnn_viz, mask_rcnn_labels, mask_rcnn_label_indexs);
 
             if (mask_rcnn_success) {
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "mono8", mask_rcnn_mat).toImageMsg();
@@ -192,7 +189,7 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         }
 
         if (run_mono_depth) {
-            mono_depth_success = mono_depth.analyse_image(current_image, mono_depth_mat);
+            mono_depth_success = mono_depth.analyse(current_image, mono_depth_mat);
 
             if (mono_depth_success) {
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "mono16", mono_depth_mat).toImageMsg();

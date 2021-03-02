@@ -58,9 +58,9 @@ class MaskRcnnRos(RosCppCommunicator):
 
 
 
-        self.mask_rcnn_service = rospy.Service("mask_rcnn_service",MaskRcnnVdoSlam, self.mask_rcnn_service_callback)
-        self.mask_rcnn_label_service = rospy.Service("mask_rcnn_label", MaskRcnnLabel, self.label_request_callback)
-        self.mask_rcnn_label_list_service = rospy.Service("mask_rcnn_label_list", MaskRcnnLabelList, self.label_list_request_callback)
+        self.mask_rcnn_service = rospy.Service("maskrcnn/analyse_image",MaskRcnnVdoSlam, self.mask_rcnn_service_callback)
+        self.mask_rcnn_label_service = rospy.Service("maskrcnn/request_label", MaskRcnnLabel, self.label_request_callback)
+        self.mask_rcnn_label_list_service = rospy.Service("maskrcnn/request_label_list", MaskRcnnLabelList, self.label_list_request_callback)
         self.log_to_ros("Service call ready")
 
 

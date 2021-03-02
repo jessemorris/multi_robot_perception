@@ -1,38 +1,47 @@
-#include "MonoDepth.hpp"
+#include "mono_depth_2/MonoDepthInterface.hpp"
 
 #include <mono_depth_2/MonoDepth.h>
 #include <cv_bridge/cv_bridge.h>
 #include <python_service_starter/StartMonoDepth.h>
 
+using namespace mono_depth_2;
 
-
-MonoDepth::MonoDepth(ros::NodeHandle& n) :
-        nh(n),
-        service_started(false)
+MonoDepthInterface::MonoDepthInterface(ros::NodeHandle& n) :
+        ServiceStarterInterface(n)
     {
-      
-    mono_depth_start = nh.serviceClient<python_service_starter::StartMonoDepth>("start_mono_depth");
+    
+    service_started = false;
+    start_client = nh.serviceClient<python_service_starter::StartMonoDepth>("start_mono_depth");
 
     }
 
-bool MonoDepth::start_service() {
+bool MonoDepthInterface::start_service(bool wait_for_services) {
+
+    if (ros::service::exists("monodepth2/analyse_image", true)) {
+        return true;
+    }
+
     python_service_starter::StartMonoDepth srv;
     srv.request.start = true;
 
-    service_started = mono_depth_start.call(srv);
+    service_started = start_client.call(srv);
     ROS_INFO_STREAM("Start Mono Depth service returned " << service_started);
-    mono_depth_client  = nh.serviceClient<mono_depth_2::MonoDepth>("mono_depth_service");
+    client  = nh.serviceClient<mono_depth_2::MonoDepth>("monodepth2/analyse_image");
+
+    if (wait_for_services) {
+        return MonoDepthInterface::wait_for_services();
+    }
 
     return service_started;
     
 }
 
-bool MonoDepth::wait_for_mono_services(ros::Duration timeout) {
-    return ros::service::waitForService("mono_depth_service", timeout);
+bool MonoDepthInterface::wait_for_services(ros::Duration timeout) {
+    return ros::service::waitForService("monodepth2/analyse_image", timeout);
 }
 
 
-bool MonoDepth::analyse_image(cv::Mat& current_image, cv::Mat& dst) {
+bool MonoDepthInterface::analyse(const cv::Mat& current_image, cv::Mat& dst) {
 
     if (!service_started) {
         return false;
@@ -43,7 +52,7 @@ bool MonoDepth::analyse_image(cv::Mat& current_image, cv::Mat& dst) {
     mono_depth_2::MonoDepth srv;
     srv.request.current_image = *current_image_msg;
 
-    if(mono_depth_client.call(srv)) {
+    if(client.call(srv)) {
 
         if (srv.response.success) {
             cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(srv.response.output_image, sensor_msgs::image_encodings::MONO16);
@@ -63,8 +72,6 @@ bool MonoDepth::analyse_image(cv::Mat& current_image, cv::Mat& dst) {
         ROS_ERROR_STREAM("Failed to call Mono Depth service");
         return false;
     }
-
-
 
 
 }

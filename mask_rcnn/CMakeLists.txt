@@ -17,12 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_python_setup()
 
 
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-)
-
-
 
 add_service_files(
   FILES
@@ -31,28 +25,46 @@ add_service_files(
   MaskRcnnLabelList.srv
 )
 
-#add_message_files(
-#    FILES
-#)
 
 generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs std_msgs sensor_msgs)
 
-catkin_package(
-#  INCLUDE_DIRS include
-  #LIBRARIES mask_rcnn
-  CATKIN_DEPENDS rospy std_msgs message_runtime
-#  DEPENDS system_lib
+
+
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
 )
 
-install(DIRECTORY
-    #controller
-    #launch
-    #mask_rcnn
- DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+add_library(${PROJECT_NAME}
+	src/MaskRcnnInterface.cpp
+  )
+
+
+target_link_libraries(${PROJECT_NAME}
+		${catkin_LIBRARIES})
+
+
+catkin_package(
+ INCLUDE_DIRS  include
+ LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS rospy std_msgs message_runtime roscpp
 )
+
+
+
+install(TARGETS ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+        FILES_MATCHING PATTERN "*.hpp"
+        PATTERN ".svn" EXCLUDE)
+
 
 install(PROGRAMS
-    scripts/mask_rcnn_interface.py
+    scripts/mask_rcnn_rospy.py
   
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

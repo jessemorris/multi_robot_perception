@@ -28,7 +28,7 @@
 #include <vdo_slam.hpp>
 
 
-#include "MaskRcnnInterface.hpp"
+#include <mask_rcnn/MaskRcnnInterface.hpp>
 #include "RosScene.hpp"
 
 #include <string>
@@ -79,7 +79,7 @@ class RosVdoSlam {
     private:
         ros::NodeHandle handle;
         //we need this to request labels
-        MaskRcnnInterface mask_rcnn_interface;
+        mask_rcnn::MaskRcnnInterface mask_rcnn_interface;
 
         void set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene);
         void vdo_worker();

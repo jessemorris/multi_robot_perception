@@ -1,3 +1,7 @@
+#ifndef _PYTHON_SERVICE_STARTER_CONTROLLER
+#define _PYTHON_SERVICE_STARTER_CONTROLLER
+
+
 #include <ros/ros.h>
 #include <string>
 #include <thread>
@@ -48,4 +52,6 @@ class PythonServiceController {
 };
 
 typedef std::unique_ptr<PythonServiceController> PythonServiceControllerPtr;
+
+#endif
 

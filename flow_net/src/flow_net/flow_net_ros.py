@@ -44,7 +44,7 @@ class FlowNetRos(RosCppCommunicator):
         self.network = Network(self.model_path).cuda().eval()
 
         #set up service calls
-        self.flow_net_service = rospy.Service("flow_net_service",FlowNet, self.flow_net_service_callback)
+        self.flow_net_service = rospy.Service("flownet/analyse_image",FlowNet, self.flow_net_service_callback)
         self.log_to_ros("Service call ready")
 
 

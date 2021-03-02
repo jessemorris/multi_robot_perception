@@ -1,34 +1,47 @@
-#include "SceneFlow.hpp"
+#include "flow_net/FlowNetInterface.hpp"
 
 #include <flow_net/FlowNet.h>
 #include <cv_bridge/cv_bridge.h>
 #include <python_service_starter/StartFlowNet.h>
 
+using namespace flow_net;
 
-
-SceneFlow::SceneFlow(ros::NodeHandle& n) :
-        nh(n),
-        service_started(false)
+FlowNetInterface::FlowNetInterface(ros::NodeHandle& n) :
+        ServiceStarterInterface(n)
     {
       
-    flow_net_start = nh.serviceClient<python_service_starter::StartFlowNet>("start_flow_net");
+    start_client = nh.serviceClient<python_service_starter::StartFlowNet>("start_flow_net");
 
     }
 
-bool SceneFlow::start_service() {
+bool FlowNetInterface::start_service(bool wait_for_services) {
+
+     if (ros::service::exists("flownet/analyse_image", true)) {
+        return true;
+    }
+
+
     python_service_starter::StartFlowNet srv;
     srv.request.start = true;
 
-    service_started = flow_net_start.call(srv);
+    service_started = start_client.call(srv);
     ROS_INFO_STREAM("Start flow net service returned " << service_started);
-    flow_net_client  = nh.serviceClient<flow_net::FlowNet>("flow_net_service");
+    client  = nh.serviceClient<flow_net::FlowNet>("flownet/analyse_image");
+
+    if (wait_for_services) {
+        return FlowNetInterface::wait_for_services();
+    }
 
     return service_started;
     
 }
 
+bool FlowNetInterface::wait_for_services(ros::Duration timeout) {
+    return ros::service::waitForService("flownet/analyse_image", timeout);
+}    
 
-bool SceneFlow::analyse_image(cv::Mat& current_image,cv::Mat& previous_image, cv::Mat& dst, cv::Mat& viz) {
+
+bool FlowNetInterface::analyse(const cv::Mat& current_image,const cv::Mat& previous_image, cv::Mat& dst, cv::Mat& viz) {
 
     if (!service_started) {
         return false;
@@ -41,7 +54,7 @@ bool SceneFlow::analyse_image(cv::Mat& current_image,cv::Mat& previous_image, cv
     srv.request.previous_image = *previous_image_msg;
     srv.request.current_image = *current_image_msg;
 
-    if(flow_net_client.call(srv)) {
+    if(client.call(srv)) {
 
         if (srv.response.success) {
             cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(srv.response.output_image, sensor_msgs::image_encodings::TYPE_32FC2);

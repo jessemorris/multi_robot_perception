@@ -1,5 +1,4 @@
 #include "RealTimeVdoSlam.hpp"
-#include "MaskRcnnInterface.hpp"
 #include "RosScene.hpp"
 
 
@@ -26,16 +25,8 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
 
         // first we check if the services exist so we dont start them again
-        if  (!ros::service::exists("mask_rcnn_service", true)) {
-            ROS_INFO_STREAM("starting mask rcnn service");
-            mask_rcnn_interface.start_service();
-            ros::service::waitForService("mask_rcnn_service");
-            MaskRcnnInterface::set_mask_labels(handle);
-        }
-        else {
-            ROS_INFO_STREAM("Mask Rcnn already active");
-        }
-        MaskRcnnInterface::set_mask_labels(handle, ros::Duration(2));
+        mask_rcnn_interface.start_service();
+        mask_rcnn::MaskRcnnInterface::set_mask_labels(handle, ros::Duration(2));
 
         std::string path = ros::package::getPath("realtime_vdo_slam");
         std::string vdo_slam_config_path = path + "/config/vdo_config.yaml";
@@ -96,7 +87,7 @@ void RosVdoSlam::set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene) {
     VDO_SLAM::SceneObject* object_ptr = scene->get_scene_objects_ptr();
     ROS_DEBUG_STREAM("Updating scene labels (size " << size << ")");
     for(int i = 0; i < size; i++) {
-        std::string label = MaskRcnnInterface::request_label(object_ptr->label_index);
+        std::string label = mask_rcnn::MaskRcnnInterface::request_label(object_ptr->label_index);
         object_ptr->label = label;
         ROS_DEBUG_STREAM(*object_ptr);  
         object_ptr++;      

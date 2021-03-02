@@ -10,6 +10,7 @@
 namespace VDO_SLAM
 {
     struct SceneObject {
+        //these really should be cv::Mat so we can save them in SE(3) space - currently ignoring rotation
         cv::Point3f pose;
         cv::Point2f velocity;
         int label_index; //this is semantic label
@@ -35,7 +36,7 @@ namespace VDO_SLAM
     class Scene {
         
         public:
-
+            Scene(int _id);
             Scene(int _id, double _timestamp);
             Scene(const Scene& scene) :
                 id(scene.get_id()),

@@ -90,8 +90,8 @@ class MonoDepth2Ros(RosCppCommunicator):
         self.depth_decoder.eval()
 
         #set up service calls
-        self.mono_depth_service = rospy.Service("mono_depth_service",MonoDepth, self.mono_depth_service_callback)
-        self.log_to_ros("Service call ready")
+        self.mono_depth_service = rospy.Service("monodepth2/analyse_image",MonoDepth, self.mono_depth_service_callback)
+        self.log_to_ros("monodepth2/analyse_image call ready")
 
     @torch.no_grad()
     # @profile(precision=4)

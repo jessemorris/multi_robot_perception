@@ -19,12 +19,49 @@ int VDO_SLAM::RosSceneManager::vis_count = 0;
 
 //should also convert unix timestamp to ROS time
 //current timetstamp is just time difference and not unix time
+
+VDO_SLAM::RosSceneObject::RosSceneObject(realtime_vdo_slam::VdoSceneObjectConstPtr& _msg) : 
+    time(_msg->time),
+    uid(_msg->uid) {
+
+        //TODO: currently ignoring rotation
+        pose.x = _msg->pose.position.x;
+        pose.y = _msg->pose.position.y;
+        pose.z = _msg->pose.position.z;
+
+        velocity.x = _msg->twist.linear.x;
+        velocity.y = _msg->twist.linear.y;
+
+        label_index = _msg->semantic_label;
+        label = _msg->label;
+        tracking_id = _msg->tracking_id;
+
+    }
+
 VDO_SLAM::RosSceneObject::RosSceneObject(SceneObject& _object, ros::Time& _time, int _uid) :
     SceneObject(_object),
     time(_time),
     uid(_uid) {}
 
+realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
+    realtime_vdo_slam::VdoSceneObjectPtr msg(new realtime_vdo_slam::VdoSceneObject);
+    msg->pose.position.x = pose.x;
+    msg->pose.position.y = pose.y;
+    msg->pose.position.z = pose.z;
 
+    msg->twist.linear.x = velocity.x;
+    msg->twist.linear.y = velocity.y;
+
+    msg->semantic_label = label_index;
+    msg->label = label;
+    msg->tracking_id = tracking_id;
+
+    msg->uid = uid;
+    msg->time = time;
+
+    return msg;
+
+}
 
 VDO_SLAM::RosSceneManager::RosSceneManager(ros::NodeHandle& _nh) :
         nh(_nh),
@@ -138,6 +175,8 @@ void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::Ros
 
 }
 
+
+
 VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
     time(_time),
     Scene(_object) {
@@ -196,12 +235,27 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
 
         //TODO: angular velocity
 
-    }
+}
+
+
+VDO_SLAM::RosScene::RosScene(realtime_vdo_slam::VdoSlamSceneConstPtr& _msg) :
+    time(_msg->header.stamp),
+    Scene(_msg->id)
+{   
+
+
+
+}
+
 const nav_msgs::Odometry& VDO_SLAM::RosScene::odom_msg() const {
     return odom;
 }
 const geometry_msgs::TransformStamped& VDO_SLAM::RosScene::tf_transform_msg() const {
     return transform_stamped;
+}
+
+realtime_vdo_slam::VdoSlamScenePtr VDO_SLAM::RosScene::to_msg() {
+
 }
 
 void VDO_SLAM::RosScene::make_vizualisation(visualization_msgs::MarkerArray& marker_array) {

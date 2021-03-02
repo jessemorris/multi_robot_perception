@@ -17,11 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_python_setup()
 
 
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-)
-
 
 
 add_service_files(
@@ -29,28 +24,53 @@ add_service_files(
   FlowNet.srv
 )
 
+generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs std_msgs sensor_msgs)
+
+
+
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+	${OpenCV_INCLUDE_DIRS}
+)
+
+add_library(${PROJECT_NAME}
+	src/FlowNetInterface.cpp
+  )
+
+
+target_link_libraries(${PROJECT_NAME}
+		${catkin_LIBRARIES}
+    ${OpenCV_LIBS}
+)
+
+
+
 #add_message_files(
 #    FILES
 #)
 
-generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs std_msgs sensor_msgs)
-
 catkin_package(
-#  INCLUDE_DIRS include
-  #LIBRARIES flow_net
-  CATKIN_DEPENDS rospy std_msgs message_runtime
-#  DEPENDS system_lib
+ INCLUDE_DIRS  include
+ LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS rospy std_msgs message_runtime roscpp
 )
 
-install(DIRECTORY
-    #controller
-    #launch
-    #flow_net
- DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+
+
+install(TARGETS ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+        FILES_MATCHING PATTERN "*.hpp"
+        PATTERN ".svn" EXCLUDE)
+
 
 install(PROGRAMS
-    scripts/flow_net_interface.py
+    scripts/flow_net_rospy.py
   
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

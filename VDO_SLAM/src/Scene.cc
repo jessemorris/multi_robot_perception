@@ -11,6 +11,19 @@ std::ostream &VDO_SLAM::operator << (std::ostream& output, const VDO_SLAM::Scene
     return output;
 }
 
+VDO_SLAM::Scene::Scene(int _id) :
+    id(_id) 
+{
+    camera_pos_translation.x = 0.0;
+    camera_pos_translation.y = 0.0;
+    camera_pos_translation.z = 0.0;
+
+    //take rotation
+    camera_pos_rotation = (cv::Mat_<float>(3,3) << 0, 0, 0,
+                                                    0, 0, 0,
+                                                    0, 0, 0);
+}
+
 VDO_SLAM::Scene::Scene(int _id, double _timestamp):
     id(_id),
     timestamp(_timestamp) {
