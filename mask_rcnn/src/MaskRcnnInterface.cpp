@@ -103,6 +103,7 @@ std::string MaskRcnnInterface::invalid_name = "invalid";
 bool MaskRcnnInterface::labels_found = false;
 std::vector<std::string> MaskRcnnInterface::mask_labels{};
 
+
 //STATIC FUNCTIONS
 std::string& MaskRcnnInterface::request_label(int index) {
     if (!MaskRcnnInterface::labels_found) {
@@ -179,4 +180,11 @@ bool MaskRcnnInterface::set_mask_labels(ros::NodeHandle& nh, ros::Duration timeo
     }
     return false;
 
+}
+
+int MaskRcnnInterface::categories_size() {
+    if (!MaskRcnnInterface::labels_found) {
+        return -1;
+    }
+    return MaskRcnnInterface::mask_labels.size();
 }

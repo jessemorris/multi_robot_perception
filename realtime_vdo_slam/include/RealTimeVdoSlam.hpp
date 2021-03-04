@@ -71,13 +71,36 @@ typedef const sensor_msgs::ImageConstPtr& ImageConst;
 class RosVdoSlam {
 
     public:
+        /**
+         * @brief Runs the Vdo Slam algorithm in the ROS environment. VDO requires input as RGB image, semantic mask,
+         * optical flow and depth map. The class synchronizes the input messages using message_filter::TimeSynchronizer
+         * and parses the images to the VDO_SLAM::System class. As the time for computation is significantly greater
+         * than the frequency of any reayltime data stream a threaded queue is used to parse input VdoSlamInput to the 
+         * VDO_SLAM::System. 
+         * 
+         * @param n 
+         */
         RosVdoSlam(ros::NodeHandle& n);
         ~RosVdoSlam();
 
+        /**
+         * @brief Synchronized message callback to obtain the data needed for the the VDO_SLAM::System. The callback listens 
+         * to the topics
+         * - raw_image: /camera/rgb/image_raw
+         * - mask: /camera/mask/image_raw
+         * - flow: /camera/flow/image_raw
+         * - depth /camera/depth/image_raw
+         * 
+         * @param raw_image 
+         * @param mask 
+         * @param flow 
+         * @param depth 
+         */
         void vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth);
 
     private:
         ros::NodeHandle handle;
+        
         //we need this to request labels
         mask_rcnn::MaskRcnnInterface mask_rcnn_interface;
 

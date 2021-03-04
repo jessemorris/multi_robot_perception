@@ -3,7 +3,6 @@
 	# Parameters
 	<arg name="config_file" default="python_service_starter_config.yaml"/>
 
-	# Launch the node
 	<node pkg="python_service_starter" type="python_service_starter" name="python_service_starter" output="screen">
 	<rosparam command="load" file="$(find python_service_starter)/config/$(arg config_file)"/>
 	</node>

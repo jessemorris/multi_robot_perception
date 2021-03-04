@@ -71,34 +71,16 @@ ImagePrepcoessing::ImagePrepcoessing(ros::NodeHandle& n) :
 
     if(run_mask_rcnn) {
         //first we check if the services exist so we dont start them again
-        if  (!mask_rcnn::MaskRcnnInterface::wait_for_services()) {
-            ROS_INFO_STREAM("starting mask rcnn service");
-            mask_rcnn_interface.start_service();
-            mask_rcnn::MaskRcnnInterface::set_mask_labels(handler);
-        }
-        else {
-            ROS_INFO_STREAM("Mask Rcnn already active");
-        }
+        mask_rcnn_interface.start_service();
         mask_rcnn::MaskRcnnInterface::set_mask_labels(handler);
     }
+
     if(run_scene_flow) {
-        if  (!flow_net::FlowNetInterface::wait_for_services()) { 
-            ROS_INFO_STREAM("starting flow net service");
-            sceneflow.start_service();
-        }
-        else {
-            ROS_INFO_STREAM("Flow Net already active");
-        }
+       sceneflow.start_service();
     }
 
     if(run_mono_depth) {
-        if  (!mono_depth_2::MonoDepthInterface::wait_for_services()) { 
-            ROS_INFO_STREAM("starting mono_depth service");
-            mono_depth.start_service();
-        }
-        else {
-            ROS_INFO_STREAM("MonoDepth already active");
-        }
+        mono_depth.start_service();
     }
 
     ROS_INFO_STREAM("Input video topic " << input_camera_topic);

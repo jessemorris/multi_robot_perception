@@ -13,7 +13,24 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <geometry_msgs/PoseWithCovariance.h>
+#include <opencv2/core.hpp>
 
+
+/**
+ * @brief Converts a segmentation index (ie. a pixel level segmentation or the classification index
+ * assignment to a scene object) to a colour so each different classification can be visualisaed.
+ * 
+ * Uses the MaskRcnnInterface to get all the available categories and divides the RGB colour specitrum amongst
+ * them evenly.
+ * 
+ * @param index 
+ * @return cv::Scalar 
+ */
+// cv::Scalar seg_index_to_colour(int index) {
+//     int total_categories = MaskRcnnInterface::categories_size();
+
+
+// }
 
 int VDO_SLAM::RosSceneManager::vis_count = 0;
 
@@ -168,7 +185,44 @@ void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::Ros
 
         int x_display =  static_cast<int>(x*scale) + x_offset;
         int y_display =  static_cast<int>(y*scale) + y_offset;
-        cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5); // orange
+
+        //TODO: use colour conversion function
+        switch (scene_object.label_index) {
+
+            case 1:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5); // orange
+                break;
+            case 2:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,255,255), 5); // green
+                break;
+            case 3:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0, 255, 0), 5); // yellow
+                break;
+            case 4:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,0,255), 5); // pink
+                break;
+            case 5:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,255,0), 5); // cyan (yellow green 47,255,173)
+                break;
+            case 6:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5); // purple
+                break;
+            case 7:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,255,255), 5);  // white
+                break;
+            case 8:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(196,228,255), 5); // bisque
+                break;
+            case 9:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(180, 105, 255), 5);  // blue
+                break;
+            case 10:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(42,42,165), 5);  // brown
+                break;
+            default:
+                ROS_WARN_STREAM("No case for this segmentaion index yet");
+                break;
+        }
 
     }
 

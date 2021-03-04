@@ -100,6 +100,14 @@ namespace mask_rcnn {
              */
             static bool wait_for_services(ros::Duration timeout = ros::Duration(-1));    
 
+            /**
+             * @brief Gets the number categoties used by this classifier. Is set with a call to `set_mask_labels`
+             * and returns the length of this vector. Returns -1 if the labels have not been set.
+             * 
+             * @return int 
+             */
+            static int categories_size();
+
         private:
 
             static bool labels_found;
