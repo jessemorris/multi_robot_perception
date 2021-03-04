@@ -15,6 +15,10 @@
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <opencv2/core.hpp>
 
+#include <mask_rcnn/MaskRcnnInterface.hpp>
+
+using namespace mask_rcnn;
+
 
 /**
  * @brief Converts a segmentation index (ie. a pixel level segmentation or the classification index
@@ -26,11 +30,42 @@
  * @param index 
  * @return cv::Scalar 
  */
-// cv::Scalar seg_index_to_colour(int index) {
-//     int total_categories = MaskRcnnInterface::categories_size();
+cv::Scalar seg_index_to_colour(int index) {
+    ROS_INFO_STREAM(index);
+    // int total_categories = MaskRcnnInterface::categories_size();
+
+    //as a hack assume 20 categories so we can get nice clear colours
+    int total_categories = 20;
+    ROS_INFO_STREAM(total_categories);
+    int options = (255.0 * 3.0/(float)total_categories);
+
+    int r = 0;
+    int g = 0;
+    int b = 0;
+
+    int result = index * options;
+    ROS_INFO_STREAM("Result " << result);
+
+    if (result > 510) {
+        r = 255;
+        g = 255;
+        result -= 255;
+
+    }
+
+    if (result > 255) {
+        g = 255;
+        
+        result -= 255;
+        b = result;
+    }
+
+    b = result;
+
+    return cv::Scalar(r, g, b);
 
 
-// }
+}
 
 int VDO_SLAM::RosSceneManager::vis_count = 0;
 
@@ -106,7 +141,7 @@ void VDO_SLAM::RosSceneManager::display_scene(RosScenePtr& scene) {
 }
 
 void VDO_SLAM::RosSceneManager::odom_repub_callback(const nav_msgs::OdometryConstPtr& msg) {
-    double x = msg->pose.pose.position.x;
+    double x = -msg->pose.pose.position.x;
     double y = msg->pose.pose.position.y;
     double z = msg->pose.pose.position.z;
     //here we update the odom repub to the display mat
@@ -116,7 +151,7 @@ void VDO_SLAM::RosSceneManager::odom_repub_callback(const nav_msgs::OdometryCons
     int y_display = (y * scale) + y_offset;
     //add odom to cv mat
     display_mutex.lock();
-    cv::rectangle(display, cv::Point(x_display, y_display), cv::Point(x_display+10, y_display+10), cv::Scalar(0,255,0),1);
+    cv::rectangle(display, cv::Point(y_display, x_display), cv::Point(y_display+10, x_display+10), cv::Scalar(0,255,0),1);
     // cv::rectangle(display, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
     // cv::putText(display, "Camera GT Trajectory (GREEN SQUARE)", cv::Point(10, 100), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
     // char text[100];
@@ -180,23 +215,26 @@ void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::Ros
     std::vector<SceneObject> scene_objects = scene->get_scene_objects();
 
     for(SceneObject& scene_object : scene_objects) {
-        int x = -scene_object.pose.x;
-        int y = -scene_object.pose.y;
+        int x = scene_object.pose.x;
+        int y = scene_object.pose.y;
 
         int x_display =  static_cast<int>(x*scale) + x_offset;
         int y_display =  static_cast<int>(y*scale) + y_offset;
 
-        //TODO: use colour conversion function
+        // cv::Scalar colour = seg_index_to_colour(scene_object.label_index);
+        // cv::circle(display, cv::Point(x_display, y_display), 2, colour, 5); // orange
+
+        // TODO: use colour conversion function
         switch (scene_object.label_index) {
 
             case 1:
                 cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5); // orange
                 break;
             case 2:
-                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,255,255), 5); // green
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,125,125), 5); // green
                 break;
             case 3:
-                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0, 255, 0), 5); // yellow
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0, 255, 255), 5); // yellow
                 break;
             case 4:
                 cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,0,255), 5); // pink
@@ -252,8 +290,8 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
         transform_stamped.header.frame_id = "vdo_odom";
         //TODO: want this to be param eventaully but lazy design currently and lack of time to refactor
         transform_stamped.child_frame_id = "vdo_camera_link";
-        transform_stamped.transform.translation.x = -camera_pos_translation.x;
-        transform_stamped.transform.translation.y = -camera_pos_translation.y;
+        transform_stamped.transform.translation.x = camera_pos_translation.x;
+        transform_stamped.transform.translation.y = camera_pos_translation.y;
         transform_stamped.transform.translation.z = camera_pos_translation.z;
 
         tf2::Quaternion quat;
@@ -274,8 +312,8 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
         odom.header.stamp = time;
         odom.header.frame_id = "vdo_odom";
         odom.child_frame_id = "vdo_camera_link";
-        odom.pose.pose.position.x = -camera_pos_translation.x;
-        odom.pose.pose.position.y = -camera_pos_translation.y;
+        odom.pose.pose.position.x = camera_pos_translation.x;
+        odom.pose.pose.position.y = camera_pos_translation.y;
         odom.pose.pose.position.z = camera_pos_translation.z;
 
         odom.pose.pose.orientation.x = quat.x();
