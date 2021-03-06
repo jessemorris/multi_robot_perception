@@ -42,7 +42,6 @@
 
 //wrapper for camera information
 struct CameraInformation {
-    typedef std::unique_ptr<CameraInformation> CameraInformationPtr;
 
     std::string topic;
     cv::Mat camera_matrix;
@@ -52,14 +51,44 @@ struct CameraInformation {
 
 };
 
+typedef std::unique_ptr<CameraInformation> CameraInformationPtr;
+
+
 namespace VDO_SLAM {
 
+    /**
+     * @brief ROS Class that pre-processes all data needed for the vdo-slam algorithm. A single image stream
+     * is captured (see readtime_vdo.yaml for the input stream topic name) and a corresponding depth map, dense optical flow
+     * and semantic mask is produced for each frame. This all happens within the callback and the
+     * Neural Nets are called sequentially (I am sure you could paralellise this but I dont need to and my laptop has only 1 GPU!) 
+     * 
+     * These topics are then produced out (with synchronized time stamps)
+     * with the parent namespace /vdoslam/input/camera. See readme for more information. Addition topics are produced to help with visualisation
+     * and debugging. 
+     * 
+     * This interface between the Neural Networks (defined in the modules: mask_rcnn, flow_net, mono_depth_2) uses the Cpp
+     * interface and so the python service starter must be running so that they correspdoning python nodes can be spun up.
+     * 
+     * Any image pre-prcoessing is done here (eg. image undistortion). The USyd Campus dataset requires images rectification (see 
+     * undistort image paramater in realtime_vdo.yaml) and a sensor_msgs::camera_info topic stream namespace must be provided for this 
+     * as well if True. 
+     * 
+     */
     class ImagePrepcoessing {
 
     public:
         ImagePrepcoessing(ros::NodeHandle& n);
         ~ImagePrepcoessing();
 
+        /**
+         * @brief Undistorts the input image if undistort_image param is set to True. 
+         * 
+         * For the USyd campus data set have an equidistant model so we must first create a rectifcation 
+         * map and then rectify based on the new camera matrix P. 
+         * 
+         * @param input 
+         * @param undistorted 
+         */
         void undistortImage(cv::Mat& input, cv::Mat& undistorted);
 
 
@@ -123,8 +152,6 @@ namespace VDO_SLAM {
 
         ros::Time previous_time;
         ros::Time current_time;
-
-        //for rectification purposes
 
 
 

@@ -85,11 +85,15 @@ class RosVdoSlam {
 
         /**
          * @brief Synchronized message callback to obtain the data needed for the the VDO_SLAM::System. The callback listens 
-         * to the topics
+         * to the topics. Becuase this information comes from the vdo_slam_preprocesing node (which uses the parent namespace /vdoslam/input/)
+         * we remap these topic to the desired topics here (see the launch file).
          * - raw_image: /camera/rgb/image_raw
          * - mask: /camera/mask/image_raw
          * - flow: /camera/flow/image_raw
          * - depth /camera/depth/image_raw
+         * 
+         * This callback creates as pointer to a VdoSlamInput which contains all the input necessary to the VDO_SLAM algorithm and adds 
+         * it to the worker queue. 
          * 
          * @param raw_image 
          * @param mask 
@@ -104,17 +108,43 @@ class RosVdoSlam {
         //we need this to request labels
         mask_rcnn::MaskRcnnInterface mask_rcnn_interface;
 
+        /**
+         * @brief Set the scene labels (from the index semantic index of each object) for a particular scene.
+         * 
+         * Uses the mask_rcnn::MaskRcnnInterface to query the categories list and then sets the label for each object
+         * which has the associated index. This is required becuase the VDO_SLAM::Scene object does not have access to the 
+         * direct label (in order to keep the VDO_SLAM module separate to the mask_rcnn interface). Once the scene has been generated
+         * we must use this function to set the labels (as each image has the index semantic label).
+         * 
+         * @param scene 
+         */
         void set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene);
+
+        /**
+         * @brief Worker thread for the VDO_SLAM queue. Will continue as long as ros::okay() returns true. 
+         * 
+         */
         void vdo_worker();
 
+        /**
+         * @brief Gets the latest input for the VDO_SLAM algorithm. This call can happen asynchronisly as the VDO algorithm
+         * will run at a different rate to the input. 
+         * 
+         * @return std::shared_ptr<VdoSlamInput> 
+         */
         std::shared_ptr<VdoSlamInput> pop_vdo_input();
+
+        /**
+         * @brief Adds a new input for the VDO_SLAM algorithm. This call can happen asynchronisly as the VDO algorithm
+         * will run at a different rate to the input and is called from the callback function
+         * 
+         * @param input 
+         */
         void push_vdo_input(std::shared_ptr<VdoSlamInput>& input);
 
         //ros time synchronizers for all input data
 
         int global_optim_trigger;
-        // int skip_frames;
-        // int frame_count;
         //VdoSlam
         VDO_SLAM::RosSceneManager ros_scene_manager;
         std::unique_ptr<VDO_SLAM::RosScene> ros_scene;
