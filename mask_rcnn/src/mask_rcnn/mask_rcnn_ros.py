@@ -2,9 +2,9 @@ import cv2
 
 import sys
 from memory_profiler import profile
+import rospkg
 
-package_path = "/home/jesse/Code/src/ros/src/multi_robot_perception/mask_rcnn/"
-sys.path.insert(0, package_path)
+
 from maskrcnn_benchmark.config import cfg
 from maskrcnn_benchmark.utils import cv2_util
 import ros_numpy
@@ -29,11 +29,19 @@ import random
 
 
 import time
+
+
+rospack = rospkg.RosPack()
+
+package_path = rospack.get_path("mask_rcnn")
+sys.path.insert(0, package_path)
+
+
 #e2e_mask_rcnn_X_101_32x8d_FPN_1x_caffe2
 #e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml
 class MaskRcnnRos(RosCppCommunicator):
 
-    def __init__(self, config_path = package_path + "src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"):
+    def __init__(self, config_path = package_path + "/src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"):
         RosCppCommunicator.__init__(self)
         self.model_config_path = config_path
         cfg.merge_from_file(self.model_config_path)

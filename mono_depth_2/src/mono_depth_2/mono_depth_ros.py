@@ -40,12 +40,12 @@ import ros_numpy
 
 import cv2
 
-package_path = "/home/jesse/Code/src/ros/src/multi_robot_perception/mono_depth_2/"
-sys.path.insert(0, package_path)
+
 
 rospack = rospkg.RosPack()
 
 package_path = rospack.get_path("mono_depth_2")
+sys.path.insert(0, package_path)
 
 class MonoDepth2Ros(RosCppCommunicator):
     def __init__(self, model_path= package_path + "/src/mono_depth_2/models/", model_name = "mono_640x192"):

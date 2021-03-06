@@ -22,19 +22,23 @@ from flow_net.layers import Network
 from flow_net.srv import FlowNet, FlowNetResponse
 from rostk_pyutils.ros_cpp_communicator import RosCppCommunicator
 
-
+import sys
 import cv2
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
+import rospkg
 # from cv_bridge import CvBridge, CvBridgeError
 
 #TODO relative paths
-package_path = "/home/jesse/Code/src/ros/src/multi_robot_perception/flow_net/"
+rospack = rospkg.RosPack()
+
+package_path = rospack.get_path("flow_net")
+sys.path.insert(0, package_path)
 
 
 class FlowNetRos(RosCppCommunicator):
 
-    def __init__(self, model_path= package_path + "src/flow_net/models/network-default.pytorch"):
+    def __init__(self, model_path= package_path + "/src/flow_net/models/network-default.pytorch"):
         RosCppCommunicator.__init__(self)
         self.model_path = model_path
        

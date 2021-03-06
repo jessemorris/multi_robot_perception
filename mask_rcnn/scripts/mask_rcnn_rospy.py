@@ -1,8 +1,8 @@
 import os
 import sys
-#TODO: relative paths
-sys.path.append("/home/jesse/Code/src/ros/src/multi_robot_perception/mask_rcnn")
-from src.mask_rcnn.mask_rcnn_ros import MaskRcnnRos
+
+from mask_rcnn.mask_rcnn_ros import MaskRcnnRos
+
 import rospy
 
 if __name__ == '__main__':

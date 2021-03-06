@@ -69,7 +69,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
         PATTERN ".svn" EXCLUDE)
 
 
-install(PROGRAMS
+catkin_install_python(PROGRAMS
     scripts/flow_net_rospy.py
   
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

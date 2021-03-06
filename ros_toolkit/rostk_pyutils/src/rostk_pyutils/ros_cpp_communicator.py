@@ -13,12 +13,10 @@ class RosCppCommunicator():
         #this is the path of the file that called this constructor.
         #we will use the name of this path to find the correct fd
         self.callers_path = sys._getframe(2).f_globals['__file__']
-
         #strip down to find the just the file
         split_path = self.callers_path.split("/")
         file_name_extension = split_path[-1]
-        self.calling_file_name = file_name_extension.strip(".py")
-        print(self.calling_file_name)
+        self.calling_file_name = file_name_extension[:-3]
 
         try:
             self._write_fd = int(os.getenv(self.calling_file_name + "_PY_WRITE_FD"))

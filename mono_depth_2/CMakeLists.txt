@@ -75,7 +75,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
-install(PROGRAMS
+catkin_install_python(PROGRAMS
     scripts/mono_depth_rospy.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

@@ -17,8 +17,7 @@
 # from utils.util import flow2rgb
 import os
 import sys
-sys.path.append("/home/jesse/Code/src/ros/src/multi_robot_perception/flow_net")
-from src.flow_net.flow_net_ros import FlowNetRos
+from flow_net.flow_net_ros import FlowNetRos
 import rospy
 
 

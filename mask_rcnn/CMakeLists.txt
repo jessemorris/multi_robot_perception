@@ -63,7 +63,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
         PATTERN ".svn" EXCLUDE)
 
 
-install(PROGRAMS
+catkin_install_python(PROGRAMS
     scripts/mask_rcnn_rospy.py
   
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

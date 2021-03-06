@@ -1,9 +1,7 @@
 import os
 import sys
 
-#TODO: 
-sys.path.append("/home/jesse/Code/src/ros/src/multi_robot_perception/mono_depth_2")
-from src.mono_depth_2.mono_depth_ros import MonoDepth2Ros
+from mono_depth_2.mono_depth_ros import MonoDepth2Ros
 import rospy
 
 
