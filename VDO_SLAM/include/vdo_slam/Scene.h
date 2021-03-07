@@ -61,9 +61,9 @@ namespace VDO_SLAM
             SceneObject* get_scene_objects_ptr();
 
             const int scene_objects_size();
-            const int& get_global_fid() const;
-            const int& get_id() const;
-            const double& get_timestamp() const;
+            const int get_global_fid() const;
+            const int get_id() const;
+            const double get_timestamp() const;
 
         protected:
             std::vector<SceneObject> scene_objects;

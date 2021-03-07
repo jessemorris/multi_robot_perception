@@ -34,7 +34,7 @@
 #include <nav_msgs/Odometry.h>
 #include <mutex>
 
-#include <vdo_slam.hpp>
+#include <vdo_slam/vdo_slam.hpp>
 
 namespace VDO_SLAM {
 

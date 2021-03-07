@@ -25,7 +25,7 @@
 #include <nav_msgs/Odometry.h>
 
 
-#include <vdo_slam.hpp>
+#include <vdo_slam/vdo_slam.hpp>
 
 
 #include <mask_rcnn/MaskRcnnInterface.hpp>

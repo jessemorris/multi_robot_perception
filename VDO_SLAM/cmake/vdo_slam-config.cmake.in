@@ -11,4 +11,4 @@ list(APPEND CMAKE_MODULE_PATH ${VdoSlam_CMAKE_DIR})
 # We should set those right?
 #find_dependency(Thread REQUIRED)
 
-list(REMOVE_AT CMAKE_MODULE_PATH -1)
+#list(REMOVE_AT CMAKE_MODULE_PATH -1)

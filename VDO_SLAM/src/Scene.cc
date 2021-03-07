@@ -54,6 +54,7 @@ const cv::Mat& VDO_SLAM::Scene::camera_vel_R() const {
     return camera_vel_rotation;
 }
 
+
 //I think I do want to copy here
 void VDO_SLAM::Scene::add_scene_object(VDO_SLAM::SceneObject _object) {
     scene_objects.push_back(_object);
@@ -97,14 +98,14 @@ VDO_SLAM::SceneObject* VDO_SLAM::Scene::get_scene_objects_ptr() {
 }
  
 
-const int& VDO_SLAM::Scene::get_global_fid() const {
+const int VDO_SLAM::Scene::get_global_fid() const {
     return global_fid;
 }
 
-const int& VDO_SLAM::Scene::get_id() const {
+const int VDO_SLAM::Scene::get_id() const {
     return id;
 }
-const double& VDO_SLAM::Scene::get_timestamp() const {
+const double VDO_SLAM::Scene::get_timestamp() const {
     return timestamp;
 }
 

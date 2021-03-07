@@ -156,6 +156,7 @@ catkin_package(
 ## Build ##
 ###########
 
+message(STATUS ${vdo_slam_INCLUDE_DIRS})
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
@@ -178,7 +179,8 @@ target_link_libraries(${PROJECT_NAME}
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
 		# ${PROJECT_SOURCE_DIR}/../VDO_SLAM/lib/libvdo_slam.so
-		${vdo_slam_LIB_DIRS}
+		# ${vdo_slam_LIB_DIRS}
+		-lvdo_slam
 		)
 
 
