@@ -6,14 +6,16 @@
 *
 **/
 
-#ifndef CONVERTER_H
-#define CONVERTER_H
+#ifndef VDO_SLAM_CONVERTER_H
+#define VDO_SLAM_CONVERTER_H
 
 #include <opencv2/core/core.hpp>
 
 #include<Eigen/Dense>
-#include "dependencies/g2o/g2o/types/types_six_dof_expmap.h"
-#include "dependencies/g2o/g2o/types/types_seven_dof_expmap.h"
+
+
+#include  <vdo_slam_g2o/types/types_seven_dof_expmap.h>
+#include  <vdo_slam_g2o/types/types_seven_dof_expmap.h>
 
 namespace VDO_SLAM
 {

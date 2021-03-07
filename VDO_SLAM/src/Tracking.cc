@@ -7,7 +7,6 @@
 **/
 
 
-#include "vdo_slam.hpp"
 
 #include <Eigen/Core>
 
@@ -35,7 +34,12 @@
 #include <map>
 #include <random>
 
+#include "vdo_slam/Tracking.h"
+#include "vdo_slam/vdo_slam.hpp"
+
 using namespace std;
+using namespace VDO_SLAM;
+
 
 bool SortPairInt(const pair<int,int> &a,
               const pair<int,int> &b)
@@ -43,8 +47,15 @@ bool SortPairInt(const pair<int,int> &a,
     return (a.second > b.second);
 }
 
-namespace VDO_SLAM
-{
+
+// Tracking::Tracking(System* pSys, Map* pMap, VdoParamsConstPtr& params) : 
+//     mState(NO_IMAGES_YET),
+//     mSensor(sensor), 
+//     mpSystem(pSys), 
+//     mpMap(pMap)
+// {
+
+// }
 
 Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const int sensor):
     mState(NO_IMAGES_YET), mSensor(sensor), mpSystem(pSys), mpMap(pMap)
@@ -108,7 +119,7 @@ Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const 
 
     mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
-    if(sensor==System::STEREO)
+    if(sensor== eSensor::STEREO)
         mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
     cout << endl << "System Parameters: " << endl << endl;
@@ -130,14 +141,14 @@ Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const 
             break;
     }
 
-    if(sensor==System::STEREO || sensor==System::RGBD)
+    if(sensor==eSensor::STEREO || sensor==eSensor::RGBD ||sensor==eSensor::MONOCULAR)
     {
         mThDepth = (float)fSettings["ThDepthBG"];
         mThDepthObj = (float)fSettings["ThDepthOBJ"];
         cout << "- depth threshold (background/object): " << mThDepth << "/" << mThDepthObj << endl;
     }
 
-    if(sensor==System::RGBD)
+    if(sensor==eSensor::RGBD)
     {
         mDepthMapFactor = fSettings["DepthMapFactor"];
         cout << "- depth map factor: " << mDepthMapFactor << endl;
@@ -194,6 +205,15 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                     imD.at<float>(i,j) = imD.at<float>(i,j)/mDepthMapFactor;
                 else if (mTestData==KITTI)
                 {
+                    if (mSensor == eSensor::RGBD) {
+                        mDepthMap.at<float>(i,j) = mbf/(imD.at<uint16_t>(i,j)/mDepthMapFactor);
+                    }
+                    if (mSensor == eSensor::MONOCULAR) {
+                        //for monocular the input image does need to be reversed - the code actually inverts the depth map to "normal"
+                        // when it does mbf/depth/factor. 
+                        float value = (imD.at<uint16_t>(i,j)/mDepthMapFactor);
+                        mDepthMap.at<float>(i,j) = value;
+                    }
                     // --- for stereo depth map ---
                     // mDepthMap.at<float>(i,j) = mbf/(imD.at<uint16_t>(i,j)/mDepthMapFactor);
                     // --- for monocular depth map ---
@@ -202,10 +222,6 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
 
                     // float value = mbf/(imD.at<uint16_t>(i,j)/mDepthMapFactor);
 
-                    //for monocular the input image does need to be reversed - the code actually inverts the depth map to "normal"
-                    // when it does mbf/depth/factor. 
-                    float value = (imD.at<uint16_t>(i,j)/mDepthMapFactor);
-                    mDepthMap.at<float>(i,j) = value;
                     // std::cout <<  mDepthMap.at<float>(i,j) << " ";
                 }
             }
@@ -714,7 +730,7 @@ void Tracking::Track()
         bFirstFrame = true;
         bFrame2Frame = false;
 
-        if(mSensor==System::RGBD)
+        if(mSensor==eSensor::RGBD)
             Initialization();
 
         if(mState!=OK)
@@ -3887,4 +3903,4 @@ void Tracking::GetVelocityError(const std::vector<std::vector<cv::Mat> > &RigMot
 // ---------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------
 
-} //namespace VDO_SLAM
+// } //namespace VDO_SLAM

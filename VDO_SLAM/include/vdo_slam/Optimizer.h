@@ -6,12 +6,14 @@
 *
 **/
 
-#ifndef OPTIMIZER_H
-#define OPTIMIZER_H
+#ifndef VDO_SLAM_OPTIMIZER_H
+#define VDO_SLAM_OPTIMIZER_H
 
-#include "Map.h"
-#include "Frame.h"
-#include "dependencies/g2o/g2o/types/types_six_dof_expmap.h"
+#include "vdo_slam/Map.h"
+#include "vdo_slam/Frame.h"
+// #include "dependencies/g2o/g2o/types/types_six_dof_expmap.h"
+#include <vdo_slam_g2o/types/types_six_dof_expmap.h>
+
 
 namespace VDO_SLAM
 {

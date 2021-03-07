@@ -7,28 +7,23 @@
 **/
 
 
-#ifndef SYSTEM_H
-#define SYSTEM_H
+#ifndef VDO_SLAM_SYSTEM_H
+#define VDO_SLAM_SYSTEM_H
 
-#include<string>
-#include<thread>
+#include <string>
+#include <thread>
 #include <memory>
-#include<opencv2/core/core.hpp>
+#include <opencv2/core/core.hpp>
 
 #include "vdo_slam/Tracking.h"
 #include "vdo_slam/Map.h"
-
-namespace VDO_SLAM
-{
+#include "vdo_slam/Scene.h"
 
 using namespace std;
 
-class Map;
-class Tracking;
 
-class System
-{
-public:
+namespace VDO_SLAM {
+
 
     // Input sensor
     enum eSensor{
@@ -37,34 +32,118 @@ public:
         RGBD=2
     };
 
-public:
+    /**
+     * @brief Define a struct that contains all the params needed to initalise the System. Can be used
+     * as a replacement for the yaml settings file. 
+     * 
+     */
+    struct VdoParams {
 
-    // Initialize the SLAM system.
-    System(const string &strSettingsFile, const eSensor sensor);
+        //Camera intrinsics
+        double fx;
+        double fy;
+        double cx;
+        double cy;
+
+        //distortion params
+        double k1;
+        double k2;
+        double p1;
+        double p2;
+
+        //image size
+        int width;
+        int height;
+
+        int fps;
+
+        // stero baseline times fx
+        double bf;
+
+        // Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+        int RGB;
+
+        //System Params
+
+        eSensor sensor_type;
+
+        double depth_map_factor;
+
+        // Close/Far Depth threshold
+        double thdepth_bg;
+        double thdepth_obj;
+
+        // Max Tracking Points on Background and Object in each frame
+        double max_track_points_bg;
+        double max_track_points_obj;
+
+        // Scene Flow Magnitude and Distribution Threshold
+        double sf_mg_thresh;
+        double sf_ds_thresh;
+
+        // Window Size and Overlapping Size for Local Batch Optimization
+        int window_size;
+        int overlap_size;
+
+        //  Use sampled feature or detected feature for background (1: sampled, 0: detected)
+        int use_sample_feature;
+
+        // Orb Params
+
+        // Number of features per image
+        int n_features;
+
+        // Scale factor between levels in the scale pyramid
+        double scale_factor;
+
+        // Number of levels in the scale pyramid
+        int n_levels;
+
+        // Fast threshold
+        int ini_th_fast;
+        int min_th_fast;
+
+    };
+
+    typedef const std::shared_ptr<VdoParams> VdoParamsConstPtr;
+    typedef std::shared_ptr<VdoParams> VdoParamsPtr;
 
 
-    // Process the given rgbd frame. Depthmap must be registered to the RGB frame.
-    // Input image: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
-    // Input depthmap: Float (CV_32F).
-    // Returns the camera pose (empty if tracking fails).
-    std::unique_ptr<Scene> TrackRGBD(const cv::Mat &im, cv::Mat &depthmap, const cv::Mat &flowmap, const cv::Mat &masksem,
-                      const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt, const double &timestamp,
-                      cv::Mat &imTraj, const int &nImage);
+     class Map;
+     class Tracking;
 
-    void SaveResultsIJRR2020(const string &filename);
+    class System
+    {
 
-private:
+    public:
 
-    // Input sensor
-    eSensor mSensor;
+        // Initialize the SLAM system.
+        System(const string &strSettingsFile, const eSensor sensor);
+        System(VdoParamsConstPtr& params);
 
-    // Map structure.
-    Map* mpMap;
 
-    // Tracker. It receives a frame and computes the associated camera pose.
-    Tracking* mpTracker;
+        // Process the given rgbd frame. Depthmap must be registered to the RGB frame.
+        // Input image: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
+        // Input depthmap: Float (CV_32F).
+        // Returns the camera pose (empty if tracking fails).
+        std::unique_ptr<Scene> TrackRGBD(const cv::Mat &im, cv::Mat &depthmap, const cv::Mat &flowmap, const cv::Mat &masksem,
+                        const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt, const double &timestamp,
+                        cv::Mat &imTraj, const int &nImage);
 
-};
+        void SaveResultsIJRR2020(const string &filename);
+
+    private:
+
+        // Input sensor
+        VDO_SLAM::eSensor mSensor;
+
+        // Map structure.
+        VDO_SLAM::Map* mpMap;
+
+        // Tracker. It receives a frame and computes the associated camera pose.
+        VDO_SLAM::Tracking* mpTracker;
+
+    };
 
 }// namespace VDO_SLAM
 

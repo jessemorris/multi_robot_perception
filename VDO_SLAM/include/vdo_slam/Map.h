@@ -6,10 +6,10 @@
 *
 **/
 
-#ifndef MAP_H
-#define MAP_H
+#ifndef VDO_SLAM_MAP_H
+#define VDO_SLAM_MAP_H
 
-#include<opencv2/core/core.hpp>
+#include <opencv2/core/core.hpp>
 
 #include <set>
 

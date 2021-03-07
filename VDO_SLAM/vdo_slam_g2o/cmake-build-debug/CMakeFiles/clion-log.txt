@@ -1,0 +1,22 @@
+/snap/clion/139/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/jesse/Code/third_parties/VDO_SLAM_attempt_modifed/dependencies/vdo_slam_g2o
+-- BUILD TYPE:Debug
+PACKAGE_INCLUDE_INSTALL_LOCATION: /usr/local/include/
+Current src dir: /home/jesse/Code/third_parties/VDO_SLAM_attempt_modifed/dependencies/vdo_slam_g2o
+G20 source dir /home/jesse/Code/third_parties/VDO_SLAM_attempt_modifed/dependencies/vdo_slam_g2o
+-- Compiling on Unix
+-- Found OpenMP_CXX: -fopenmp  
+-- Found OpenMP: TRUE   
+PACKAGE_INCLUDE_INSTALL_LOCATION: /usr/local/include/vdo_slam_g2o
+CMake Warning (dev) at /snap/clion/139/bin/cmake/linux/share/cmake-3.17/Modules/FindPackageHandleStandardArgs.cmake:272 (message):
+  The package name passed to `find_package_handle_standard_args` (CSPARSE)
+  does not match the name of the calling package (CSparse).  This can lead to
+  problems in calling code that expects `find_package` result variables
+  (e.g., `_FOUND`) to follow a certain pattern.
+Call Stack (most recent call first):
+  cmake_modules/FindCSparse.cmake:26 (find_package_handle_standard_args)
+  CMakeLists.txt:100 (find_package)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/jesse/Code/third_parties/VDO_SLAM_attempt_modifed/dependencies/vdo_slam_g2o/cmake-build-debug

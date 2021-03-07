@@ -1,5 +1,5 @@
-#ifndef _VDO_SLAM
-#define _VDO_SLAM
+#ifndef _VDO_SLAM_H
+#define _VDO_SLAM_H
 
 
 #include "vdo_slam/Converter.h"
@@ -11,12 +11,12 @@
 #include "vdo_slam/Tracking.h"
 #include "vdo_slam/Scene.h"
 
-#include "vdo_slam/cvplot/color.h"
-#include "vdo_slam/cvplot/cvplot.h"
-#include "vdo_slam/cvplot/figure.h"
-#include "vdo_slam/cvplot/internal.h"
-#include "vdo_slam/cvplot/highgui.h"
-#include "vdo_slam/cvplot/window.h"
+#include "vdo_slam/color.h"
+#include "vdo_slam/cvplot.h"
+#include "vdo_slam/figure.h"
+#include "vdo_slam/internal.h"
+#include "vdo_slam/highgui.h"
+#include "vdo_slam/window.h"
 
 
 #endif

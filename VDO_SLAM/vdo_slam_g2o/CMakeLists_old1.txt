@@ -1,0 +1,349 @@
+cmake_minimum_required(VERSION 3.10)
+SET(CMAKE_LEGACY_CYGWIN_WIN32 0)
+
+PROJECT(vdo_slam_g2o)
+
+set(LIB_NAME ${PROJECT_NAME})
+
+
+SET(g2o_C_FLAGS)
+SET(g2o_CXX_FLAGS)
+
+# default built type
+IF(NOT CMAKE_BUILD_TYPE)
+  SET(CMAKE_BUILD_TYPE Release)
+ENDIF()
+
+MESSAGE(STATUS "BUILD TYPE:" ${CMAKE_BUILD_TYPE})
+set(PACKAGE_INCLUDE_INSTALL_LOCATION ${CMAKE_INSTALL_PREFIX}/include/${PACKAGE_NAME})
+message("PACKAGE_INCLUDE_INSTALL_LOCATION: ${PACKAGE_INCLUDE_INSTALL_LOCATION}")
+message("Current src dir: ${CMAKE_CURRENT_SOURCE_DIR}")
+
+
+
+
+SET (include_LIB_TYPE SHARED)
+
+# There seems to be an issue with MSVC8
+# see http://eigen.tuxfamily.org/bz/show_bug.cgi?id=83
+if(MSVC90)
+  add_definitions(-DEIGEN_DONT_ALIGN_STATICALLY=1)
+  message(STATUS "Disabling memory alignment for MSVC8")
+endif(MSVC90)
+
+# Set the output directory for the build executables and libraries
+IF(WIN32)
+  SET(include_LIBRARY_OUTPUT_DIRECTORY  ${PROJECT_BINARY_DIR}/bin CACHE PATH "Target for the libraries")
+ELSE(WIN32)
+  SET(include_LIBRARY_OUTPUT_DIRECTORY  ${PROJECT_BINARY_DIR}/lib CACHE PATH "Target for the libraries")
+ENDIF(WIN32)
+# SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${g2o_LIBRARY_OUTPUT_DIRECTORY})
+# SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${g2o_LIBRARY_OUTPUT_DIRECTORY})
+# SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${g2o_RUNTIME_OUTPUT_DIRECTORY})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+set(CMAKE_SRC_BINARY_DIRECTORY ${CMAKE_BINARY_DIR}/src)
+set(g2o_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Set search directory for looking for our custom CMake scripts to
+# look for SuiteSparse, QGLViewer, and Eigen3.
+MESSAGE("G20 source dir " ${g2o_SOURCE_DIR})
+LIST(APPEND CMAKE_MODULE_PATH ${g2o_SOURCE_DIR}/cmake_modules)
+
+# Detect OS and define macros appropriately
+IF(UNIX)
+  ADD_DEFINITIONS(-DUNIX)
+  REMOVE_DEFINITIONS(-D_MSC_VER)
+  MESSAGE(STATUS "Compiling on Unix")
+ENDIF(UNIX)
+
+# Eigen library parallelise itself, though, presumably due to performance issues
+# OPENMP is experimental. We experienced some slowdown with it
+
+FIND_PACKAGE(OpenMP)
+SET(G2O_USE_OPENMP OFF CACHE BOOL "Build include with OpenMP support (EXPERIMENTAL)")
+IF(OPENMP_FOUND AND G2O_USE_OPENMP)
+  SET (G2O_OPENMP 1)
+  SET(g2o_C_FLAGS "${g2o_C_FLAGS} ${OpenMP_C_FLAGS}")
+  SET(g2o_CXX_FLAGS "${g2o_CXX_FLAGS} -DEIGEN_DONT_PARALLELIZE ${OpenMP_CXX_FLAGS}")
+  MESSAGE(STATUS "Compiling with OpenMP support")
+ENDIF(OPENMP_FOUND AND G2O_USE_OPENMP)
+
+# Compiler specific options for gcc
+SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
+SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native")
+
+# activate warnings !!!
+SET(g2o_C_FLAGS "${g2o_C_FLAGS} -Wall -W")
+SET(g2o_CXX_FLAGS "${g2o_CXX_FLAGS} -Wall -W")
+
+# specifying compiler flags
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${g2o_CXX_FLAGS}")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${g2o_C_FLAGS}")
+
+# Find Eigen3
+SET(EIGEN3_INCLUDE_DIR ${include_EIGEN3_INCLUDE})
+FIND_PACKAGE(Eigen3 3.1.0 REQUIRED)
+IF(EIGEN3_FOUND)
+  SET(include_EIGEN3_INCLUDE ${EIGEN3_INCLUDE_DIR} CACHE PATH "Directory of Eigen3")
+ELSE(EIGEN3_FOUND)
+  SET(include_EIGEN3_INCLUDE "" CACHE PATH "Directory of Eigen3")
+ENDIF(EIGEN3_FOUND)
+
+# Set the package install location
+set(PACKAGE_INCLUDE_INSTALL_LOCATION ${CMAKE_INSTALL_PREFIX}/include/vdo_slam/g2o)
+message("PACKAGE_INCLUDE_INSTALL_LOCATION: ${PACKAGE_INCLUDE_INSTALL_LOCATION}")
+
+
+# Generate vdoslam_g2o_config.h
+SET(include_CXX_COMPILER "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER}")
+
+find_package(CSparse REQUIRED)
+include_directories(${CSPARSE_INCLUDE_DIR})
+
+
+message("G20 source dir: ${g2o_SOURCE_DIR}")
+
+set(PUBLIC_SRC_FILES 
+  src/types/src/types_sba.cpp
+  src/types/src/edge_xyz_prior.cpp
+  src/types/src/types_six_dof_expmap.cpp
+  src/types/src/types_seven_dof_expmap.cpp
+  src/types/src/edge_se3_prior.cpp
+  src/types/src/edge_se3_prior.cpp
+  src/types/src/vertex_pointxyz.cpp
+  src/types/src/edge_se3.cpp
+  src/types/src/isometry3d_mappings.cpp
+  src/types/src/vertex_se3.cpp
+  src/types/src/types_dyn_slam3d.cpp
+  src/types/src/dquat2mat.cpp
+  src/types/src/dquat2mat_maxima_generated.cpp
+  src/types/src/edge_se3_pointxyz.cpp
+  src/types/src/isometry3d_gradients.cpp
+  src/types/src/parameter_se3_offset.cpp
+  src/types/src/types_slam3d.cpp
+  src/types/src/edge_se3_offset.cpp
+  src/core/src/hyper_graph_action.cpp
+  src/core/src/hyper_graph.cpp
+  src/core/src/marginal_covariance_cholesky.cpp
+  src/core/src/matrix_structure.cpp
+  src/core/src/batch_stats.cpp
+  src/core/src/optimizable_graph.cpp
+  src/core/src/parameter.cpp
+  src/core/src/cache.cpp
+  src/core/src/solver.cpp
+  src/core/src/optimization_algorithm_factory.cpp
+  src/core/src/factory.cpp
+  src/core/src/parameter_container.cpp
+  src/core/src/sparse_optimizer.cpp
+  src/core/src/hyper_dijkstra.cpp
+  src/core/src/estimate_propagator.cpp
+  src/core/src/optimization_algorithm.cpp
+  src/core/src/optimization_algorithm_with_hessian.cpp
+  src/core/src/optimization_algorithm_levenberg.cpp
+  src/core/src/optimization_algorithm_dogleg.cpp
+  src/core/src/optimization_algorithm_gauss_newton.cpp
+  src/core/src/jacobian_workspace.cpp
+  src/core/src/robust_kernel_factory.cpp
+  src/core/src/robust_kernel.cpp
+  src/core/src/robust_kernel_impl.cpp
+  src/core/src/sparse_optimizer_terminate_action.cpp
+
+  src/stuff/src/timeutil.cpp
+  src/stuff/src/os_specific.c
+  src/stuff/src/opengl_primitives.cpp
+  src/stuff/src/string_tools.cpp
+  src/stuff/src/property.cpp
+  
+  src/solvers/src/csparse_extension.cpp
+  src/solvers/src/solver_csparse.cpp
+  src/solvers/src/csparse_helper.cpp
+
+)
+
+# Public Header Files
+
+set(TYPES_HEADER_FILES
+  #types
+  src/types/include/eigen_types_new.h
+  src/types/include/types_sba.h
+  src/types/include/types_six_dof_expmap.h
+  src/types/include/types_seven_dof_expmap.h
+  src/types/include/se3quat.h
+  src/types/include/se3_ops.h
+  src/types/include/se3_ops.hpp
+  src/types/include/edge_xyz_prior.h
+  src/types/include/edge_se3_prior.h
+  src/types/include/g2o_types_slam3d_api.h
+  src/types/include/vertex_pointxyz.h
+  src/types/include/vertex_se3.h
+  src/types/include/edge_se3.h
+  src/types/include/isometry3d_mappings.h
+  src/types/include/types_dyn_slam3d.h
+  src/types/include/dquat2mat.h
+  src/types/include/edge_se3_pointxyz.h
+  src/types/include/isometry3d_gradients.h
+  src/types/include/parameter_se3_offset.h
+  src/types/include/types_slam3d.h
+  src/types/include/edge_se3_offset.h
+
+)
+
+set(CORE_HEADER_FILES
+   #core
+   src/core/include/g2o_core_api.h
+   src/core/include/base_edge.h
+   src/core/include/base_binary_edge.h
+   src/core/include/base_binary_edge.hpp
+   src/core/include/hyper_graph_action.h
+   src/core/include/base_multi_edge.h
+   src/core/include/base_multi_edge.hpp
+   src/core/include/hyper_graph.h
+   src/core/include/base_unary_edge.h
+   src/core/include/linear_solver.h
+   src/core/include/base_unary_edge.hpp
+   src/core/include/base_vertex.h
+   src/core/include/marginal_covariance_cholesky.h
+   src/core/include/base_vertex.hpp
+   src/core/include/matrix_structure.h
+   src/core/include/batch_stats.h
+   src/core/include/openmp_mutex.h
+   src/core/include/block_solver.h
+   src/core/include/block_solver.hpp
+   src/core/include/parameter.h
+   src/core/include/cache.h
+   src/core/include/optimizable_graph.h
+   src/core/include/solver.h
+   src/core/include/creators.h
+   src/core/include/optimization_algorithm_factory.h
+   src/core/include/estimate_propagator.h
+   src/core/include/optimization_algorithm_property.h
+   src/core/include/factory.h
+   src/core/include/sparse_block_matrix.h
+   src/core/include/sparse_block_matrix.hpp
+   src/core/include/sparse_optimizer.h
+   src/core/include/hyper_dijkstra.h
+   src/core/include/parameter_container.h
+   src/core/include/optimization_algorithm.h
+   src/core/include/optimization_algorithm_with_hessian.h
+   src/core/include/optimization_algorithm_levenberg.h
+   src/core/include/optimization_algorithm_dogleg.h
+   src/core/include/optimization_algorithm_gauss_newton.h
+   src/core/include/jacobian_workspace.h
+   src/core/include/robust_kernel.h
+   src/core/include/robust_kernel_factory.h
+   src/core/include/robust_kernel_impl.h
+   src/core/include/sparse_optimizer_terminate_action.h 
+
+)
+
+set(STUFF_HEADER_FILES
+  #stuff
+  src/stuff/include/string_tools.h
+  src/stuff/include/color_macros.h
+  src/stuff/include/macros.h
+  src/stuff/include/misc.h
+  src/stuff/include/timeutil.h
+  src/stuff/include/os_specific.h
+  src/stuff/include/property.h
+
+)
+
+set(SOLVERS_HEADER_FILES
+  #solvers
+  src/solvers/include/g2o_csparse_extension_api.h
+  src/solvers/include/csparse_extension.h
+  src/solvers/include/csparse_helper.h
+  src/solvers/include/linear_solver_eigen.h
+  src/solvers/include/linear_solver_csparse.h
+  src/solvers/include/linear_solver_dense.h
+
+)
+
+set(PUBLIC_HEADER_FILES
+  #config 
+  src/core/core.hpp
+
+  ${TYPES_HEADER_FILES}
+  ${CORE_HEADER_FILES}
+  ${STUFF_HEADER_FILES}
+  ${SOLVERS_HEADER_FILES}
+)
+
+
+
+
+#create global headers for each module
+set(GLOBAL_HEADER_CONTENT "${GLOBAL_HEADER_CONTENT}
+#include \"types.hpp\"
+#include \"core.hpp\"
+#include \"stuff.hpp\"
+#include \"solvers.hpp\"")
+
+configure_file(cmake/${PROJECT_NAME}.hpp.in ${PROJECT_NAME}.hpp)
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
+        INSTALL_DESTINATION lib/cmake/${PROJECT_NAME}
+)
+
+
+# Set up the top-level include directories
+# include_directories(
+#   include
+#   ${PUBLIC_HEADER_FILES}
+#   ${include_EIGEN3_INCLUDE}
+# )
+
+
+# Include the subdirectories
+add_library(${LIB_NAME} ${include_LIB_TYPE}
+ ${PUBLIC_SRC_FILES}
+  ${PUBLIC_HEADER_FILES}
+
+)
+
+target_link_libraries(${LIB_NAME} 
+  ${CSPARSE_LIBRARY})
+
+target_compile_options(${LIB_NAME}  PRIVATE -Wno-psabi)
+
+# Set include directories for build and install
+target_include_directories(${LIB_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    ${include_EIGEN3_INCLUDE}
+)
+
+install(TARGETS ${LIB_NAME} 
+        EXPORT ${PROJECT_NAME}-export
+        PUBLIC_HEADER DESTINATION include/vdo_slam/g2o
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+)
+
+# Install export library to generate cmake
+install(EXPORT ${PROJECT_NAME}-export
+        #NAMESPACE ${PACKAGE_NAME}::
+        FILE ${PROJECT_NAME}-config.cmake
+        DESTINATION lib/cmake/${PROJECT_NAME}
+)
+
+# Install package config file
+install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
+        DESTINATION lib/cmake/${PROJECT_NAME}
+)
+
+install(FILES ${TYPES_HEADER_FILES} DESTINATION include/vdo_slam/g2o/types)
+install(FILES include/types.hpp DESTINATION include/vdo_slam/g2o)
+
+install(FILES ${CORE_HEADER_FILES} DESTINATION include/vdo_slam/g2o/core)
+install(FILES include/core.hpp DESTINATION include/vdo_slam/g2o)
+
+install(FILES ${STUFF_HEADER_FILES} DESTINATION include/vdo_slam/g2o/stuff)
+install(FILES include/stuff.hpp DESTINATION include/vdo_slam/g2o)
+
+install(FILES ${SOLVERS_HEADER_FILES} DESTINATION include/vdo_slam/g2o/solvers)
+install(FILES include/solvers.hpp DESTINATION include/vdo_slam/g2o)

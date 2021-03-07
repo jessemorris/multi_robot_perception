@@ -6,8 +6,8 @@
 *
 **/
 
-#ifndef ORBEXTRACTOR_H
-#define ORBEXTRACTOR_H
+#ifndef VDO_SLAM_ORBEXTRACTOR_H
+#define VDO_SLAM_ORBEXTRACTOR_H
 
 #include <vector>
 #include <list>

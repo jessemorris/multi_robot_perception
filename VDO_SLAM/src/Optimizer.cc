@@ -8,25 +8,24 @@
 
 #include "vdo_slam/Optimizer.h"
 
-#include "dependencies/g2o/g2o/core/block_solver.h"
-#include "dependencies/g2o/g2o/core/optimization_algorithm_levenberg.h"
-#include "dependencies/g2o/g2o/core/optimization_algorithm_gauss_newton.h"
-#include "dependencies/g2o/g2o/core/optimization_algorithm_dogleg.h"
-#include "dependencies/g2o/g2o/solvers/linear_solver_eigen.h"
-#include "dependencies/g2o/g2o/types/types_six_dof_expmap.h"
-#include "dependencies/g2o/g2o/core/robust_kernel_impl.h"
-#include "dependencies/g2o/g2o/solvers/linear_solver_dense.h"
-#include "dependencies/g2o/g2o/types/types_seven_dof_expmap.h"
-
-#include "dependencies/g2o/g2o/types/types_dyn_slam3d.h"
-#include "dependencies/g2o/g2o/types/vertex_se3.h"
-#include "dependencies/g2o/g2o/types/vertex_pointxyz.h"
-#include "dependencies/g2o/g2o/types/edge_se3.h"
-#include "dependencies/g2o/g2o/types/edge_se3_pointxyz.h"
-#include "dependencies/g2o/g2o/types/edge_se3_prior.h"
-#include "dependencies/g2o/g2o/types/edge_xyz_prior.h"
-#include "dependencies/g2o/g2o/core/sparse_optimizer_terminate_action.h"
-#include "dependencies/g2o/g2o/solvers/linear_solver_csparse.h"
+#include <vdo_slam_g2o/core/block_solver.h>
+#include <vdo_slam_g2o/core/optimization_algorithm_levenberg.h>
+#include <vdo_slam_g2o/core/optimization_algorithm_gauss_newton.h>
+#include <vdo_slam_g2o/core/optimization_algorithm_dogleg.h>
+#include <vdo_slam_g2o/solvers/linear_solver_eigen.h>
+#include <vdo_slam_g2o/types/types_six_dof_expmap.h>
+#include <vdo_slam_g2o/core/robust_kernel_impl.h>
+#include <vdo_slam_g2o/solvers/linear_solver_dense.h>
+#include <vdo_slam_g2o/types/types_seven_dof_expmap.h>
+#include <vdo_slam_g2o/types/types_dyn_slam3d.h>
+#include <vdo_slam_g2o/types/vertex_se3.h>
+#include <vdo_slam_g2o/types/vertex_pointxyz.h>
+#include <vdo_slam_g2o/types/edge_se3.h>
+#include <vdo_slam_g2o/types/edge_se3_pointxyz.h>
+#include <vdo_slam_g2o/types/edge_se3_prior.h>
+#include <vdo_slam_g2o/types/edge_xyz_prior.h>
+#include <vdo_slam_g2o/core/sparse_optimizer_terminate_action.h>
+#include <vdo_slam_g2o/solvers/linear_solver_csparse.h>
 
 #include<Eigen/StdVector>
 

@@ -71,6 +71,7 @@
         "set": "cpp",
         "string": "cpp",
         "*.ipp": "cpp",
-        "forward_list": "cpp"
+        "forward_list": "cpp",
+        "core": "cpp"
     }
 }

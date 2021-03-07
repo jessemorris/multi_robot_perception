@@ -47,16 +47,17 @@ endif()
 
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(CSparse REQUIRED)
+find_package(vdo_slam_g2o REQUIRED)
 
 include_directories(
-   ${PROJECT_SOURCE_DIR}
-   ${PROJECT_SOURCE_DIR}/include
+   # ${PROJECT_SOURCE_DIR}
+   # ${PROJECT_SOURCE_DIR}/include
    ${EIGEN3_INCLUDE_DIR}
    ${CSPARSE_INCLUDE_DIR}
 )
 
 set(PUBLIC_HEADER_FILES
-    include/vdo_slam.hpp
+   #  include/vdo_slam.hpp
     include/${PROJECT_NAME}/Converter.h
     include/${PROJECT_NAME}/Frame.h
     include/${PROJECT_NAME}/Map.h
@@ -71,10 +72,20 @@ set(PUBLIC_HEADER_FILES
     include/${PROJECT_NAME}/cvplot/figure.h
     include/${PROJECT_NAME}/cvplot/highgui.h
     include/${PROJECT_NAME}/cvplot/window.h
-   include/${PROJECT_NAME}/cvplot/internal.h
+    include/${PROJECT_NAME}/cvplot/internal.h
 )
 
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+# set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+
+include(CMakePackageConfigHelpers)
+set(INSTALL_CONFIGDIR lib/cmake/${PROJECT_NAME})
+configure_package_config_file(
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/${PROJECT_NAME}-config.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
+  INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
+)
+
+
 
 add_library(${PROJECT_NAME} SHARED
    src/System.cc
@@ -90,7 +101,10 @@ add_library(${PROJECT_NAME} SHARED
    src/cvplot/figure.cc
    src/cvplot/highgui.cc
    src/cvplot/window.cc
+   ${PUBLIC_HEADER_FILES}
 )
+
+message("vdo slam g2o lib ${vdo_slam_g2o_LIB_DIRS}")
 
 target_link_libraries(
    ${PROJECT_NAME}
@@ -101,23 +115,20 @@ target_link_libraries(
    #${PROJECT_SOURCE_DIR}/dependencies/g2o/lib/libg2o.dylib
    # for linux (ubuntu)
    #${PROJECT_SOURCE_DIR}/dependencies/g2o/lib/libg2o.so
-   -lvdoslam_g2o
+   ${vdo_slam_g2o_LIB_DIRS}
 )
+
+# Set include directories for build and install
+target_include_directories(${PROJECT_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        ${vdo_slam_g2o_INCLUDE_DIRS}
+        )
+
+
 
 # Configure target warnings (PRIVATE doesn't pass on options to targets linking to target)
-target_compile_options(${PACKAGE_NAME} PRIVATE -Wno-psabi)
-
-# Build example
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example)
-
-add_executable(vdo_slam_example
-  example/vdo_slam.cc
-)
-
-target_link_libraries(vdo_slam_example ${PROJECT_NAME})
-
-
+target_compile_options(${PROJECT_NAME} PRIVATE -Wno-psabi)
 
 # Install library as an export target
 install(TARGETS ${PACKAGE_NAME}
@@ -126,12 +137,34 @@ install(TARGETS ${PACKAGE_NAME}
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
-)
+        )
 
+# Install export library to generate cmake
+install(EXPORT ${PROJECT_NAME}-export
+   #NAMESPACE ${PACKAGE_NAME}::
+   FILE ${PROJECT_NAME}-config.cmake
+   DESTINATION lib/cmake/${PROJECT_NAME}
+   )
+
+# Install package config file
+install(FILES
+   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
+   DESTINATION lib/cmake/${PROJECT_NAME}
+   )
 
 # Install Header Files
 install(FILES ${PUBLIC_HEADER_FILES} DESTINATION include/${PROJECT_NAME})
 install(FILES include/${PROJECT_NAME}.hpp DESTINATION include/${PACKAGE_NAME})
 
+
+
+# Build example
+
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example)
+
+add_executable(vdo_slam_example
+  example/vdo_slam.cc
+)
+target_link_libraries(vdo_slam_example ${PROJECT_NAME})
 
 

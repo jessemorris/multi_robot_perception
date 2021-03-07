@@ -1,0 +1,24 @@
+set(vdoslam_g2o_LIBRARIES "")
+set(vdoslam_g2o_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/include/@PACKAGE_NAME@")
+
+set(_INTERNAL_LIBRARY_LIBS)
+set(_INTERNAL_LIBRARY_INCLUDE_DIRS)
+foreach(_INTERNAL_LIBRARY @INTERNAL_LIBRARIES@)
+    # Include the internal library config.cmake
+    include(@CMAKE_INSTALL_PREFIX@/lib/cmake/@PACKAGE_NAME@/${_INTERNAL_LIBRARY}-config.cmake)
+
+    # Add the library itself to vdoslam_g2o_LIBRARIES
+    list(APPEND vdoslam_g2o_LIBRARIES "@PACKAGE_LIB_PREFIX@${_INTERNAL_LIBRARY}")
+
+    # Add all of the library's libraries to vdoslam_g2o_LIBRARIES
+    get_target_property(_INTERNAL_LIBRARY_LIBS @PACKAGE_LIB_PREFIX@${_INTERNAL_LIBRARY} INTERFACE_LINK_LIBRARIES)
+    if(NOT "${_INTERNAL_LIBRARY_LIBS}" STREQUAL "_INTERNAL_LIBRARY_LIBS-NOTFOUND")
+        list(APPEND vdoslam_g2o_LIBRARIES "${_INTERNAL_LIBRARY_LIBS}")
+    endif()
+
+    # Add all of the library's include directories to vdoslam_g2o_INCLUDE_DIRS
+    get_target_property(_INTERNAL_LIBRARY_INCLUDE_DIRS @PACKAGE_LIB_PREFIX@${_INTERNAL_LIBRARY} INTERFACE_INCLUDE_DIRECTORIES)
+    if(NOT "${_INTERNAL_LIBRARY_INCLUDE_DIRS}" STREQUAL "_INTERNAL_LIBRARY_INCLUDE_DIRS-NOTFOUND")
+        list(APPEND vdoslam_g2o_INCLUDE_DIRS "${_INTERNAL_LIBRARY_INCLUDE_DIRS}")
+    endif()
+endforeach()

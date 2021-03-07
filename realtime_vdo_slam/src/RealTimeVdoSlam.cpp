@@ -38,7 +38,7 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
 
         sync.registerCallback(boost::bind(&RosVdoSlam::vdo_input_callback, this, _1, _2, _3, _4));
 
-        slam_system = std::make_unique< VDO_SLAM::System>(vdo_slam_config_path,VDO_SLAM::System::RGBD);
+        slam_system = std::make_unique< VDO_SLAM::System>(vdo_slam_config_path,VDO_SLAM::eSensor::MONOCULAR);
 
 
     }

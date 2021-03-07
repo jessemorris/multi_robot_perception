@@ -30,6 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
 	sensor_msgs)
 
 find_package(OpenCV)
+find_package(vdo_slam REQUIRED)
 
 ## Setup include directories
 #include_directories(${catkin_INCLUDE_DIRS},
@@ -162,8 +163,9 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS}
-	${PROJECT_SOURCE_DIR}/../VDO_SLAM/include/
-	${PROJECT_SOURCE_DIR}/../VDO_SLAM/
+	${vdo_slam_INCLUDE_DIRS}
+	# ${PROJECT_SOURCE_DIR}/../VDO_SLAM/include/
+	# ${PROJECT_SOURCE_DIR}/../VDO_SLAM/
 )
 
 add_library(${PROJECT_NAME}
@@ -175,7 +177,9 @@ add_library(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
-		${PROJECT_SOURCE_DIR}/../VDO_SLAM/lib/libvdo_slam.so)
+		# ${PROJECT_SOURCE_DIR}/../VDO_SLAM/lib/libvdo_slam.so
+		${vdo_slam_LIB_DIRS}
+		)
 
 
 add_executable(ros_vdoslam_node
