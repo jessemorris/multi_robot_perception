@@ -165,6 +165,7 @@ install(FILES include/${PROJECT_NAME}.hpp DESTINATION include/${PACKAGE_NAME})
 add_executable(vdo_slam_example
   example/vdo_slam.cc
 )
-target_link_libraries(vdo_slam_example ${PROJECT_NAME})
+target_link_libraries(vdo_slam_example ${PROJECT_NAME}
+${vdo_slam_g2o_LIB_DIRS})
 
 

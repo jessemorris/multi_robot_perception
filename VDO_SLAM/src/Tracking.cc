@@ -313,8 +313,9 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                 mDepthMap.at<float>(i,j)=0;
             else
             {
-                if (mTestData==OMD)
-                    imD.at<float>(i,j) = imD.at<float>(i,j)/mDepthMapFactor;
+                if (mTestData==OMD) {
+                    mDepthMap.at<float>(i,j) = imD.at<uint16_t>(i,j)/mDepthMapFactor;
+                }
                 else if (mTestData==KITTI)
                 {
                     if (mSensor == eSensor::RGBD) {
