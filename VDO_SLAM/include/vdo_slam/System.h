@@ -40,16 +40,17 @@ namespace VDO_SLAM {
     struct VdoParams {
 
         //Camera intrinsics
-        double fx;
-        double fy;
-        double cx;
-        double cy;
+        float fx;
+        float fy;
+        float cx;
+        float cy;
 
         //distortion params
-        double k1;
-        double k2;
-        double p1;
-        double p2;
+        float k1;
+        float k2;
+        float p1;
+        float p2;
+        float p3 = 0;
 
         //image size
         int width;
@@ -58,28 +59,31 @@ namespace VDO_SLAM {
         int fps;
 
         // stero baseline times fx
-        double bf;
+        float bf;
 
         // Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
         int RGB;
 
         //System Params
 
+
+        int data_code;
+
         eSensor sensor_type;
 
-        double depth_map_factor;
+        float depth_map_factor;
 
         // Close/Far Depth threshold
-        double thdepth_bg;
-        double thdepth_obj;
+        float thdepth_bg;
+        float thdepth_obj;
 
         // Max Tracking Points on Background and Object in each frame
-        double max_track_points_bg;
-        double max_track_points_obj;
+        float max_track_points_bg;
+        float max_track_points_obj;
 
         // Scene Flow Magnitude and Distribution Threshold
-        double sf_mg_thresh;
-        double sf_ds_thresh;
+        float sf_mg_thresh;
+        float sf_ds_thresh;
 
         // Window Size and Overlapping Size for Local Batch Optimization
         int window_size;
@@ -94,7 +98,7 @@ namespace VDO_SLAM {
         int n_features;
 
         // Scale factor between levels in the scale pyramid
-        double scale_factor;
+        float scale_factor;
 
         // Number of levels in the scale pyramid
         int n_levels;
@@ -109,8 +113,8 @@ namespace VDO_SLAM {
     typedef std::shared_ptr<VdoParams> VdoParamsPtr;
 
 
-     class Map;
-     class Tracking;
+    class Map;
+    class Tracking;
 
     class System
     {
@@ -119,7 +123,7 @@ namespace VDO_SLAM {
 
         // Initialize the SLAM system.
         System(const string &strSettingsFile, const eSensor sensor);
-        System(VdoParamsConstPtr& params);
+        System(const VdoParams& params);
 
 
         // Process the given rgbd frame. Depthmap must be registered to the RGB frame.

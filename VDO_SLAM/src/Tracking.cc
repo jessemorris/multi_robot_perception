@@ -35,6 +35,7 @@
 #include <random>
 
 #include "vdo_slam/Tracking.h"
+#include "vdo_slam/System.h"
 #include "vdo_slam/vdo_slam.hpp"
 
 using namespace std;
@@ -48,14 +49,125 @@ bool SortPairInt(const pair<int,int> &a,
 }
 
 
-// Tracking::Tracking(System* pSys, Map* pMap, VdoParamsConstPtr& params) : 
-//     mState(NO_IMAGES_YET),
-//     mSensor(sensor), 
-//     mpSystem(pSys), 
-//     mpMap(pMap)
-// {
+Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) : 
+    mState(NO_IMAGES_YET),
+    mpSystem(pSys), 
+    mpMap(pMap)
+{
+    mSensor = params.sensor_type;
 
-// }
+
+    float fx = params.fx;
+    float fy = params.fy;
+    float cx = params.cx;
+    float cy = params.cy;
+
+    cv::Mat K = cv::Mat::eye(3,3,CV_32F);
+    K.at<float>(0,0) = fx;
+    K.at<float>(1,1) = fy;
+    K.at<float>(0,2) = cx;
+    K.at<float>(1,2) = cy;
+    K.copyTo(mK);
+
+    cv::Mat DistCoef(4,1,CV_32F);
+    DistCoef.at<float>(0) = params.k1;
+    DistCoef.at<float>(1) = params.k2;
+    DistCoef.at<float>(2) = params.p1;
+    DistCoef.at<float>(3) = params.p2;
+    const float k3 = params.p3;
+    if(k3!=0)
+    {
+        DistCoef.resize(5);
+        DistCoef.at<float>(4) = k3;
+    }
+    DistCoef.copyTo(mDistCoef);
+
+    mbf = params.bf;
+
+    float fps = params.fps;
+    if(fps==0)
+        fps=30;
+
+    cout << endl << "Camera Parameters: " << endl << endl;
+    cout << "- fx: " << fx << endl;
+    cout << "- fy: " << fy << endl;
+    cout << "- cx: " << cx << endl;
+    cout << "- cy: " << cy << endl;
+    cout << "- fps: " << fps << endl;
+
+
+    int nRGB = params.RGB;
+    mbRGB = nRGB;
+
+    if(mbRGB)
+        cout << "- color order: RGB (ignored if grayscale)" << endl;
+    else
+        cout << "- color order: BGR (ignored if grayscale)" << endl;
+
+    // Load ORB parameters
+    int nFeatures = params.n_features;
+    float fScaleFactor = params.scale_factor;
+    int nLevels = params.n_levels;
+    int fIniThFAST = params.ini_th_fast;
+    int fMinThFAST = params.min_th_fast;
+
+    mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+
+    if(mSensor== eSensor::STEREO)
+        mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+
+    cout << endl << "System Parameters: " << endl << endl;
+
+    int DataCode = params.data_code;
+    switch (DataCode)
+    {
+        case 1:
+            mTestData = OMD;
+            cout << "- tested dataset: OMD " << endl;
+            break;
+        case 2:
+            mTestData = KITTI;
+            cout << "- tested dataset: KITTI " << endl;
+            break;
+        case 3:
+            mTestData = VirtualKITTI;
+            cout << "- tested dataset: Virtual KITTI " << endl;
+            break;
+    }
+
+    if(mSensor==eSensor::STEREO || mSensor==eSensor::RGBD ||mSensor==eSensor::MONOCULAR)
+    {
+        mThDepth = (float)params.thdepth_bg;
+        mThDepthObj = (float)params.thdepth_obj;
+        cout << "- depth threshold (background/object): " << mThDepth << "/" << mThDepthObj << endl;
+    }
+
+    if(mSensor==eSensor::RGBD || mSensor==eSensor::MONOCULAR)
+    {
+        mDepthMapFactor = params.depth_map_factor;
+        cout << "- depth map factor: " << mDepthMapFactor << endl;
+    }
+
+    nMaxTrackPointBG = params.max_track_points_bg;
+    nMaxTrackPointOBJ = params.max_track_points_obj;
+    cout << "- max tracking points: " << "(1) background: " << nMaxTrackPointBG << " (2) object: " << nMaxTrackPointOBJ << endl;
+
+    fSFMgThres = params.sf_mg_thresh;
+    fSFDsThres = params.sf_ds_thresh;
+    cout << "- scene flow paras: " << "(1) magnitude: " << fSFMgThres << " (2) percentage: " << fSFDsThres << endl;
+
+    nWINDOW_SIZE = params.window_size;
+    nOVERLAP_SIZE = params.overlap_size;
+    cout << "- local batch paras: " << "(1) window: " << nWINDOW_SIZE << " (2) overlap: " << nOVERLAP_SIZE << endl;
+
+    nUseSampleFea = params.use_sample_feature;
+    if (nUseSampleFea==1)
+        cout << "- used sampled feature for background scene..." << endl;
+    else
+        cout << "- used detected feature for background scene..." << endl;
+
+
+}
 
 Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const int sensor):
     mState(NO_IMAGES_YET), mSensor(sensor), mpSystem(pSys), mpMap(pMap)

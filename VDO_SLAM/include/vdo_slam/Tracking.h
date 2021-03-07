@@ -33,6 +33,7 @@ using namespace std;
 
  class Map;
  class System;
+ struct VdoParams;
 
 class Tracking
 {
@@ -62,8 +63,8 @@ class Tracking
     };
 
     public:
-        // Tracking(System* pSys, Map* pMap, VdoParamsConstPtr& params);
-        Tracking(VDO_SLAM::System* pSys, Map* pMap, const string &strSettingPath, const int sensor);
+        Tracking(System* pSys, Map* pMap, const VdoParams& params);
+        Tracking(System* pSys, Map* pMap, const string &strSettingPath, const int sensor);
 
         // Preprocess the input and call Track(). Extract features and performs stereo matching.
         std::unique_ptr<Scene> GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow, const cv::Mat &maskSEM,

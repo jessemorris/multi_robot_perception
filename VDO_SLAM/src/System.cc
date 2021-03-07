@@ -20,6 +20,15 @@
 
 namespace VDO_SLAM
 {
+    System::System(const VdoParams& params) {
+        //Create the Map
+        mpMap = new Map();
+
+        //Initialize the Tracking thread
+        //(it will live in the main thread of execution, the one that called this constructor)
+        mpTracker = new Tracking(this, mpMap, params);
+    }
+
 
     System::System(const string &strSettingsFile, const eSensor sensor):mSensor(sensor)
     {
