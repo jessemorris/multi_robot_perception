@@ -32,7 +32,7 @@ Camera.width: 640
 Camera.height: 480
 
 # Camera frames per second
-Camera.fps: 24
+Camera.fps: 12
 
 # IR projector baseline times fx (aprox.)
 Camera.bf: 387.5744
@@ -49,8 +49,8 @@ Camera.RGB: 1
 ChooseData: 2
 
 # Deptmap values factor
-DepthMapFactor: 1515
-# DepthMapFactor: 1500
+# DepthMapFactor: 500
+DepthMapFactor: 1500
 
 # Close/Far Depth threshold
 #ThDepthBG: 40.0

@@ -202,6 +202,7 @@ class MaskRcnnRos(RosCppCommunicator):
         for mask, semantic_index in zip(masks, label_indexs):
             thresh = mask[0, :, :].astype(np.uint8) * count
             blank_mask += thresh
+            print(count)
             count += 1
 
 

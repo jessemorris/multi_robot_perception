@@ -4,8 +4,9 @@ scene_flow_delay_count: 1
 # topic_prefix: "/gmsl/"
 # camera_suffix: "/image_color"
 # info_msg_suffix: "/camera_info"
-input_camera_topic: /gmsl/A0/image_color
+# input_camera_topic: /gmsl/A0/image_color
 # input_camera_topic: /read/camera/rgb/raw_image
+input_camera_topic: /camera/rgb/raw_image
 input_camera_info_topic: /gmsl/A0/camera_info
 
 #options for which analysis to run
@@ -29,6 +30,6 @@ camera_topics_prefixes:
 
 
 #options for images
-apply_undistortion: True
+apply_undistortion: False
 
 #launch-prefix="valgrind --tool=memcheck --xtree-memory=full --xml=yes --xml-file='memcheck.realtime_vdo_slam.%p'"
