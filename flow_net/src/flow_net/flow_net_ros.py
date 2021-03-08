@@ -181,31 +181,31 @@ class FlowNetRos(RosCppCommunicator):
         return img
 
 
-def main():
+# def main():
     
-    flownet = FlowNetRos()
-    is_first = True
-    cam = cv2.VideoCapture(0)
-    previous_image = None
-    while True:
+#     flownet = FlowNetRos()
+#     is_first = True
+#     cam = cv2.VideoCapture(0)
+#     previous_image = None
+#     while True:
 
-        start_time = time.time()
-        ret_val, img = cam.read()
-        if is_first:
-            previous_image = img
-            is_first = False
-            continue
-        composite = flownet.analyse_flow(previous_image, img)
-        rgb_flow = flownet.flow2rgb(composite)
-        print("Time: {:.2f} s / img".format(time.time() - start_time))
-        cv2.imshow("RGB Flow", rgb_flow)
-        if cv2.waitKey(1) == 27:
-            break  # esc to quit
+#         start_time = time.time()
+#         ret_val, img = cam.read()
+#         if is_first:
+#             previous_image = img
+#             is_first = False
+#             continue
+#         composite = flownet.analyse_flow(previous_image, img)
+#         rgb_flow = flownet.flow2rgb(composite)
+#         print("Time: {:.2f} s / img".format(time.time() - start_time))
+#         cv2.imshow("RGB Flow", rgb_flow)
+#         if cv2.waitKey(1) == 27:
+#             break  # esc to quit
 
-        previous_image = img
-    cv2.destroyAllWindows()
+#         previous_image = img
+#     cv2.destroyAllWindows()
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 

@@ -28,8 +28,8 @@
 #define VDO_SLAM_G2O_SPARSE_BLOCK_MATRIX_DIAGONAL_H
 
 #include <vector>
-#include <Eigen/Core>
-#include <Eigen/StdVector>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/StdVector>
 
 #include "vdo_slam_g2o/vdo_slam_g2o_config.hpp"
 #include "vdo_slam_g2o/core/matrix_operations.h"

@@ -26,7 +26,7 @@
 
 #ifndef VDO_SLAM_G2O_BLOCK_SOLVER_H
 #define VDO_SLAM_G2O_BLOCK_SOLVER_H
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include "vdo_slam_g2o/core/solver.h"
 #include "vdo_slam_g2o/core/linear_solver.h"
 #include "vdo_slam_g2o/core/sparse_block_matrix.h"

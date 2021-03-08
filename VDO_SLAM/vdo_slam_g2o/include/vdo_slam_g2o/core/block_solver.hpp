@@ -28,7 +28,7 @@
 #define VDO_SLAM_G20_BLOCK_SOLVER_HPP
 
 #include "vdo_slam_g2o/core/sparse_optimizer.h"
-#include <Eigen/LU>
+#include <eigen3/Eigen/LU>
 #include <fstream>
 #include <iomanip>
 

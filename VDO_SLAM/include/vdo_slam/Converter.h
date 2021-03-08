@@ -11,7 +11,7 @@
 
 #include <opencv2/core/core.hpp>
 
-#include<Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 
 
 #include  <vdo_slam_g2o/types/types_seven_dof_expmap.h>

@@ -6,3 +6,7 @@ sensor_msgs/Image output_viz
 string[] labels
 int32[] label_indexs
 bool success
+
+#center (x,y) will be starting x, y which is the bottom left corner of the image
+#size_x and size_y will be with and height of image
+vision_msgs/BoundingBox2D[] bounding_boxes

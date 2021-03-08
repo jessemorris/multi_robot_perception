@@ -33,7 +33,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cassert>
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 #include "vdo_slam_g2o/core/sparse_block_matrix_ccs.h"
 #include "vdo_slam_g2o/core/matrix_structure.h"

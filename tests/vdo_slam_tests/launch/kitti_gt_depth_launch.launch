@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="vdo_slam_tests" type="kitti_gt_depth_node" name="kitti_gt_depth" output="screen" />
+  <param name="path_to_sequence" value="/home/jesse/Code/src/ros/src/multi_robot_perception/VDO_SLAM/demo-kitti"/>
+  <param name="vdo_yaml_file" value="/home/jesse/Code/src/ros/src/multi_robot_perception/VDO_SLAM/example/kitti-0018-0020.yaml"/>
+  <!-- for sensor type: MONOCULAR=0, STEREO=1, RGBD=2-->
+  <param name="sensor_type" type="int" value="2" />
+</launch>

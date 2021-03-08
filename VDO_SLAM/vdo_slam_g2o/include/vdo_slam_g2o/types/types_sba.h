@@ -24,12 +24,12 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef VGOSLAM_G2O_SBA_TYPES
-#define VGOSLAM_G2O_SBA_TYPES
+#ifndef VDO_SLAM_G2O_SBA_TYPES
+#define VDO_SLAM_G2O_SBA_TYPES
 
 #include "vdo_slam_g2o/core/base_vertex.h"
 
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Geometry>
 #include <iostream>
 
 namespace g2o {

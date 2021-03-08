@@ -54,7 +54,7 @@
 #include "vdo_slam_g2o/types/se3_ops.h"
 #include "vdo_slam_g2o/types/se3quat.h"
 #include "vdo_slam_g2o/types/types_sba.h"
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Geometry>
 
 namespace g2o {
 namespace types_six_dof_expmap {

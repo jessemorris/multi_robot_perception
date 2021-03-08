@@ -24,13 +24,13 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef G2O_ISOMETRY3D_GRADIENTS_H_
-#define G2O_ISOMETRY3D_GRADIENTS_H_
+#ifndef VDO_SLAM_G2O_ISOMETRY3D_GRADIENTS_H_
+#define VDO_SLAM_G2O_ISOMETRY3D_GRADIENTS_H_
 
 #include "vdo_slam_g2o/types/isometry3d_mappings.h"
 #include "vdo_slam_g2o/types/dquat2mat.h"
 
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 namespace g2o {
   namespace internal {

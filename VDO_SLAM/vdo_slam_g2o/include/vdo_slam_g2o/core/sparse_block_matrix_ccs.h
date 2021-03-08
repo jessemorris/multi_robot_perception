@@ -29,7 +29,7 @@
 
 #include <vector>
 #include <cassert>
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 #include "vdo_slam_g2o/core/matrix_operations.h"
 

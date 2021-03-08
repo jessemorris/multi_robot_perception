@@ -14,7 +14,7 @@
 #include <opencv2/features2d/features2d.hpp>
 
 // eigen
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 #include "vdo_slam/Map.h"
 #include "vdo_slam/Frame.h"

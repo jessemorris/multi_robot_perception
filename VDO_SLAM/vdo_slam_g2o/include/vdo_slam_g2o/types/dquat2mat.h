@@ -26,7 +26,7 @@
 
 #ifndef VDO_SLAM_DQUAT2MAT_H_
 #define VDO_SLAM_DQUAT2MAT_H_
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 #include "vdo_slam_g2o/types/g2o_types_slam3d_api.h"
 

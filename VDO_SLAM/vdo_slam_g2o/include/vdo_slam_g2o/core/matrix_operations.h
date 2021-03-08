@@ -27,7 +27,7 @@
 #ifndef VDO_SLAM_G2O_CORE_MATRIX_OPERATIONS_H
 #define VDO_SLAM_G2O_CORE_MATRIX_OPERATIONS_H
 
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 namespace g2o {
   namespace internal {

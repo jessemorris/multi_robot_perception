@@ -24,11 +24,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef G2O_SIM_3
-#define G2O_SIM_3
+#ifndef VDO_SLAM_G2O_SIM_3
+#define VDO_SLAM_G2O_SIM_3
 
-#include "se3_ops.h"
-#include <Eigen/Geometry>
+#include "vdo_slam_g2o/types/se3_ops.h"
+#include <eigen3/Eigen/Geometry>
 
 namespace g2o
 {

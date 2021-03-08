@@ -27,8 +27,8 @@
 #ifndef VDO_SLAM_G2O_EIGEN_TYPES_NEW_H
 #define VDO_SLAM_G2O_EIGEN_TYPES_NEW_H
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 
 #include "vdo_slam_g2o/vdo_slam_g2o_config.hpp"
 

@@ -13,10 +13,15 @@ find_package(catkin REQUIRED COMPONENTS
   rostk_pyutils
   python_service_starter
   sensor_msgs
+  cv_bridge
+  vision_msgs
 )
 catkin_python_setup()
 
-
+add_message_files(
+   FILES
+   SemanticObject.msg
+)
 
 add_service_files(
   FILES
@@ -26,7 +31,7 @@ add_service_files(
 )
 
 
-generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs std_msgs sensor_msgs)
+generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs std_msgs sensor_msgs vision_msgs)
 
 
 
@@ -47,7 +52,7 @@ target_link_libraries(${PROJECT_NAME}
 catkin_package(
  INCLUDE_DIRS  include
  LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS rospy std_msgs message_runtime roscpp
+  CATKIN_DEPENDS rospy std_msgs message_runtime roscpp cv_bridge
 )
 
 

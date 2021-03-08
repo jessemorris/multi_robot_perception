@@ -51,8 +51,6 @@ add_executable(vdo_orb_test_node
 		src/vdo_orb_test.cpp
 		)
 
-
-
 target_link_libraries(vdo_orb_test_node
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
@@ -61,6 +59,25 @@ target_link_libraries(vdo_orb_test_node
 
 if(catkin_EXPORTED_LIBRARIES)
   add_dependencies(image_preprocessing_node
+		  ${catkin_EXPORTED_LIBRARIES}
+		  ${catkin_LIBRARIES}
+		  ${OpenCV_LIBS})
+endif()
+
+
+## Kitti GT Depth Node ######
+add_executable(kitti_gt_depth_node
+		src/kitti_gt_depth.cpp
+		)
+
+target_link_libraries(kitti_gt_depth_node
+		${catkin_LIBRARIES}
+		${OpenCV_LIBS}
+    -lvdo_slam
+		)
+
+if(catkin_EXPORTED_LIBRARIES)
+  add_dependencies(kitti_gt_depth_node
 		  ${catkin_EXPORTED_LIBRARIES}
 		  ${catkin_LIBRARIES}
 		  ${OpenCV_LIBS})

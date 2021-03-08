@@ -8,6 +8,8 @@
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <mask_rcnn/SemanticObject.h>
+
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <python_service_starter/ServiceStarterInterface.hpp>
@@ -15,6 +17,8 @@
 
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <vision_msgs/BoundingBox2D.h>
+#include <geometry_msgs/Pose2D.h>
 
 // Standard Library Headers
 #include <string>
@@ -41,10 +45,43 @@ namespace mask_rcnn {
              * @param viz RGB uint8 image where the masks have been colourized for easier visualisation.
              * @param labels A list of labels corresponding to the sematic labels in the image.
              * @param label_indexs The index values that these semantic labels belong to accoriding to the Mask Rcnn categories.
+             * @param bounding_box A list of bounding box msgs objects.
              * @return true 
              * @return false 
              */
-            bool analyse(cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz, std::vector<std::string>& labels, std::vector<int>& label_indexs);
+            bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz, std::vector<std::string>& labels, 
+                std::vector<int>& label_indexs, std::vector<vision_msgs::BoundingBox2D>& bounding_box);
+
+             /**
+             * @brief Analysises the image image using Mask Rcnn.
+             * 
+             * @param current_image RGB uint8 image to analyse
+             * @param dst Mono uint8 image where background pixels are set to 0 and sematic labels are provided to each pixel.
+             * The semantic label can be found at the index of the labels vector at the using the pixel value as the idnex
+             * @param viz RGB uint8 image where the masks have been colourized for easier visualisation.
+             * @param labels A list of labels corresponding to the sematic labels in the image.
+             * @param label_indexs The index values that these semantic labels belong to accoriding to the Mask Rcnn categories.
+             * @return true 
+             * @return false 
+             */
+            bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz, std::vector<std::string>& labels, 
+                std::vector<int>& label_indexs);
+
+            /**
+             * @brief Analysises the image image using Mask Rcnn.
+             * 
+             * @param current_image RGB uint8 image to analyse
+             * @param dst Mono uint8 image where background pixels are set to 0 and sematic labels are provided to each pixel.
+             * The semantic label can be found at the index of the labels vector at the using the pixel value as the idex.
+             * @param viz RGB uint8 image where the masks have been colourized for easier visualisation.
+             * @return true 
+             * @return false 
+             */
+            bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz);
+
+            bool create_semantic_objects(const std::vector<std::string>& labels, const std::vector<int>& label_indexs,
+                const std::vector<vision_msgs::BoundingBox2D>& bounding_box, std::vector<mask_rcnn::SemanticObject>& semantic_objects);
+            // bool assign_tracking_labels()
 
             /**
              * @brief begins the python program found in the scripts file.

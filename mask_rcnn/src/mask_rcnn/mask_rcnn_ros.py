@@ -23,6 +23,9 @@ from mask_rcnn.srv import MaskRcnnLabel, MaskRcnnLabelResponse
 from rostk_pyutils.ros_cpp_communicator import RosCppCommunicator
 
 from sensor_msgs.msg import Image
+from vision_msgs.msg import BoundingBox2D
+from geometry_msgs.msg import Pose2D
+
 import struct
 import rospy
 import random
@@ -36,12 +39,13 @@ rospack = rospkg.RosPack()
 package_path = rospack.get_path("mask_rcnn")
 sys.path.insert(0, package_path)
 
-
+#e2e_mask_rcnn_R_101_FPN_1x_caffe2
+#e2e_mask_rcnn_X_101_32x8d_FPN_1x_caffe2
 #e2e_mask_rcnn_X_101_32x8d_FPN_1x_caffe2
 #e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml
 class MaskRcnnRos(RosCppCommunicator):
 
-    def __init__(self, config_path = package_path + "/src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"):
+    def __init__(self, config_path = package_path + "/src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_101_FPN_1x_caffe2.yaml"):
         RosCppCommunicator.__init__(self)
         self.model_config_path = config_path
         cfg.merge_from_file(self.model_config_path)
@@ -55,9 +59,9 @@ class MaskRcnnRos(RosCppCommunicator):
         # prepare object that handles inference plus adds predictions on top of image
         self.coco_demo = COCODemo(
             cfg,
-            confidence_threshold=0.80,
+            confidence_threshold=0.75,
             show_mask_heatmaps=False,
-            masks_per_dim=4,
+            masks_per_dim=20,
             min_image_size=800
         )
 
@@ -78,7 +82,7 @@ class MaskRcnnRos(RosCppCommunicator):
         try: 
             input_image = ros_numpy.numpify(req.input_image)
 
-            response_image, labels, label_indexs, _ = self.analyse_image(input_image)
+            response_image, labels, label_indexs, bounding_box_msgs = self.analyse_image(input_image)
             display_image = self._generate_coloured_mask(response_image, labels, label_indexs)
             # test_image = self.display_predictions(input_image)
 
@@ -91,6 +95,9 @@ class MaskRcnnRos(RosCppCommunicator):
             response.labels = labels
             response.label_indexs = label_indexs
             response.output_viz = display_image_msg
+            response.bounding_boxes = bounding_box_msgs
+
+            self.log_to_ros(response.labels)
 
             del response_image
             del labels
@@ -133,8 +140,21 @@ class MaskRcnnRos(RosCppCommunicator):
             boxes = top_predictions.bbox
             for box in boxes:
                 xmin, ymin, w, h = box.split(1, dim=-1)
-                rect = [int(xmin.numpy()[0]), int(ymin.numpy()[0]), int(w.numpy()[0]), int(h.numpy()[0]) ]
-                bounding_boxes.append(rect)
+
+                #here we make bounding box msg types
+                #we make pose x, y which is bottom left corner of image
+                pose2d = Pose2D(int(xmin.numpy()[0]), int(ymin.numpy()[0]))
+
+                bounding_box_msg = BoundingBox2D()
+
+                #size x and size y will be bounding box width and height respectively
+                bounding_box_msg.size_x =  int(w.numpy()[0])
+                bounding_box_msg.size_y = int(h.numpy()[0])
+
+                bounding_box_msg.center = pose2d
+
+                # rect = [int(xmin.numpy()[0]), int(ymin.numpy()[0]), int(w.numpy()[0]), int(h.numpy()[0]) ]
+                bounding_boxes.append(bounding_box_msg)
             
             if len(bounding_boxes) < 1:
                 bounding_boxes = [[]]
@@ -176,6 +196,13 @@ class MaskRcnnRos(RosCppCommunicator):
         for mask, semantic_index in zip(masks, label_indexs):
             thresh = mask[0, :, :].astype(np.uint8) * semantic_index
             blank_mask += thresh
+
+        # count = 1
+        # for mask, semantic_index in zip(masks, label_indexs):
+        #     thresh = mask[0, :, :].astype(np.uint8) * count
+        #     blank_mask += thresh
+        #     count += 1
+
 
         composite = blank_mask
 
@@ -241,7 +268,7 @@ def main():
         start_time = time.time()
         ret_val, img = cam.read()
         # response_image, labels, label_indexs = maskrcnn.analyse_image(img)
-        response_image, labels, label_indexs = maskrcnn.analyse_image(img)
+        response_image, labels, label_indexs, _ = maskrcnn.analyse_image(img)
         display_image = maskrcnn._generate_coloured_mask(response_image, labels, label_indexs)
 
         # test_image = maskrcnn.display_predictions(img)

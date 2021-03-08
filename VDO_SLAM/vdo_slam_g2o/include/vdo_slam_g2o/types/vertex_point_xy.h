@@ -32,7 +32,7 @@
 #include "g2o/core/base_vertex.h"
 #include "g2o/core/hyper_graph_action.h"
 
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 namespace g2o {
 

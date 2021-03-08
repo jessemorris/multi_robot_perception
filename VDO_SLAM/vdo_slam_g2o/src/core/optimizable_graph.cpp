@@ -32,7 +32,7 @@
 #include <fstream>
 #include <algorithm>
 
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 
 #include "vdo_slam_g2o/core/estimate_propagator.h"
 #include "vdo_slam_g2o/core/factory.h"

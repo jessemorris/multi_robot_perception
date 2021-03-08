@@ -8,7 +8,7 @@
 
 
 
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
@@ -173,7 +173,7 @@ Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const 
     mState(NO_IMAGES_YET), mSensor(sensor), mpSystem(pSys), mpMap(pMap)
 {
     // Load camera parameters from settings file
-
+    cout << "mSensor " << mSensor << endl;
     cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
     float fx = fSettings["Camera.fx"];
     float fy = fSettings["Camera.fy"];
@@ -309,10 +309,10 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     {
         for (int j = 0; j < imD.cols; j++)
         {
-            if (imD.at<uint16_t>(i,j)<0)
+            if (imD.at<uint16_t>(i,j)<0) {
                 mDepthMap.at<float>(i,j)=0;
-            else
-            {
+            }
+            else {
                 if (mTestData==OMD) {
                     mDepthMap.at<float>(i,j) = imD.at<uint16_t>(i,j)/mDepthMapFactor;
                 }
@@ -321,7 +321,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                     if (mSensor == eSensor::RGBD) {
                         mDepthMap.at<float>(i,j) = mbf/(imD.at<uint16_t>(i,j)/mDepthMapFactor);
                     }
-                    if (mSensor == eSensor::MONOCULAR) {
+                    else if (mSensor == eSensor::MONOCULAR) {
                         //for monocular the input image does need to be reversed - the code actually inverts the depth map to "normal"
                         // when it does mbf/depth/factor. 
                         float value = (imD.at<uint16_t>(i,j)/mDepthMapFactor);

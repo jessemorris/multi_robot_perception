@@ -72,6 +72,13 @@
         "string": "cpp",
         "*.ipp": "cpp",
         "forward_list": "cpp",
-        "core": "cpp"
+        "core": "cpp",
+        "dense": "cpp",
+        "cholesky": "cpp",
+        "stdvector": "cpp",
+        "stack": "cpp",
+        "lu": "cpp",
+        "geometry": "cpp",
+        "sparse": "cpp"
     }
 }

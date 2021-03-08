@@ -4,8 +4,12 @@
   <version>0.0.0</version>
   <description>The flow_net package</description>
 
-  <maintainer email="info@ocrtoc.org">robot</maintainer>
+  <maintainer email="jmor6670@uni.sydney.edu.au">Jesse Morris</maintainer>
   <license>BSD</license>
+
+  <depend>sensor_msgs</depend>
+
+  <depend>cv_bridge</depend>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>actionlib</build_depend>

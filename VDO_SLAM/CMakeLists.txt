@@ -123,6 +123,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         ${vdo_slam_g2o_INCLUDE_DIRS}
+        ${include_EIGEN3_INCLUDE}
         )
 
 

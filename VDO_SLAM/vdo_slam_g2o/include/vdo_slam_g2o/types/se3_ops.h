@@ -27,8 +27,8 @@
 #ifndef VDO_SLAM_G2O_MATH_STUFF
 #define VDO_SLAM_G2O_MATH_STUFF
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 
 namespace g2o {
   using namespace Eigen;

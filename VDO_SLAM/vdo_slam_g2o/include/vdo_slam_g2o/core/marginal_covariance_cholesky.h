@@ -27,8 +27,8 @@
 #ifndef VDO_SLAM_G2O_MARGINAL_COVARIANCE_CHOLESKY_H
 #define VDO_SLAM_G2O_MARGINAL_COVARIANCE_CHOLESKY_H
 
-#include "optimizable_graph.h"
-#include "sparse_block_matrix.h"
+#include "vdo_slam_g2o/core/optimizable_graph.h"
+#include "vdo_slam_g2o/core/sparse_block_matrix.h"
 
 #include <cassert>
 #include <vector>

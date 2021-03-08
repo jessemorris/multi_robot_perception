@@ -7,6 +7,10 @@
   <maintainer email="jmor6670@uni.sydney.edu.au">Jesse Morris</maintainer>
   <license>BSD</license>
 
+  <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>vision_msgs</depend>
+
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>actionlib</build_depend>
   <build_depend>actionlib_msgs</build_depend>

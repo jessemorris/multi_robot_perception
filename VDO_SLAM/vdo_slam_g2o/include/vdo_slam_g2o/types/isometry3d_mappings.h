@@ -29,7 +29,7 @@
 
 #include "vdo_slam_g2o/types/g2o_types_slam3d_api.h"
 #include "vdo_slam_g2o/types/se3quat.h"
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include "vdo_slam_g2o/types/eigen_types_new.h"
 
 namespace g2o {

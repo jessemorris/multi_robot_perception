@@ -27,13 +27,13 @@
 #ifndef VDO_SLAM_JACOBIAN_WORKSPACE_H
 #define VDO_SLAM_JACOBIAN_WORKSPACE_H
 
-#include <Eigen/Core>
-#include <Eigen/StdVector>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/StdVector>
 
 #include <vector>
 #include <cassert>
 
-#include "hyper_graph.h"
+#include "vdo_slam_g2o/core/hyper_graph.h"
 
 namespace g2o {
 

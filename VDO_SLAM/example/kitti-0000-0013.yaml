@@ -55,7 +55,7 @@ WINDOW_SIZE: 20
 OVERLAP_SIZE: 4
 
 # Use sampled feature or detected feature for background (1: sampled, 0: detected)
-UseSampleFeature: 0
+UseSampleFeature: 1
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters (NOTE: only FAST corners are used in this system.)

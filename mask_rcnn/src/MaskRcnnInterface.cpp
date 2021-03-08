@@ -4,6 +4,7 @@
 #include <mask_rcnn/MaskRcnnVdoSlam.h>
 #include <mask_rcnn/MaskRcnnLabel.h>
 #include <mask_rcnn/MaskRcnnLabelList.h>
+
 #include <python_service_starter/StartMaskRcnn.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/core.hpp>
@@ -57,8 +58,9 @@ bool MaskRcnnInterface::wait_for_services(ros::Duration timeout) {
 }    
 
 
-bool MaskRcnnInterface::analyse(cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz,
-    std::vector<std::string>& labels, std::vector<int>& label_indexs) {
+bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz,
+    std::vector<std::string>& labels, std::vector<int>& label_indexs, 
+    std::vector<vision_msgs::BoundingBox2D>& bounding_box) {
 
     if (!service_started) {
         return false;
@@ -84,6 +86,13 @@ bool MaskRcnnInterface::analyse(cv::Mat& current_image, cv::Mat& dst, cv::Mat& v
             for (std::vector<int>::iterator it = srv.response.label_indexs.begin(); it != srv.response.label_indexs.end(); ++it) {
                 label_indexs.push_back(*it);
             }
+
+            bounding_box.clear();
+            for (std::vector<vision_msgs::BoundingBox2D>::iterator it = srv.response.bounding_boxes.begin(); it != srv.response.bounding_boxes.end(); ++it) {
+                bounding_box.push_back(*it);
+            }
+
+
             return true;
         }
         else {
@@ -97,6 +106,19 @@ bool MaskRcnnInterface::analyse(cv::Mat& current_image, cv::Mat& dst, cv::Mat& v
         return false;
     }
 
+}
+
+bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz,
+    std::vector<std::string>& labels, std::vector<int>& label_indexs) {
+    std::vector<vision_msgs::BoundingBox2D> bb;
+    return analyse(current_image, dst, viz, labels, label_indexs, bb);
+}
+
+bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz) {
+    std::vector<std::string> labels;
+    std::vector<int> label_indexs;
+    std::vector<vision_msgs::BoundingBox2D> bb;
+    return analyse(current_image, dst, viz, labels, label_indexs, bb);
 }
 
 std::string MaskRcnnInterface::invalid_name = "invalid";
