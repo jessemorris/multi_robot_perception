@@ -97,21 +97,26 @@ bool SemanticTracker::assign_tracking_labels(std::vector<mask_rcnn::SemanticObje
         double cost = hungarian_solver.Solve(euclid_cost_matrix, assignment);
         for (unsigned int current_track_index = 0; current_track_index < euclid_cost_matrix.size(); current_track_index++) {
             int assigned_track = assignment[current_track_index];
-
+            ROS_INFO_STREAM("Assigned track " << assigned_track);
             if (assigned_track < 0) {
                 //i guess keep own tracking label but this will be wrong? need new tracking label somehow
                 current_semantic_objects[current_track_index].tracking_label = global_track_id;
                 global_track_id++;
-                continue;
+            }
+            else {
+                
+                //if previous track was not provided but we have an assignment - make new track
+                if((previous_semantic_objects+assigned_track)->tracking_label == -1) {
+                    (previous_semantic_objects+assigned_track)->tracking_label = global_track_id;
+                    global_track_id++;
+                }
+                ROS_INFO_STREAM("here1");
+
+                current_semantic_objects[current_track_index].tracking_label = (previous_semantic_objects+assigned_track)->tracking_label;
             }
 
-            //if previous track was not provided but we have an assignment - make new track
-            if((previous_semantic_objects+assigned_track)->tracking_label == -1) {
-                (previous_semantic_objects+assigned_track)->tracking_label = global_track_id;
-                global_track_id++;
-            }
+            ROS_INFO_STREAM("here2");
 
-            current_semantic_objects[current_track_index].tracking_label = (previous_semantic_objects+assigned_track)->tracking_label;
 
             //now modify mask and viz
             vision_msgs::BoundingBox2D bounding_box = current_semantic_objects[current_track_index].bounding_box;
@@ -126,8 +131,8 @@ bool SemanticTracker::assign_tracking_labels(std::vector<mask_rcnn::SemanticObje
             int x_end = left + width;
             int y_end = top + height;
 
-            int y_end = std::min(y_end, original_semantic_mat.cols);
-            int x_end = std::min(x_end, original_semantic_mat.rows);
+            // y_end = std::min(y_end, original_semantic_mat.cols);
+            // x_end = std::min(x_end, original_semantic_mat.rows);
 
             for (int rows = top; rows < y_end; rows++) {
                 for (int cols = left; cols < x_end; cols++) {
@@ -135,11 +140,11 @@ bool SemanticTracker::assign_tracking_labels(std::vector<mask_rcnn::SemanticObje
                     if (original_semantic_mat.at<int>(rows, cols) != 0) {
                         // std::cout << original_semantic_mat.at<int>(rows, cols) << " ";
 
-                        reassigned_instance_mat.at<int>(rows, cols) =  (uint16_t)current_semantic_objects[current_track_index].tracking_label * 50;
-                        ROS_INFO_STREAM("Assigned track " << reassigned_instance_mat.at<int>(rows, cols));
+                        reassigned_instance_mat.at<int>(rows, cols) =  (int)current_semantic_objects[current_track_index].tracking_label;
                         viz.at<cv::Vec3b>(rows, cols)[0] = 0;
                         viz.at<cv::Vec3b>(rows, cols)[1] = current_semantic_objects[current_track_index].tracking_label * 50;
                         viz.at<cv::Vec3b>(rows, cols)[2] = 255;
+
                     }
                     else {
                         reassigned_instance_mat.at<int>(rows, cols) = 0;
@@ -149,16 +154,22 @@ bool SemanticTracker::assign_tracking_labels(std::vector<mask_rcnn::SemanticObje
 
             }
 
-            // cv::rectangle(viz, cv::Point(bounding_box.center.x, bounding_box.center.y),
-            //         cv::Point(bounding_box.center.x + bounding_box.size_x, bounding_box.center.y + bounding_box.size_y),
-            //         cv::Scalar(0, 255, 255), 2);
+            ROS_INFO_STREAM("here3");
 
+            cv::rectangle(viz, cv::Point(bounding_box.center.x, bounding_box.center.y),
+                            cv::Point(bounding_box.center.x + bounding_box.size_x, bounding_box.center.y + bounding_box.size_y),
+                            cv::Scalar(0, 255, 255), 2);
 
-            // std::cout << current_track_index << "," << assignment[current_track_index] << "\t";
+            std::cout << current_track_index << "," << assignment[current_track_index] << "\t";
 
         }
 
+        ROS_INFO_STREAM("here4");
+
+
         add_semantic_objects(current_semantic_objects);
+
+        ROS_INFO_STREAM("here5");
 
     }
 

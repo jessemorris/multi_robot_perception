@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
 	tf2_geometry_msgs
 	visualization_msgs
 	message_generation
+	vision_msgs
 	std_msgs
 	cv_bridge
 	nav_msgs

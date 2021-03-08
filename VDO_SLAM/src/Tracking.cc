@@ -260,7 +260,7 @@ Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const 
         cout << "- depth threshold (background/object): " << mThDepth << "/" << mThDepthObj << endl;
     }
 
-    if(sensor==eSensor::RGBD)
+    if(sensor==eSensor::RGBD || sensor==eSensor::MONOCULAR)
     {
         mDepthMapFactor = fSettings["DepthMapFactor"];
         cout << "- depth map factor: " << mDepthMapFactor << endl;
@@ -335,7 +335,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
 
                     // float value = mbf/(imD.at<uint16_t>(i,j)/mDepthMapFactor);
 
-                    // std::cout <<  mDepthMap.at<float>(i,j) << " ";
+                    // std::cout <<   mDepthMap.at<float>(i,j) << " ";
                 }
             }
         }

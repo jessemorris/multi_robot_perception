@@ -45,7 +45,7 @@ sys.path.insert(0, package_path)
 #e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml
 class MaskRcnnRos(RosCppCommunicator):
 
-    def __init__(self, config_path = package_path + "/src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_101_FPN_1x_caffe2.yaml"):
+    def __init__(self, config_path = package_path + "/src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"):
         RosCppCommunicator.__init__(self)
         self.model_config_path = config_path
         cfg.merge_from_file(self.model_config_path)
@@ -192,17 +192,17 @@ class MaskRcnnRos(RosCppCommunicator):
             masks = np.expand_dims(masks, axis=0)
             masks = np.expand_dims(masks, axis=0)
 
-        #TODO: make sure there is a boarder around each mask so that they are definetely considered
-        # #separate objects
-        # for mask, semantic_index in zip(masks, label_indexs):
-        #     thresh = mask[0, :, :].astype(np.uint8) * semantic_index
-        #     blank_mask += thresh
-
-        count = 1
+       #TODO: make sure there is a boarder around each mask so that they are definetely considered
+        #separate objects
         for mask, semantic_index in zip(masks, label_indexs):
-            thresh = mask[0, :, :].astype(np.uint8) * count
+            thresh = mask[0, :, :].astype(np.uint8) * semantic_index
             blank_mask += thresh
-            count += 1
+
+        # count = 1
+        # for mask, semantic_index in zip(masks, label_indexs):
+        #     thresh = mask[0, :, :].astype(np.uint8) * count
+        #     blank_mask += thresh
+        #     count += 1
 
 
         composite = blank_mask

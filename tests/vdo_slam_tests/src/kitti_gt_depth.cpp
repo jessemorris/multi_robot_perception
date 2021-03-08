@@ -122,11 +122,9 @@ int main(int argc, char **argv) {
     // namedWindow( "Trajectory", cv::WINDOW_AUTOSIZE);
     cv::Mat imTraj = cv::Mat::zeros(800, 600, CV_8UC3);
 
-    std::vector<std::string> mask_rcnn_labels;
-    std::vector<int> mask_rcnn_label_indexs;
-    std::vector<vision_msgs::BoundingBox2D> bb;
 
     cv::Mat imRGB, imD, mTcw_gt, flow_mat, mask_mat, prev_rgb;
+    cv::Mat tracked_mask_converted;
     bool is_first = true;
     for(int ni=0; ni<nImages; ni++) {
          // Read imreadmage and depthmap from file
@@ -144,9 +142,14 @@ int main(int argc, char **argv) {
         imD.convertTo(imD_f, CV_16UC1);
 
         std::vector<mask_rcnn::SemanticObject> semantic_objects;
+        std::vector<std::string> mask_rcnn_labels;
+        std::vector<int> mask_rcnn_label_indexs;
+        std::vector<vision_msgs::BoundingBox2D> bb;
         cv::Mat mask_viz, tracked_mask;
         mask_rcnn.analyse(imRGB, mask_mat, mask_viz, mask_rcnn_labels,mask_rcnn_label_indexs, bb);
-        mask_mat.convertTo(mask_mat, CV_32SC1);
+
+        //NOTE: in order to display we convert to a CV_32SC1!!!! This doesnt make sense!!! 
+        // mask_mat.convertTo(mask_mat, CV_32SC1);
 
         cout << "Bounding boxes" << endl;
         for(auto& b : bb) {
@@ -160,8 +163,11 @@ int main(int argc, char **argv) {
             cout << b << endl;
         }
 
-        tracker.assign_tracking_labels(semantic_objects,mask_mat,tracked_mask, mask_viz);
-        // tracked_mask.convertTo(tracked_mask, CV_32SC1);
+        cv::Mat tracked_viz;
+        tracker.assign_tracking_labels(semantic_objects,mask_mat,tracked_mask, tracked_viz);
+        ROS_INFO_STREAM(mask_mat.size());
+
+        tracked_mask.convertTo(tracked_mask_converted, CV_32SC1);
 
         cout << "After assignment" << endl;
         for(auto& b : semantic_objects) {
@@ -184,9 +190,13 @@ int main(int argc, char **argv) {
             vObjPose_gt[i] = vObjPoseGT[vObjPoseID[ni][i]];
         }
 
-        auto sceneptr = slam.TrackRGBD(imRGB, imD_f, flow_mat, tracked_mask,mTcw_gt,vObjPose_gt,tframe,imTraj,nImages);
+        auto sceneptr = slam.TrackRGBD(imRGB, imD_f, flow_mat, tracked_mask_converted,mTcw_gt,vObjPose_gt,tframe,imTraj,nImages);
 
-        cv::imshow("Depth", tracked_mask);
+        cv::imshow("Tracked", tracked_viz);
+        cv::waitKey(1);
+
+
+        cv::imshow("MASK Viz", mask_viz);
         cv::waitKey(1);
 
         // cv::imshow("Flow", viz);

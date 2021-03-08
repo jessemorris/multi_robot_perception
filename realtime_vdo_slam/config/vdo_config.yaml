@@ -5,15 +5,15 @@
 #--------------------------------------------------------------------------------------------
 
 # Camera calibration and distortion parameters (OpenCV)
-# Camera.fx: 396.70760099999995
-# Camera.fy: 469.5846480794702
-# Camera.cx: 323.5571166666666
-# Camera.cy: 238.71953562913907
+Camera.fx: 396.70760099999995
+Camera.fy: 469.5846480794702
+Camera.cx: 323.5571166666666
+Camera.cy: 238.71953562913907
 
-Camera.fx: 718.8560
-Camera.fy: 718.8560
-Camera.cx: 607.1928
-Camera.cy: 185.2157
+# Camera.fx: 718.8560
+# Camera.fy: 718.8560
+# Camera.cx: 607.1928
+# Camera.cy: 185.2157
 
 # Camera.k1: -0.089289
 # Camera.k2: 0.001958
@@ -32,7 +32,7 @@ Camera.width: 640
 Camera.height: 480
 
 # Camera frames per second
-Camera.fps: 10
+Camera.fps: 24
 
 # IR projector baseline times fx (aprox.)
 Camera.bf: 387.5744
@@ -49,7 +49,7 @@ Camera.RGB: 1
 ChooseData: 2
 
 # Deptmap values factor
-DepthMapFactor: 500
+DepthMapFactor: 1515
 # DepthMapFactor: 1500
 
 # Close/Far Depth threshold

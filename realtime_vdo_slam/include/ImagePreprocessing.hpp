@@ -28,6 +28,7 @@
 // #incl
 #include <mono_depth_2/MonoDepthInterface.hpp>
 #include <mask_rcnn/MaskRcnnInterface.hpp>
+#include <mask_rcnn/SemanticTracker.hpp>
 #include <flow_net/FlowNetInterface.hpp>
 
 #include <string>
@@ -99,6 +100,7 @@ namespace VDO_SLAM {
         ros::NodeHandle handler;
         flow_net::FlowNetInterface sceneflow;
         mask_rcnn::MaskRcnnInterface mask_rcnn_interface;
+        mask_rcnn::SemanticTracker tracker;
         mono_depth_2::MonoDepthInterface mono_depth;
 
         bool run_scene_flow;
