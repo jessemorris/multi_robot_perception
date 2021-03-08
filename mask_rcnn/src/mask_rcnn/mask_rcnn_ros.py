@@ -198,12 +198,21 @@ class MaskRcnnRos(RosCppCommunicator):
         #     thresh = mask[0, :, :].astype(np.uint8) * semantic_index
         #     blank_mask += thresh
 
-        count = 1
+        #track semantic labels in this map
+        # we want unique instance-level semantic labelling per class (so car: [1,2], person: [1,2])
+        instance_track = {}
+
+        for label_index in label_indexs:
+            # there is at least one of these objects in the list
+            instance_track[label_index] = 1
+
         for mask, semantic_index in zip(masks, label_indexs):
-            thresh = mask[0, :, :].astype(np.uint8) * count
+            label = instance_track[semantic_index]
+            thresh = mask[0, :, :].astype(np.uint8) * label
+            print(label)
             blank_mask += thresh
-            print(count)
-            count += 1
+            instance_track[semantic_index] += 1
+
 
 
         composite = blank_mask
