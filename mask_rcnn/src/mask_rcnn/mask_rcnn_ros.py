@@ -143,7 +143,8 @@ class MaskRcnnRos(RosCppCommunicator):
 
                 #here we make bounding box msg types
                 #we make pose x, y which is bottom left corner of image
-                pose2d = Pose2D(int(xmin.numpy()[0]), int(ymin.numpy()[0]))
+                # leave theta as 0
+                pose2d = Pose2D(int(xmin.numpy()[0]), int(ymin.numpy()[0]), 0)
 
                 bounding_box_msg = BoundingBox2D()
 
@@ -192,16 +193,16 @@ class MaskRcnnRos(RosCppCommunicator):
             masks = np.expand_dims(masks, axis=0)
 
         #TODO: make sure there is a boarder around each mask so that they are definetely considered
-        #separate objects
-        for mask, semantic_index in zip(masks, label_indexs):
-            thresh = mask[0, :, :].astype(np.uint8) * semantic_index
-            blank_mask += thresh
-
-        # count = 1
+        # #separate objects
         # for mask, semantic_index in zip(masks, label_indexs):
-        #     thresh = mask[0, :, :].astype(np.uint8) * count
+        #     thresh = mask[0, :, :].astype(np.uint8) * semantic_index
         #     blank_mask += thresh
-        #     count += 1
+
+        count = 1
+        for mask, semantic_index in zip(masks, label_indexs):
+            thresh = mask[0, :, :].astype(np.uint8) * count
+            blank_mask += thresh
+            count += 1
 
 
         composite = blank_mask
@@ -239,6 +240,13 @@ class MaskRcnnRos(RosCppCommunicator):
         # colors = (colors % 255).astype("uint8")
         return colors
 
+    def generated_bounding_boxes(self, rgb_image, bounding_box_msgs):
+        rgb_image_bb = rgb_image.copy()
+        for bounding_box in bounding_box_msgs:
+            cv2.rectangle(rgb_image_bb, (bounding_box.center.x, bounding_box.center.y),
+                        (bounding_box.center.x + bounding_box.size_x, bounding_box.center.y + bounding_box.size_y), (0, 255, 255), 2)
+        return rgb_image_bb
+
     def _generate_coloured_mask(self, mask, labels, labels_index):
         # mask =  np.expand_dims(mask, 2) 
         # mask = np.repeat(mask, 3, axis=2) # give the mask the same shape as your image
@@ -268,12 +276,13 @@ def main():
         start_time = time.time()
         ret_val, img = cam.read()
         # response_image, labels, label_indexs = maskrcnn.analyse_image(img)
-        response_image, labels, label_indexs, _ = maskrcnn.analyse_image(img)
+        response_image, labels, label_indexs, bb = maskrcnn.analyse_image(img)
         display_image = maskrcnn._generate_coloured_mask(response_image, labels, label_indexs)
+        bb_imagg = maskrcnn.generated_bounding_boxes(img, bb)
 
         # test_image = maskrcnn.display_predictions(img)
         print("Time: {:.2f} s / img".format(time.time() - start_time))
-        cv2.imshow("COCO detections", display_image)
+        cv2.imshow("COCO detections", bb_imagg)
         print(labels)
         # cv2.imshow("Preds", test_image)
         if cv2.waitKey(1) == 27:

@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   mask_rcnn
   mono_depth_2
   sensor_msgs
+  vision_msgs
 )
 catkin_python_setup()
 

@@ -45,7 +45,7 @@ namespace mask_rcnn {
              * @param viz RGB uint8 image where the masks have been colourized for easier visualisation.
              * @param labels A list of labels corresponding to the sematic labels in the image.
              * @param label_indexs The index values that these semantic labels belong to accoriding to the Mask Rcnn categories.
-             * @param bounding_box A list of bounding box msgs objects.
+             * @param bounding_boxs A list of bounding box msgs objects.
              * @return true 
              * @return false 
              */
@@ -79,9 +79,19 @@ namespace mask_rcnn {
              */
             bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz);
 
+            /**
+             * @brief Create a a list of semantic objects from the output of the analyse functions.
+             * 
+             * @param labels A list of labels corresponding to the sematic labels in the image.
+             * @param label_indexs The index values that these semantic labels belong to accoriding to the Mask Rcnn categories.
+             * @param bounding_boxs A list of bounding box msgs objects.
+             * @param semantic_objects A list of semantic objects
+             * @return true 
+             * @return false 
+             */
             bool create_semantic_objects(const std::vector<std::string>& labels, const std::vector<int>& label_indexs,
-                const std::vector<vision_msgs::BoundingBox2D>& bounding_box, std::vector<mask_rcnn::SemanticObject>& semantic_objects);
-            // bool assign_tracking_labels()
+                const std::vector<vision_msgs::BoundingBox2D>& bounding_boxs, std::vector<mask_rcnn::SemanticObject>& semantic_objects);
+
 
             /**
              * @brief begins the python program found in the scripts file.

@@ -9,11 +9,15 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+#include <mask_rcnn/SemanticTracker.hpp>
+#include <mask_rcnn/SemanticObject.h>
 
 #include <opencv2/core.hpp>
 #include <vector>
 #include <string>
 #include <iostream>
+
+#include <vision_msgs/BoundingBox2D.h>
 
 // #incl
 #include <mono_depth_2/MonoDepthInterface.hpp>
@@ -104,6 +108,8 @@ int main(int argc, char **argv) {
 
     VDO_SLAM::System slam(vdo_yaml_file,sensor);
 
+    mask_rcnn::SemanticTracker tracker;
+
 
     mask_rcnn.start_service();
     flow_net.start_service();
@@ -115,6 +121,10 @@ int main(int argc, char **argv) {
 
     // namedWindow( "Trajectory", cv::WINDOW_AUTOSIZE);
     cv::Mat imTraj = cv::Mat::zeros(800, 600, CV_8UC3);
+
+    std::vector<std::string> mask_rcnn_labels;
+    std::vector<int> mask_rcnn_label_indexs;
+    std::vector<vision_msgs::BoundingBox2D> bb;
 
     cv::Mat imRGB, imD, mTcw_gt, flow_mat, mask_mat, prev_rgb;
     bool is_first = true;
@@ -133,10 +143,34 @@ int main(int argc, char **argv) {
 
         imD.convertTo(imD_f, CV_16UC1);
 
-
-        cv::Mat mask_viz;
-        mask_rcnn.analyse(imRGB, mask_mat, mask_viz);
+        std::vector<mask_rcnn::SemanticObject> semantic_objects;
+        cv::Mat mask_viz, tracked_mask;
+        mask_rcnn.analyse(imRGB, mask_mat, mask_viz, mask_rcnn_labels,mask_rcnn_label_indexs, bb);
         mask_mat.convertTo(mask_mat, CV_32SC1);
+
+        cout << "Bounding boxes" << endl;
+        for(auto& b : bb) {
+            cout << b << endl;
+        }
+
+        mask_rcnn.create_semantic_objects(mask_rcnn_labels, mask_rcnn_label_indexs, bb, semantic_objects);
+
+        cout << "Semantic Objects" << endl;
+        for(auto& b : semantic_objects) {
+            cout << b << endl;
+        }
+
+        tracker.assign_tracking_labels(semantic_objects,mask_mat,tracked_mask, mask_viz);
+        // tracked_mask.convertTo(tracked_mask, CV_32SC1);
+
+        cout << "After assignment" << endl;
+        for(auto& b : semantic_objects) {
+            cout << b << endl;
+        }
+
+
+
+        // mask_mat.convertTo(mask_mat, CV_32SC1);
         cv::Mat viz;
         flow_net.analyse(imRGB,prev_rgb, flow_mat, viz);
 
@@ -150,13 +184,13 @@ int main(int argc, char **argv) {
             vObjPose_gt[i] = vObjPoseGT[vObjPoseID[ni][i]];
         }
 
-        auto sceneptr = slam.TrackRGBD(imRGB, imD_f, flow_mat, mask_mat,mTcw_gt,vObjPose_gt,tframe,imTraj,nImages);
+        auto sceneptr = slam.TrackRGBD(imRGB, imD_f, flow_mat, tracked_mask,mTcw_gt,vObjPose_gt,tframe,imTraj,nImages);
 
-        cv::imshow("Depth", mask_viz);
+        cv::imshow("Depth", tracked_mask);
         cv::waitKey(1);
 
-        cv::imshow("Flow", viz);
-        cv::waitKey(1);
+        // cv::imshow("Flow", viz);
+        // cv::waitKey(1);
 
         prev_rgb = imRGB.clone();
     }

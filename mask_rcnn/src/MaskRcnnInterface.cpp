@@ -108,6 +108,24 @@ bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::
 
 }
 
+bool MaskRcnnInterface::create_semantic_objects(const std::vector<std::string>& labels, const std::vector<int>& label_indexs,
+                const std::vector<vision_msgs::BoundingBox2D>& bounding_boxs, std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
+    
+    semantic_objects.clear();
+    for(int i = 0; i < bounding_boxs.size(); i++) {
+        mask_rcnn::SemanticObject semantic_object;
+        semantic_object.label = labels[i];
+        semantic_object.label_index = label_indexs[i];
+        semantic_object.tracking_label = -1; //initalise as -1
+
+        semantic_object.bounding_box = bounding_boxs[i];
+
+        semantic_objects.push_back(semantic_object);
+
+    }
+
+}
+
 bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz,
     std::vector<std::string>& labels, std::vector<int>& label_indexs) {
     std::vector<vision_msgs::BoundingBox2D> bb;
