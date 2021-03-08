@@ -117,7 +117,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
             }
 
             if (imDepth.at<float>(y,x)>mThDepth || imDepth.at<float>(y,x)<=0)  {// new added in Aug 21 2019
-                std::cout << "Depth was bad " << imDepth.at<float>(y,x) << std::endl;
+                // std::cout << "Depth was bad " << imDepth.at<float>(y,x) << std::endl;
                 continue;
             }
 

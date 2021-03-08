@@ -327,6 +327,10 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                         float value = (imD.at<uint16_t>(i,j)/mDepthMapFactor);
                         mDepthMap.at<float>(i,j) = value;
                     }
+
+                     // when it does mbf/depth/factor. 
+                        // float value = (imD.at<uint16_t>(i,j)/mDepthMapFactor);
+                        // mDepthMap.at<float>(i,j) = value;
                     // --- for stereo depth map ---
                     // mDepthMap.at<float>(i,j) = mbf/(imD.at<uint16_t>(i,j)/mDepthMapFactor);
                     // --- for monocular depth map ---
@@ -843,7 +847,7 @@ void Tracking::Track()
         bFirstFrame = true;
         bFrame2Frame = false;
 
-        if(mSensor==eSensor::RGBD)
+        if(mSensor==eSensor::RGBD || mSensor==eSensor::MONOCULAR)
             Initialization();
 
         if(mState!=OK)

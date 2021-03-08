@@ -165,15 +165,16 @@ void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 
         if (run_mask_rcnn) {
             mask_rcnn_success = mask_rcnn_interface.analyse(current_image, mask_rcnn_mat, mask_rcnn_viz, mask_rcnn_labels, mask_rcnn_label_indexs, bb);
-            mask_rcnn_interface.create_semantic_objects(mask_rcnn_labels, mask_rcnn_label_indexs, bb, semantic_objects);
+            // mask_rcnn_interface.create_semantic_objects(mask_rcnn_labels, mask_rcnn_label_indexs, bb, semantic_objects);
 
             if (mask_rcnn_success) {
+                // mask_rcnn_mat.convertTo(mask_rcnn_mat, CV_32SC1);
 
-                tracker.assign_tracking_labels(semantic_objects,mask_rcnn_mat,tracked_mask, tracked_viz);
+                // tracker.assign_tracking_labels(semantic_objects,mask_rcnn_mat,tracked_mask, tracked_viz);
                 // tracked_mask.convertTo(tracked_mask, CV_32SC1);
 
 
-                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "mono8", tracked_mask).toImageMsg();
+                sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "mono8", mask_rcnn_mat).toImageMsg();
                 maskrcnn_raw.publish(img_msg);
 
                 img_msg = cv_bridge::CvImage(original_header, "rgb8", mask_rcnn_viz).toImageMsg();
