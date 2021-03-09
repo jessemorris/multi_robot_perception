@@ -194,6 +194,9 @@ namespace VDO_SLAM {
              */
             void odom_repub_callback(const nav_msgs::OdometryConstPtr& msg);
 
+
+            const nav_msgs::Odometry& get_latest_gt_odom();
+
         private:
             ros::NodeHandle nh;
             ros::Publisher visualiser;
@@ -207,9 +210,12 @@ namespace VDO_SLAM {
             tf2_ros::TransformListener listener;
             std::string child_frame_id;
 
+            nav_msgs::Odometry gt_odom;
+
             const int x_offset = 300;
             const int y_offset = 300;
-            const int scale = 3;
+            const int scale = 6;
+            
 
         
 

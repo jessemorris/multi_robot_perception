@@ -11,9 +11,9 @@
 
   <node pkg="realtime_vdo_slam" type="ros_vdoslam_node" name="ros_vdoslam" output="screen">
     <!-- Remap if needed from vdo generated topics to vdo_slam expected topics. These are the same as the ImageProcessing node -->
-    <remap to="/vdoslam/input/camera/rgb/image_raw" from="/camera/rgb/image_raw"/>
+    <!-- <remap to="/vdoslam/input/camera/rgb/image_raw" from="/camera/rgb/image_raw"/>
     <remap to="/vdoslam/input/camera/mask/image_raw" from="/camera/mask/image_raw"/>
     <remap to="/vdoslam/input/camera/flow/image_raw" from="/camera/flow/image_raw"/>
-    <remap to="/vdoslam/input/camera/depth/image_raw" from="/camera/depth/image_raw"/>
+    <remap to="/vdoslam/input/camera/depth/image_raw" from="/camera/depth/image_raw"/> -->
   </node>
 </launch>

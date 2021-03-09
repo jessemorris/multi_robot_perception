@@ -134,11 +134,11 @@ void RosVdoSlam::vdo_worker() {
             std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(
                     new VDO_SLAM::RosScene(*scene, input->image_time));
             ros_scene = std::move(unique_ros_scene);
-            // ros_scene_manager.display_scene(ros_scene);
-            // ros_scene_manager.update_display_mat(ros_scene);
+            ros_scene_manager.display_scene(ros_scene);
+            ros_scene_manager.update_display_mat(ros_scene);
 
-            // cv::imshow("Trajectory", ros_scene_manager.get_display_mat());
-            // cv::waitKey(1);
+            cv::imshow("Trajectory", ros_scene_manager.get_display_mat());
+            cv::waitKey(1);
         }
     }
 

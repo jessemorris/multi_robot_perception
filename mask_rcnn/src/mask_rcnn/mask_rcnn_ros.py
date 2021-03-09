@@ -61,8 +61,7 @@ class MaskRcnnRos(RosCppCommunicator):
             cfg,
             confidence_threshold=0.75,
             show_mask_heatmaps=False,
-            masks_per_dim=20,
-            min_image_size=800
+            masks_per_dim=20
         )
 
         self._greyscale_colours = self._generate_grayscale_values()
@@ -185,18 +184,11 @@ class MaskRcnnRos(RosCppCommunicator):
         label_indexs = predictions.get_field("labels").numpy()
         labels = self.convert_label_index_to_string(label_indexs)
 
-
         # colours = self.get_greyscale_colours(label_indexs)
         
         if masks.ndim < 3:
             masks = np.expand_dims(masks, axis=0)
             masks = np.expand_dims(masks, axis=0)
-
-       #TODO: make sure there is a boarder around each mask so that they are definetely considered
-        #separate objects
-        # for mask, semantic_index in zip(masks, label_indexs):
-        #     thresh = mask[0, :, :].astype(np.uint8) * semantic_index
-        #     blank_mask += thresh
 
         #track semantic labels in this map
         # we want unique instance-level semantic labelling per class (so car: [1,2], person: [1,2])
@@ -209,13 +201,12 @@ class MaskRcnnRos(RosCppCommunicator):
         for mask, semantic_index in zip(masks, label_indexs):
             label = instance_track[semantic_index]
             thresh = mask[0, :, :].astype(np.uint8) * label
-            print(label)
             blank_mask += thresh
             instance_track[semantic_index] += 1
 
 
-
         composite = blank_mask
+
 
         return composite, labels, label_indexs
 
@@ -261,15 +252,11 @@ class MaskRcnnRos(RosCppCommunicator):
         # mask =  np.expand_dims(mask, 2) 
         # mask = np.repeat(mask, 3, axis=2) # give the mask the same shape as your image
         coloured_img = np.zeros((mask.shape[0], mask.shape[1], 3))
-        
-        for index in labels_index:
+        max_value = np.amax(mask)
+
+        for index in range(max_value):
             colour = self._colours[index]
             coloured_img[mask == index] = colour
-            # mask.flatten()
-            # np.where(mask == index, np.multiply(mask, colour), mask )
-            # colored_mask = mask.reshape(coloured_img.shape)
-            # print(colored_mask.shape)
-            # coloured_img = coloured_img + colored_mask
         coloured_img = coloured_img.astype('uint8')
         return coloured_img
 
@@ -277,28 +264,73 @@ class MaskRcnnRos(RosCppCommunicator):
 
 
 
-def main():
-    
-    maskrcnn = MaskRcnnRos()
 
-    cam = cv2.VideoCapture(0)
-    while True:
-        start_time = time.time()
-        ret_val, img = cam.read()
-        # response_image, labels, label_indexs = maskrcnn.analyse_image(img)
-        response_image, labels, label_indexs, bb = maskrcnn.analyse_image(img)
-        display_image = maskrcnn._generate_coloured_mask(response_image, labels, label_indexs)
-        bb_imagg = maskrcnn.generated_bounding_boxes(img, bb)
 
-        # test_image = maskrcnn.display_predictions(img)
-        print("Time: {:.2f} s / img".format(time.time() - start_time))
-        cv2.imshow("COCO detections", bb_imagg)
-        print(labels)
-        # cv2.imshow("Preds", test_image)
-        if cv2.waitKey(1) == 27:
-            break  # esc to quit
+class MaskRcnnTopic():
+
+    def __init__(self, mask_rcnn, topic):
+        self.mask_rcnn = mask_rcnn
+        self.image = None
+        self.sub = rospy.Subscriber(topic, Image, self.image_callback)
+
+    def image_callback(self, data):
+        input_image = ros_numpy.numpify(data)
+        response_image, labels, label_indexs, bb = self.mask_rcnn.analyse_image(input_image)
+        display_image = self.mask_rcnn._generate_coloured_mask(response_image, labels, label_indexs)
+        cv2.imshow("detections", display_image)
+        cv2.waitKey(1)
+
+        cv2.imshow("Input image", input_image)
+        cv2.waitKey(1)
+
+
+def shutdown_hook():
     cv2.destroyAllWindows()
 
 
+#TODO: options for type of output
 if __name__ == "__main__":
-    main()
+    rospy.init_node("mask_rcnn_ros_node")
+    rospy.on_shutdown(shutdown_hook)
+    import argparse
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--topic', default="0")
+    args = parser.parse_args()
+    
+    topic = args.topic
+
+    input_device = "camera"
+    maskrcnn = MaskRcnnRos()
+
+
+    if topic == "0":
+        rospy.loginfo("Using video camera as input")
+
+
+        cam = cv2.VideoCapture(0)
+        while True:
+            start_time = time.time()
+            ret_val, img = cam.read()
+            # response_image, labels, label_indexs = maskrcnn.analyse_image(img)
+            response_image, labels, label_indexs, bb = maskrcnn.analyse_image(img)
+            display_image = maskrcnn._generate_coloured_mask(response_image, labels, label_indexs)
+            bb_imagg = maskrcnn.generated_bounding_boxes(img, bb)
+
+            # test_image = maskrcnn.display_predictions(img)
+            print("Time: {:.2f} s / img".format(time.time() - start_time))
+            cv2.imshow("detections", bb_imagg)
+            # cv2.imshow("Preds", test_image)
+            if cv2.waitKey(1) == 27:
+                break  # esc to quit
+        cv2.destroyAllWindows()
+
+        
+
+    else:
+        input_device = "ros_topic"
+        rospy.loginfo("Attempting to subscribe to rostopic {}".format(topic))
+        topic_mask_rcnn = MaskRcnnTopic(maskrcnn, topic)
+        rospy.spin()
+
+    

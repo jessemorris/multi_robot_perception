@@ -141,30 +141,35 @@ void VDO_SLAM::RosSceneManager::display_scene(RosScenePtr& scene) {
 }
 
 void VDO_SLAM::RosSceneManager::odom_repub_callback(const nav_msgs::OdometryConstPtr& msg) {
-    double x = -msg->pose.pose.position.x;
-    double y = msg->pose.pose.position.y;
-    double z = msg->pose.pose.position.z;
-    //here we update the odom repub to the display mat
-    //we use 10 for scale
+    gt_odom = *msg;
+    // display_mutex.lock();
+    // double x = -msg->pose.pose.position.x;
+    // double y = msg->pose.pose.position.y;
+    // double z = msg->pose.pose.position.z;
+    // //here we update the odom repub to the display mat
+    // //we use 10 for scale
+    // ROS_INFO_STREAM(x << " " << y << " " << z);
     
-    int x_display = (x * scale) + x_offset;
-    int y_display = (y * scale) + y_offset;
-    //add odom to cv mat
-    display_mutex.lock();
-    cv::rectangle(display, cv::Point(y_display, x_display), cv::Point(y_display+10, x_display+10), cv::Scalar(0,255,0),1);
+    // int x_display = (x * scale) + x_offset;
+    // int y_display = (y * scale) + y_offset;
+    // //add odom to cv mat
+    // cv::rectangle(display, cv::Point(y_display, x_display), cv::Point(y_display+10, x_display+10), cv::Scalar(0,255,0),1);
     // cv::rectangle(display, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
     // cv::putText(display, "Camera GT Trajectory (GREEN SQUARE)", cv::Point(10, 100), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
     // char text[100];
-    // sprintf(text, "x = %02fm y = %02fm z = %02fm", x, y, z);
+    // sprintf(text, "x = %.2f y = %.2f z = %.2f", x, y, z);
     // cv::putText(display, text, cv::Point(10, 120), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
-    display_mutex.unlock();
+    // display_mutex.unlock();
 }
 
 cv::Mat& VDO_SLAM::RosSceneManager::get_display_mat() {
     return display;
 }
 
+
+
 void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::RosScene>& scene) {
+
     const nav_msgs::Odometry odom = scene->odom_msg();
 
     //camera is offset from the base link so try and orietnate 
@@ -175,26 +180,11 @@ void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::Ros
 
     geometry_msgs::Pose transformed_pose;
     
-    // try {
-	// 	transform_stamped = tf_buffer.lookupTransform("base_link", "vdo_camera_link", ros::Time(0));
-	// } catch (const tf2::TransformException& e) {
-	// 	ROS_WARN_STREAM("Skipping track_callback because lookup_transform failed with exception: " << e.what());
-	// 	return;
-	// }
-
-    tf2::doTransform(pose, transformed_pose, transform_stamped);
-
-
 
     double x = odom.pose.pose.position.x;
     double y = odom.pose.pose.position.y;
     double z = odom.pose.pose.position.z;
-    // double x = transformed_pose.position.x;
-    // double y = transformed_pose.position.y;
-    // double z = transformed_pose.position.z;
 
-
-    
 
     //800 is height of cv mat and we want to draw from bottom left
     int x_display =  static_cast<int>(x*scale) + x_offset;
@@ -208,6 +198,24 @@ void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::Ros
     char text[100];
     sprintf(text, "x = %02fm y = %02fm z = %02fm", x, y, z);
     cv::putText(display, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
+
+
+    //now for gt odom
+    x = -gt_odom.pose.pose.position.x;
+    y = gt_odom.pose.pose.position.y;
+    z = gt_odom.pose.pose.position.z;
+    //here we update the odom repub to the display mat
+    //we use 10 for scale    
+    x_display = (x * scale) + x_offset;
+    y_display = (y * scale) + y_offset;
+    //add odom to cv mat
+    cv::rectangle(display, cv::Point(y_display, x_display), cv::Point(y_display+10, x_display+10), cv::Scalar(0,255,0),1);
+    cv::rectangle(display, cv::Point(10, 100), cv::Point(550, 130), CV_RGB(0,0,0), CV_FILLED);
+    cv::putText(display, "Camera GT Trajectory (GREEN SQUARE)", cv::Point(10, 100), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
+    char text1[100];
+    sprintf(text1, "x = %.2f y = %.2f z = %.2f", x, y, z);
+    cv::putText(display, text1, cv::Point(10, 120), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
+
     display_mutex.unlock();
 
 

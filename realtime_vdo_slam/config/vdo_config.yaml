@@ -50,7 +50,7 @@ ChooseData: 2
 
 # Deptmap values factor
 # DepthMapFactor: 500
-DepthMapFactor: 1500
+DepthMapFactor: 1000
 
 # Close/Far Depth threshold
 #ThDepthBG: 40.0
@@ -61,8 +61,8 @@ MaxTrackPointBG: 1700 # 1200
 MaxTrackPointOBJ: 800 # 800
 
 # Scene Flow Magnitude and Distribution Threshold
-SFMgThres: 0.12 # 0.05 #0.12
-SFDsThres: 0.3 # 0.99 #0.3
+SFMgThres: 0.05 #0.12
+SFDsThres: 0.99 # 0.99 #0.3
 
 # Window Size and Overlapping Size for Local Batch Optimization
 # WINDOW_SIZE: 20
