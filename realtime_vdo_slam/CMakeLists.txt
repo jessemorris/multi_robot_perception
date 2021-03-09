@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	tf2_ros
 	tf2
+	tf
 	tf2_sensor_msgs
 	image_transport
 	flow_net
@@ -140,6 +141,7 @@ catkin_package(
 	std_msgs
 	tf2_ros
 	tf2
+	tf
 	tf2_sensor_msgs
 	nav_msgs
 	sensor_msgs
@@ -172,8 +174,10 @@ include_directories(
 
 add_library(${PROJECT_NAME}
 	src/ImagePreprocessing.cpp
-	src/RealTimeVdoSlam.cpp
-	src/RosScene.cpp)
+	src/RosVdoSlam.cpp
+	src/RosScene.cpp
+	src/RosSceneManager.cpp
+	src/utils/RosUtils.cpp)
 
 
 target_link_libraries(${PROJECT_NAME}
@@ -186,7 +190,7 @@ target_link_libraries(${PROJECT_NAME}
 
 
 add_executable(ros_vdoslam_node
-		src/RosVdoSlam.cpp)
+		src/RosVdoSlamNode.cpp)
 
 target_link_libraries(ros_vdoslam_node
 		${catkin_LIBRARIES}

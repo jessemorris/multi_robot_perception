@@ -53,6 +53,7 @@
   <exec_depend>message_runtime</exec_depend>
 
   <depend>vision_msgs</depend>
+  <depend>tf</depend>
 
   <depend>roscpp</depend>
   <depend>std_msgs</depend>

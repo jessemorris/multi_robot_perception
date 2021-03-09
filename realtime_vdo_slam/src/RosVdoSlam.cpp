@@ -1,132 +1,169 @@
-#include <ros/ros.h>
-#include <nodelet/loader.h>
+#include "RosVdoSlam.hpp"
+#include "RosScene.hpp"
+#include "RosSceneManager.hpp"
+#include "utils/RosUtils.hpp"
 
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
+
+#include <ros/package.h>
+#include <sensor_msgs/CameraInfo.h>
 #include <nav_msgs/Odometry.h>
-#include <sensor_msgs/Image.h>
-#include <opencv2/core.hpp>
-#include <opencv2/videoio.hpp>
-#include <opencv2/highgui.hpp>
-#include <image_transport/image_transport.h>
-#include <tf2_ros/static_transform_broadcaster.h>
-#include <tf2_ros/transform_listener.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <iostream>
-#include <stdio.h>
+#include <vdo_slam/vdo_slam.hpp>
+#include <tf2/transform_datatypes.h>
+#include <tf2/convert.h>
+#include <memory>
+
+RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
+        handle(n),
+        ros_scene_manager(handle),
+        mask_rcnn_interface(n),
+        raw_img(handle,"/camera/rgb/image_raw", 100),
+        mask_img(handle,"/camera/mask/image_raw", 100),
+        flow_img(handle,"/camera/flow/image_raw", 100),
+        depth_img(handle,"/camera/depth/image_raw", 100),
+        sync(raw_img, mask_img, flow_img, depth_img, 100)
+
+    {
+        //Getting Frame ID's
+        handle.getParam("/ros_vdoslam/map_frame_id", map_frame_id);
+        handle.getParam("/ros_vdoslam/odom_frame_id", odom_frame_id);
+        handle.getParam("/ros_vdoslam/base_link_frame_id", base_link_frame_id);
+
+        nav_msgs::Odometry odom;
+        odom.pose.pose.position.x = 0;
+        odom.pose.pose.position.y = 0;
+        odom.pose.pose.position.z = 0;
+
+        odom.pose.pose.orientation.x = 0;
+        odom.pose.pose.orientation.y = 0;
+        odom.pose.pose.orientation.z = 0;
+        odom.pose.pose.orientation.w = 1;
+
+        //setting map frame and odom frame to be the same
+        VDO_SLAM::utils::publish_static_tf(odom, map_frame_id, odom_frame_id);
+
+        //setting base link starting point to be the same as odom
+        VDO_SLAM::utils::publish_static_tf(odom, odom_frame_id, base_link_frame_id);
+
+
+        handle.getParam("/global_optim_trigger", global_optim_trigger);
+        ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
+
+        // first we check if the services exist so we dont start them again
+        mask_rcnn_interface.start_service();
+        mask_rcnn::MaskRcnnInterface::set_mask_labels(handle, ros::Duration(2));
+
+        std::string path = ros::package::getPath("realtime_vdo_slam");
+        std::string vdo_slam_config_path = path + "/config/vdo_config.yaml";
+
+        //TODO: should get proper previous time
+        previous_time = ros::Time::now();
+        image_trajectory = cv::Mat::zeros(800, 600, CV_8UC3);
+        vdo_worker_thread = std::thread(&RosVdoSlam::vdo_worker, this);
+
+        sync.registerCallback(boost::bind(&RosVdoSlam::vdo_input_callback, this, _1, _2, _3, _4));
+
+        slam_system = std::make_unique< VDO_SLAM::System>(vdo_slam_config_path,VDO_SLAM::eSensor::MONOCULAR);
+
+
+    }
+
+RosVdoSlam::~RosVdoSlam() {
+    if (vdo_worker_thread.joinable()) {
+        vdo_worker_thread.join();
+    }
+}
+
+void RosVdoSlam::vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth) {
+    //the actual time the image was craeted
+    current_time = raw_image->header.stamp;
+    ros::Duration diff = current_time - previous_time;
+    //time should be in n seconds or seconds (or else?)
+    double time_difference = diff.toNSec();
+
+    cv::Mat image, scene_flow_mat, mono_depth_mat, mask_rcnn_mat;
+    cv_bridge::CvImagePtr cv_ptr;
+    cv_ptr = cv_bridge::toCvCopy(*raw_image, sensor_msgs::image_encodings::RGB8);
+    image = cv_ptr->image;
+
+    cv_ptr = cv_bridge::toCvCopy(*mask, sensor_msgs::image_encodings::MONO8);
+    mask_rcnn_mat = cv_ptr->image;
+
+    cv_ptr = cv_bridge::toCvCopy(*flow, sensor_msgs::image_encodings::TYPE_32FC2);
+    scene_flow_mat = cv_ptr->image;
+
+    cv_ptr = cv_bridge::toCvCopy(*depth, sensor_msgs::image_encodings::MONO16);
+    mono_depth_mat = cv_ptr->image;
 
 
 
-#include "RealTimeVdoSlam.hpp"
+    std::shared_ptr<VdoSlamInput> input = std::make_shared<VdoSlamInput>(image,scene_flow_mat,
+            mono_depth_mat, mask_rcnn_mat, time_difference, current_time);
 
-#include <string>
-#include <vector>
-#include <algorithm>
-#include <map>
-
-//for a1_video_full
-// float odom_x_offset = -127.7;
-// float odom_y_offset = -90.88;
-
-//for al_video_begin
-
-
-class VdoUtils {
-
-    public:
-        VdoUtils(ros::NodeHandle& _nh) :
-                nh(_nh) ,
-                listener(tf_buffer),
-                is_first(true)
-            {
-                odom_x_offset = 0;
-                odom_y_offset = 0;
-                odom_repub = nh.advertise<nav_msgs::Odometry>("/odom_repub", 1000);
-                odom_sub = nh.subscribe("/odom", 1000, &VdoUtils::odom_repub_callback, this);
-
-                geometry_msgs::TransformStamped transform_stamped;
-                transform_stamped.header.stamp = ros::Time(1);
-                transform_stamped.header.frame_id = "vdo_map";
-                transform_stamped.child_frame_id = "vdo_odom";
-                transform_stamped.transform.translation.x = 0;
-                transform_stamped.transform.translation.y = 0;
-                transform_stamped.transform.translation.z = 0;
-                
-                //must provide quaternion!
-                transform_stamped.transform.rotation.x = 0;
-                transform_stamped.transform.rotation.y = 0;
-                transform_stamped.transform.rotation.z = 0;
-                transform_stamped.transform.rotation.w = 1;
-                static_broadcaster.sendTransform(transform_stamped);
-                ros::spinOnce();
-
-                transform_stamped.child_frame_id = "odom_offset";
-                static_broadcaster.sendTransform(transform_stamped);
-                ros::spinOnce();
-
-                transform_stamped.child_frame_id = "vdo_odom";
-                //currently hardcoded -> this is the frame_id that the camera images are in which was gmsl_right_link
-                transform_stamped.header.frame_id = "base_link";
-                transform_stamped.transform.translation.x = 1.270;
-                transform_stamped.transform.translation.y = -0.096;
-                transform_stamped.transform.translation.z = 1.237;
-                
-                //must provide quaternion!
-                transform_stamped.transform.rotation.x = -0.294;
-                transform_stamped.transform.rotation.y = 0.642;
-                transform_stamped.transform.rotation.z = -0.636;
-                transform_stamped.transform.rotation.w = 0.311;
-                static_broadcaster.sendTransform(transform_stamped);
-                ros::spinOnce();
-                
-
-
-            }
-
-        void odom_repub_callback(const nav_msgs::OdometryConstPtr& msg) {
-            if (is_first) {
-                odom_x_offset = msg->pose.pose.position.x;
-                odom_y_offset = msg->pose.pose.position.y;
-                is_first = false;
-            }
-            std_msgs::Header header = std_msgs::Header();
-            header.stamp = ros::Time::now();
-            header.frame_id = "odom_offset";
-            odom_new.header = header;
-            odom_new.pose.pose.position.x = msg->pose.pose.position.x - odom_x_offset;
-            odom_new.pose.pose.position.y = msg->pose.pose.position.y - odom_y_offset;
-            odom_new.pose.pose.position.z = 0;
-
-            odom_new.pose.pose.orientation = msg->pose.pose.orientation;
-
-            odom_repub.publish(odom_new);
-        }
-
-
-    private:
-        ros::NodeHandle nh;
-        nav_msgs::Odometry odom_new;
-        tf2_ros::Buffer tf_buffer;
-        tf2_ros::TransformListener listener;
-        tf2_ros::StaticTransformBroadcaster static_broadcaster;
-
-        ros::Publisher odom_repub;
-        ros::Subscriber odom_sub;
-        bool is_first;
-        float odom_x_offset;
-        float odom_y_offset;
-
-};
-
-
-
-int main(int argc, char **argv)
-{
-    ros::init(argc, argv, "ros_vdoslam");
-    ros::NodeHandle n;
-
-    VdoUtils utils(n);
-    RosVdoSlam ros_vdo_slam(n);
-    ros::spin();
+    //add the input to the thread queue so we can deal with it later
+    push_vdo_input(input);
+    previous_time = current_time;
     
+}
+
+
+void RosVdoSlam::set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene) {
+    int size = scene->scene_objects_size();
+    VDO_SLAM::SceneObject* object_ptr = scene->get_scene_objects_ptr();
+    ROS_DEBUG_STREAM("Updating scene labels (size " << size << ")");
+    for(int i = 0; i < size; i++) {
+        std::string label = mask_rcnn::MaskRcnnInterface::request_label(object_ptr->label_index);
+        object_ptr->label = label;
+        ROS_DEBUG_STREAM(*object_ptr);  
+        object_ptr++;      
+
+    }
+}
+
+std::shared_ptr<VdoSlamInput> RosVdoSlam::pop_vdo_input() {
+    queue_mutex.lock();
+    std::shared_ptr<VdoSlamInput> input = vdo_input_queue.front();
+    vdo_input_queue.pop();
+    queue_mutex.unlock();
+    return input;
+}
+
+void RosVdoSlam::push_vdo_input(std::shared_ptr<VdoSlamInput>& input) {
+    queue_mutex.lock();
+    vdo_input_queue.push(input);
+    queue_mutex.unlock();
+}
+
+
+void RosVdoSlam::vdo_worker() {
+
+    std::unique_ptr<VDO_SLAM::Scene> scene;
+    while (ros::ok()) {
+
+
+        //cam add semaphore here so we waste less CPU time but it seems fine for now
+        if (!vdo_input_queue.empty()) {
+
+            std::shared_ptr<VdoSlamInput> input = pop_vdo_input();
+
+            std::unique_ptr<VDO_SLAM::Scene> unique_scene =  slam_system->TrackRGBD(input->raw,input->depth,
+                input->flow,
+                input->mask,
+                input->ground_truth,
+                input->object_pose_gt,
+                input->time_diff,
+                image_trajectory,global_optim_trigger);
+
+            set_scene_labels(unique_scene);
+            scene = std::move(unique_scene);
+            std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(
+                    new VDO_SLAM::RosScene(*scene, input->image_time, odom_frame_id, base_link_frame_id));
+            ros_scene = std::move(unique_ros_scene);
+            ros_scene_manager.display_scene(ros_scene);
+            ros_scene_manager.update_display_mat(ros_scene);
+
+            cv::imshow("Trajectory", ros_scene_manager.get_display_mat());
+            cv::waitKey(1);
+        }
+    }
+
 }

@@ -100,9 +100,11 @@ namespace VDO_SLAM {
              * @brief Construct a new Ros Scene object from a VDO_SLAM::Scene object and a ros::Time.
              * 
              * @param _object 
-             * @param _time 
+             * @param _time
+             * @param _frame_id The frame with which to plot relative too. Usually the odom frame.
+             * @param _child_frame_id The frame which the scene is in. Usually base_link/camera_link equivalent.
              */
-            RosScene(Scene& _object, ros::Time _time);
+            RosScene(Scene& _object, ros::Time _time, std::string& _frame_id, std::string& _child_frame_id);
 
             /**
              * @brief Gets the odometry of the camera as determined by the camera translation and rotation matrix.
@@ -132,97 +134,21 @@ namespace VDO_SLAM {
              */
             realtime_vdo_slam::VdoSlamScenePtr to_msg();
 
+            const std::string& get_frame_id();
+            const std::string& get_child_frame_id();
+            const ros::Time& get_ros_time();
+
         private:
             ros::Time time;
 
             nav_msgs::Odometry odom;
             geometry_msgs::TransformStamped transform_stamped;
 
-        
-    };
-
-    class RosSceneManager {
-        
-        /**
-         * @brief Manager to control and visualise a VDO_SLAM scene. To simply the construction of each scene, the manager holds 
-         * all the visualisation tools (ros::publishers and tf::listeners etc) and can then update the visualisation graphs/odom/transforms
-         * etc.
-         * 
-         */
-        public:
-            /**
-             * @brief Construct a new Ros Scene Manager object
-             * 
-             * @param _nh 
-             */
-            RosSceneManager(ros::NodeHandle& _nh);
-
-            /**
-             * @brief Updates the ROS related information for this scene including the camera odometry, marker array of all the objects
-             * within the scene and the transform tree.
-             * 
-             * @param scene 
-             */
-            void display_scene(std::unique_ptr<VDO_SLAM::RosScene>& scene);
-
-            /**
-             * @brief Updates and visualises the birdseye view of the scene. It plots the camera pos as a red square and all tracked
-             * 3D objects as coloured dots (currently coloured by classification). If gt odom is present it will also plot this as a green 
-             * squares.
-             * 
-             * @param scene 
-             */
-            void update_display_mat(std::unique_ptr<VDO_SLAM::RosScene>& scene);
-
-            /**
-             * @brief Get the display mat object
-             * 
-             * @return cv::Mat& 
-             */
-            cv::Mat& get_display_mat();
-
-            /**
-             * @brief Subscribes to nav_msgs::Odometry messages that will be used for ground truth. Listenes to the /odom_repub topic
-             *  (see VDO_SLAM::Utils in RosScene.cpp) that is essentially the gt odom (simply /odom) that is then offset by some amount 
-             * such that the /odom_repub starts at [0,0,0][0,0,0,1] even if the ROS information playing does not start centerd at the world 
-             * coordinates. This purpose of this is to start the VDO_SLAM odom and the gt odom at the same place so we can compare them visually.
-             * 
-             * If odom started at the world frame, this would not be necessary as the VDO_SLAM odom starts at [0,0,0][0,0,0,1].
-             * Intenrally, this will add the gt square to the display mat object.
-             * 
-             * @param msg 
-             */
-            void odom_repub_callback(const nav_msgs::OdometryConstPtr& msg);
-
-
-            const nav_msgs::Odometry& get_latest_gt_odom();
-
-        private:
-            ros::NodeHandle nh;
-            ros::Publisher visualiser;
-            ros::Publisher odom_pub;
-            ros::Subscriber odom_repub_sub;
-            cv::Mat display;
-            std::mutex display_mutex;
-
-            tf2_ros::TransformBroadcaster broadcaster;
-            tf2_ros::Buffer tf_buffer;
-            tf2_ros::TransformListener listener;
+            std::string frame_id;
             std::string child_frame_id;
 
-            nav_msgs::Odometry gt_odom;
-
-            const int x_offset = 300;
-            const int y_offset = 300;
-            const int scale = 6;
-            
-
         
-
-            static int vis_count; //used for marker visualisation
-
     };
-
 
 };
 

@@ -30,6 +30,7 @@
 
 #include <mask_rcnn/MaskRcnnInterface.hpp>
 #include "RosScene.hpp"
+#include "RosSceneManager.hpp"
 
 #include <string>
 #include <vector>
@@ -105,7 +106,7 @@ class RosVdoSlam {
     private:
         ros::NodeHandle handle;
         
-        //we need this to request labels
+        //we need this to request labels TODO: take out dependancy
         mask_rcnn::MaskRcnnInterface mask_rcnn_interface;
 
         /**
@@ -142,19 +143,28 @@ class RosVdoSlam {
          */
         void push_vdo_input(std::shared_ptr<VdoSlamInput>& input);
 
-        //ros time synchronizers for all input data
 
         int global_optim_trigger;
+
+        //Frames
+        std::string odom_frame_id;
+        std::string base_link_frame_id;
+        std::string map_frame_id;
+
+
         //VdoSlam
         VDO_SLAM::RosSceneManager ros_scene_manager;
         std::unique_ptr<VDO_SLAM::RosScene> ros_scene;
 
         cv::Mat image_trajectory;
         std::unique_ptr<VDO_SLAM::System> slam_system;
+
+        //VdoSlam input
         std::queue<std::shared_ptr<VdoSlamInput>> vdo_input_queue;
         std::mutex queue_mutex;
         std::thread vdo_worker_thread;
 
+        //data synchronizers
         message_filters::Subscriber<sensor_msgs::Image> raw_img;
         message_filters::Subscriber<sensor_msgs::Image> mask_img;
         message_filters::Subscriber<sensor_msgs::Image> flow_img;
