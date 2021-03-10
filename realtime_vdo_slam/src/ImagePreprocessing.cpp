@@ -109,6 +109,8 @@ ImagePrepcoessing::ImagePrepcoessing(ros::NodeHandle& n) :
 
 ImagePrepcoessing::~ImagePrepcoessing() {}
 
+
+//TODO: use camerainformation class!
 void ImagePrepcoessing::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGB8);
     cv::Mat distored = cv_ptr->image;

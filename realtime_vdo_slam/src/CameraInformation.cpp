@@ -23,6 +23,8 @@ VDO_SLAM::CameraInformation::CameraInformation(sensor_msgs::CameraInfoConstPtr& 
         camera_matrix = cv::Mat(3, 3, CV_64F, &camera_info_msg.K[0]);
         dist_coeffs = cv::Mat(4, 1, CV_64F, &camera_info_msg.D[0]);
 
+        // ROS_INFO_STREAM(camera_matrix);
+
         //cv::Mat scaled_camera_matrix = camera_matrix *
         // camera_info.camera_matrix.at<double>(2, 2) = 1.;
 

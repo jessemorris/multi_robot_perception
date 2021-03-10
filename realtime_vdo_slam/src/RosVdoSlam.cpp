@@ -49,7 +49,7 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         VDO_SLAM::utils::publish_static_tf(odom, odom_frame_id, base_link_frame_id);
 
 
-        handle.getParam("/global_optim_trigger", global_optim_trigger);
+        handle.getParam("/ros_vdoslam/optimization_trigger_frame", global_optim_trigger);
         ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
 
         // first we check if the services exist so we dont start them again
@@ -59,12 +59,16 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         //TODO: should get proper previous time
         previous_time = ros::Time::now();
         image_trajectory = cv::Mat::zeros(800, 600, CV_8UC3);
-        vdo_worker_thread = std::thread(&RosVdoSlam::vdo_worker, this);
 
-        sync.registerCallback(boost::bind(&RosVdoSlam::vdo_input_callback, this, _1, _2, _3, _4));
 
         // slam_system = std::make_unique< VDO_SLAM::System>(vdo_slam_config_path,VDO_SLAM::eSensor::MONOCULAR);
-        slam_system = std::move(construct_slam_system(handle));
+        // slam_system = std::move(construct_slam_system(handle));
+        slam_system = construct_slam_system(handle);
+
+        sync.registerCallback(boost::bind(&RosVdoSlam::vdo_input_callback, this, _1, _2, _3, _4));
+        vdo_worker_thread = std::thread(&RosVdoSlam::vdo_worker, this);
+
+
 
 
     }
@@ -75,10 +79,10 @@ RosVdoSlam::~RosVdoSlam() {
     }
 }
 
-std::unique_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHandle& nh) {
+std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHandle& nh) {
     //check first where to load the params from - calibration file or launch file
     bool use_calibration_file;
-    nh.getParam("/ros_vdoslam/use_calibtration_file", use_calibration_file);
+    nh.getParam("/ros_vdoslam/use_calibration_file", use_calibration_file);
 
     //load from calibration file
     if(use_calibration_file) {
@@ -93,7 +97,7 @@ std::unique_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         else if (sensor_mode == 1) {
             sensor = VDO_SLAM::eSensor::STEREO;
         }
-        if (sensor_mode == 2) {
+        else if (sensor_mode == 2) {
             sensor = VDO_SLAM::eSensor::RGBD;
         }
 
@@ -104,9 +108,7 @@ std::unique_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         std::string vdo_slam_config_path = path + "/config/" + calibration_file;
 
 
-
-        std::unique_ptr<VDO_SLAM::System> system(new VDO_SLAM::System(vdo_slam_config_path, sensor));
-        return system;
+        return std::make_shared<VDO_SLAM::System>(vdo_slam_config_path, sensor);
     }
     //load from params in launch
     else {
@@ -117,29 +119,32 @@ std::unique_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
 
         //wait for topic defined in configuration file
         if (use_camera_info_topic) {
-            std::string camera_info_topic;
-            nh.getParam("/input_camera_info_topic", camera_info_topic);
+            std::string camera_info_topic = "/camera/camera_info";
+            // nh.getParam("/ros_vdoslam/input_camera_info_topic", camera_info_topic);
             ROS_INFO_STREAM("Waiting for camera info topic: " << camera_info_topic);
             sensor_msgs::CameraInfoConstPtr info_ptr = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camera_info_topic);
 
             VDO_SLAM::CameraInformation cam_info(info_ptr);
             
             bool apply_undistortion;
-            nh.getParam("/apply_undistortion", apply_undistortion);
+            nh.getParam("/ros_vdoslam/apply_undistortion", apply_undistortion);
 
             //if true -> we use the modified camera matrix P
             if(apply_undistortion) {
-                params.fx = cam_info.modified_camera_matrix.at<float>(0,0);
-                params.cx = cam_info.modified_camera_matrix.at<float>(0,2);
-                params.fy = cam_info.modified_camera_matrix.at<float>(0,5);
-                params.cy = cam_info.modified_camera_matrix.at<float>(0,6);
+                ROS_INFO_STREAM(cam_info.modified_camera_matrix.size());
+                ROS_INFO_STREAM(cam_info.modified_camera_matrix);
+                //should be 3x3
+                params.fx = cam_info.modified_camera_matrix.at<double>(0,0);
+                params.cx = cam_info.modified_camera_matrix.at<double>(0,2);
+                params.fy = cam_info.modified_camera_matrix.at<double>(1,1);
+                params.cy = cam_info.modified_camera_matrix.at<double>(1,2);
             }
             //else use the original matrix K
             else {
-                params.fx = cam_info.camera_matrix.at<float>(0,0);
-                params.cx = cam_info.camera_matrix.at<float>(0,2);
-                params.fy = cam_info.camera_matrix.at<float>(0,4);
-                params.cy = cam_info.camera_matrix.at<float>(0,5);
+                params.fx = cam_info.camera_matrix.at<double>(0,0);
+                params.cx = cam_info.camera_matrix.at<double>(0,2);
+                params.fy = cam_info.camera_matrix.at<double>(1,1);
+                params.cy = cam_info.camera_matrix.at<double>(1,2);
             }
         }
         //load camera params from launch file
@@ -169,7 +174,20 @@ std::unique_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         nh.getParam("/ros_vdoslam/RGB", params.RGB);
         nh.getParam("/ros_vdoslam/data_code", params.data_code);
 
-        nh.getParam("/ros_vdoslam/sensor_type", params.sensor_type);
+        int sensor_mode;
+        nh.getParam("/ros_vdoslam/sensor_type", sensor_mode);
+
+        if (sensor_mode == 0) {
+            params.sensor_type = VDO_SLAM::eSensor::MONOCULAR;
+        }
+        else if (sensor_mode == 1) {
+            params.sensor_type = VDO_SLAM::eSensor::STEREO;
+        }
+        else if (sensor_mode == 2) {
+            params.sensor_type = VDO_SLAM::eSensor::RGBD;
+        }
+
+
         nh.getParam("/ros_vdoslam/depth_map_factor", params.depth_map_factor);
 
         nh.getParam("/ros_vdoslam/thdepth_bg", params.thdepth_bg);
@@ -196,8 +214,7 @@ std::unique_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         nh.getParam("/ros_vdoslam/ini_th_fast", params.ini_th_fast);
         nh.getParam("/ros_vdoslam/min_th_fast", params.min_th_fast);
 
-        std::unique_ptr<VDO_SLAM::System> system(new VDO_SLAM::System(params));
-        return system;
+        return std::make_shared<VDO_SLAM::System>(params);
 
     }
 

@@ -19,9 +19,9 @@ VDO_SLAM::Scene::Scene(int _id) :
     camera_pos_translation.z = 0.0;
 
     //take rotation
-    camera_pos_rotation = (cv::Mat_<float>(3,3) << 0, 0, 0,
-                                                    0, 0, 0,
-                                                    0, 0, 0);
+    camera_pos_rotation = (cv::Mat_<float>(3,3) << 1, 0, 0,
+                                                    0, 1, 0,
+                                                    0, 0, 1);
 }
 
 VDO_SLAM::Scene::Scene(int _id, double _timestamp):
@@ -33,9 +33,9 @@ VDO_SLAM::Scene::Scene(int _id, double _timestamp):
         camera_pos_translation.z = 0.0;
 
         //take rotation
-        camera_pos_rotation = (cv::Mat_<float>(3,3) << 0, 0, 0,
-                                                       0, 0, 0,
-                                                       0, 0, 0);
+        camera_pos_rotation = (cv::Mat_<float>(3,3) << 1, 0, 0,
+                                                       0, 1, 0,
+                                                       0, 0, 1);
     }
 
 const cv::Point3f& VDO_SLAM::Scene::camera_pos_T() const {

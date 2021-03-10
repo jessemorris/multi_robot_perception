@@ -105,9 +105,9 @@ class RosVdoSlam {
          * in the launch file.
          * 
          * @param nh Ros::NodeHandle
-         * @return std::unique_ptr<VDO_SLAM::System> 
+         * @return std::shared_ptr<VDO_SLAM::System>
          */
-        std::unique_ptr<VDO_SLAM::System> construct_slam_system(ros::NodeHandle& nh);
+        std::shared_ptr<VDO_SLAM::System> construct_slam_system(ros::NodeHandle& nh);
 
 
         /**
@@ -146,7 +146,7 @@ class RosVdoSlam {
         std::unique_ptr<VDO_SLAM::RosScene> ros_scene;
 
         cv::Mat image_trajectory;
-        std::unique_ptr<VDO_SLAM::System> slam_system;
+        std::shared_ptr<VDO_SLAM::System> slam_system;
 
         //VdoSlam input
         std::queue<std::shared_ptr<VDO_SLAM::VdoSlamInput>> vdo_input_queue;

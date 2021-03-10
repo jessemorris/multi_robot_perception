@@ -22,6 +22,7 @@ namespace VDO_SLAM {
             
             odom_to_tf(odom, &static_transform_stamped.transform);
             static_broadcaster.sendTransform(static_transform_stamped);
+            ros::spinOnce();
         }
 
         void odom_to_tf(const nav_msgs::Odometry& odom, geometry_msgs::Transform* transform) {

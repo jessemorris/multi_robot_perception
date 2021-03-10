@@ -11,7 +11,7 @@
   <!-- If true, and use calibration file is false, the system will get the camera intrinsics
   from the camera info topic defined in the config file. If False, the camera information
   properties must be defined here (K, D etc)-->
-  <arg name="use_camera_info_topic" default="true" />
+  <arg name="use_camera_info_topic" default="false" />
 
   <!-- System params for VDO SLAM. Used if  use_calibtration_file is true-->
 	<arg name="calibration_file" default="vdo_config.yaml"/>
@@ -23,11 +23,18 @@
   <!--  MONOCULAR=0, STEREO=1, RGBD=2-->
   <arg name="sensor_mode" default="0"/>
 
+  <!--After how many frames to run global optimization -->
+  <arg name="optimization_trigger_frame" default="-1"/>
+
   <!--VDO SLAM params. Used if use_calibration_file is false-->
-  <arg name="fx" default="396.707"/>
-  <arg name="fy" default=" 469.5846480794702"/>
-  <arg name="cx" default="396.707"/>
-  <arg name="cy" default="396.707"/>
+  <arg name="fx" default="392.3105540020543"/>
+  <arg name="fy" default="467.96648747036744"/>
+  <arg name="cx" default="320.7584729627735"/>
+  <arg name="cy" default="243.46670267884215"/>
+   <!-- <arg name="fx" default="427.7050099835501"/>
+  <arg name="fy" default="510.1866599144113"/>
+  <arg name="cx" default="323.5111875590873"/>
+  <arg name="cy" default="250.9863176952058"/> -->
 
   <arg name="width" default="640"/>
   <arg name="height" default="480"/>
@@ -35,14 +42,17 @@
   <arg name="bf" default="387.5744"/>
   <arg name="RGB" default="1"/>
   <arg name="data_code" default="2"/>
-  <arg name="depth_map_factor" default="1000"/>
+
+  <arg name="depth_map_factor" default="1000.0"/>
+
+
   <arg name="thdepth_bg" default="40"/>
   <arg name="thdepth_obj" default="25"/>
   <arg name="max_track_points_bg" default="1700"/>
   <arg name="max_track_points_obj" default="800"/>
 
-  <arg name="sf_mg_thresh" default="0.05"/>
-  <arg name="sf_ds_thresh" default="0.99"/>
+  <arg name="sf_mg_thresh" default="0.12"/>
+  <arg name="sf_ds_thresh" default="0.3"/>
 
   <arg name="window_size" default="20"/>
   <arg name="overlap_size" default="4"/>
@@ -81,7 +91,10 @@
   <node pkg="realtime_vdo_slam" type="ros_vdoslam_node" name="ros_vdoslam" output="screen">
 
     <param name="online" value="$(arg online)" />
+    <!--  MONOCULAR=0, STEREO=1, RGBD=2-->
     <param name="sensor_mode" value="$(arg sensor_mode)" />
+
+    <param name="optimization_trigger_frame" value="$(arg optimization_trigger_frame)" />
 
 
     <!-- Remap if needed from vdo generated topics to vdo_slam expected topics. These are the same as the ImageProcessing node. Remapping used 
@@ -90,6 +103,8 @@
     <remap to="/vdoslam/input/camera/mask/image_raw" from="/camera/mask/image_raw" if="$(arg online)"/>
     <remap to="/vdoslam/input/camera/flow/image_raw" from="/camera/flow/image_raw" if="$(arg online)"/>
     <remap to="/vdoslam/input/camera/depth/image_raw" from="/camera/depth/image_raw" if="$(arg online)"/>
+
+    <remap to="$(param input_camera_info_topic)" from="/camera/camera_info" if="$(arg online)"/>
 
     <param name="use_calibration_file" value="$(arg use_calibration_file)"/>
 
@@ -108,6 +123,33 @@
     <!-- Empty string ("") means no ground-truth available. Used for init if
     requested to do ground-truth initialization. -->
     <param name="odometry_ground_truth_topic"       value="$(arg odometry_ground_truth_topic)"/>
+
+    <!-- VDO SLAM params. Used if use_calibration_file is false -->
+    <param name="fx" value="$(arg fx)" unless="$(arg use_calibration_file)"/>
+    <param name="fy" value="$(arg fy)" unless="$(arg use_calibration_file)"/>
+    <param name="cx" value="$(arg cx)" unless="$(arg use_calibration_file)"/>
+    <param name="cy" value="$(arg cy)" unless="$(arg use_calibration_file)"/>
+    <param name="width" value="$(arg width)" unless="$(arg use_calibration_file)"/>
+    <param name="height" value="$(arg height)" unless="$(arg use_calibration_file)"/>
+    <param name="fps" value="$(arg fps)" unless="$(arg use_calibration_file)"/>
+    <param name="bf" value="$(arg bf)" unless="$(arg use_calibration_file)"/>
+    <param name="RGB" value="$(arg RGB)" unless="$(arg use_calibration_file)"/>
+    <param name="data_code" value="$(arg data_code)" unless="$(arg use_calibration_file)"/>
+    <param name="depth_map_factor" value="$(arg depth_map_factor)" unless="$(arg use_calibration_file)"/>
+    <param name="thdepth_bg" value="$(arg thdepth_bg)" unless="$(arg use_calibration_file)"/>
+    <param name="thdepth_obj" value="$(arg thdepth_obj)" unless="$(arg use_calibration_file)"/>
+    <param name="max_track_points_bg" value="$(arg max_track_points_bg)" unless="$(arg use_calibration_file)"/>
+    <param name="max_track_points_obj" value="$(arg max_track_points_obj)" unless="$(arg use_calibration_file)"/>
+    <param name="sf_mg_thresh" value="$(arg sf_mg_thresh)" unless="$(arg use_calibration_file)"/>
+    <param name="sf_ds_thresh" value="$(arg sf_ds_thresh)" unless="$(arg use_calibration_file)"/>
+    <param name="window_size" value="$(arg window_size)" unless="$(arg use_calibration_file)"/>
+    <param name="overlap_size" value="$(arg overlap_size)" unless="$(arg use_calibration_file)"/>
+    <param name="use_sample_feature" value="$(arg use_sample_feature)" unless="$(arg use_calibration_file)"/>
+    <param name="n_features" value="$(arg n_features)" unless="$(arg use_calibration_file)"/>
+    <param name="scale_factor" value="$(arg scale_factor)" unless="$(arg use_calibration_file)"/>
+    <param name="n_levels" value="$(arg n_levels)" unless="$(arg use_calibration_file)"/>
+    <param name="ini_th_fast" value="$(arg ini_th_fast)" unless="$(arg use_calibration_file)"/>
+    <param name="min_th_fast" value="$(arg min_th_fast)" unless="$(arg use_calibration_file)"/>
 
     <!-- Frame IDs -->
     <param name="map_frame_id"        value="$(arg map_frame_id)"/>

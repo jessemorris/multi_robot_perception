@@ -55,6 +55,16 @@ Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) :
     mpMap(pMap)
 {
     mSensor = params.sensor_type;
+    VDO_SLAM::eSensor sensor;
+    if (mSensor == 0) {
+        sensor = VDO_SLAM::eSensor::MONOCULAR;
+    }
+    else if (mSensor == 1) {
+        sensor = VDO_SLAM::eSensor::STEREO;
+    }
+    else if (mSensor == 2) {
+        sensor = VDO_SLAM::eSensor::RGBD;
+    }
 
 
     float fx = params.fx;
@@ -113,7 +123,7 @@ Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) :
 
     mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
-    if(mSensor== eSensor::STEREO)
+    if(sensor== eSensor::STEREO)
         mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
     cout << endl << "System Parameters: " << endl << endl;
@@ -135,14 +145,14 @@ Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) :
             break;
     }
 
-    if(mSensor==eSensor::STEREO || mSensor==eSensor::RGBD ||mSensor==eSensor::MONOCULAR)
+    if(sensor==eSensor::STEREO || sensor==eSensor::RGBD ||sensor==eSensor::MONOCULAR)
     {
         mThDepth = (float)params.thdepth_bg;
         mThDepthObj = (float)params.thdepth_obj;
         cout << "- depth threshold (background/object): " << mThDepth << "/" << mThDepthObj << endl;
     }
 
-    if(mSensor==eSensor::RGBD || mSensor==eSensor::MONOCULAR)
+    if(sensor==eSensor::RGBD || sensor==eSensor::MONOCULAR)
     {
         mDepthMapFactor = params.depth_map_factor;
         cout << "- depth map factor: " << mDepthMapFactor << endl;
@@ -1381,7 +1391,7 @@ void Tracking::Track()
         double loc_ba_time;
         s_5 = clock();
         // Get Partial Batch Optimization
-        // Optimizer::PartialBatchOptimization(mpMap,mK,nWINDOW_SIZE);
+        Optimizer::PartialBatchOptimization(mpMap,mK,nWINDOW_SIZE);
         e_5 = clock();
         loc_ba_time = (double)(e_5-s_5)/CLOCKS_PER_SEC*1000;
         mpMap->fLBA_time.push_back(loc_ba_time);
@@ -1414,7 +1424,7 @@ void Tracking::Track()
             double loc_ba_time;
             s_5 = clock();
             // Get Partial Batch Optimization
-            // Optimizer::PartialBatchOptimization(mpMap,mK,f_id);
+            Optimizer::PartialBatchOptimization(mpMap,mK,f_id);
             e_5 = clock();
             loc_ba_time = (double)(e_5-s_5)/CLOCKS_PER_SEC*1000;
             mpMap->fLBA_time.push_back(loc_ba_time);

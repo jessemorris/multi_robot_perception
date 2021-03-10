@@ -62,7 +62,7 @@ void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::Ros
     //800 is height of cv mat and we want to draw from bottom left
     int x_display =  static_cast<int>(x*scale) + x_offset;
     int y_display =  static_cast<int>(y*scale) + y_offset;
-    ROS_INFO_STREAM("x display " << x_display << " y display " << y_display);
+    // ROS_INFO_STREAM("x display " << x_display << " y display " << y_display);
     //add odom to cv mat
     display_mutex.lock();
     cv::rectangle(display, cv::Point(x_display, y_display), cv::Point(x_display+10, y_display+10), cv::Scalar(0,0,255),1);
@@ -73,21 +73,21 @@ void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::Ros
     cv::putText(display, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
 
 
-    //now for gt odom
-    x = -gt_odom.pose.pose.position.x;
-    y = gt_odom.pose.pose.position.y;
-    z = gt_odom.pose.pose.position.z;
-    //here we update the odom repub to the display mat
-    //we use 10 for scale    
-    x_display = (x * scale) + x_offset;
-    y_display = (y * scale) + y_offset;
-    //add odom to cv mat
-    cv::rectangle(display, cv::Point(y_display, x_display), cv::Point(y_display+10, x_display+10), cv::Scalar(0,255,0),1);
-    cv::rectangle(display, cv::Point(10, 100), cv::Point(550, 130), CV_RGB(0,0,0), CV_FILLED);
-    cv::putText(display, "Camera GT Trajectory (GREEN SQUARE)", cv::Point(10, 100), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
-    char text1[100];
-    sprintf(text1, "x = %.2f y = %.2f z = %.2f", x, y, z);
-    cv::putText(display, text1, cv::Point(10, 120), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
+    // //now for gt odom
+    // x = -gt_odom.pose.pose.position.x;
+    // y = gt_odom.pose.pose.position.y;
+    // z = gt_odom.pose.pose.position.z;
+    // //here we update the odom repub to the display mat
+    // //we use 10 for scale    
+    // x_display = (x * scale) + x_offset;
+    // y_display = (y * scale) + y_offset;
+    // //add odom to cv mat
+    // cv::rectangle(display, cv::Point(y_display, x_display), cv::Point(y_display+10, x_display+10), cv::Scalar(0,255,0),1);
+    // cv::rectangle(display, cv::Point(10, 100), cv::Point(550, 130), CV_RGB(0,0,0), CV_FILLED);
+    // cv::putText(display, "Camera GT Trajectory (GREEN SQUARE)", cv::Point(10, 100), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
+    // char text1[100];
+    // sprintf(text1, "x = %.2f y = %.2f z = %.2f", x, y, z);
+    // cv::putText(display, text1, cv::Point(10, 120), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
 
     display_mutex.unlock();
 
@@ -106,24 +106,24 @@ void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::Ros
         cv::Point3d transformed_point;
         ros::Time t = scene->get_ros_time();
 
-        VDO_SLAM::utils::apply_transform(child_frame,frame, p, &transformed_point,t);
+        // VDO_SLAM::utils::apply_transform(frame,child_frame, p, &transformed_point,t);
 
 
-        int x_display =  static_cast<int>(transformed_point.x*scale) + x_offset;
-        int y_display =  static_cast<int>(transformed_point.y*scale) + y_offset;
+        int x_display =  static_cast<int>(x*scale) + x_offset;
+        int y_display =  static_cast<int>(y*scale) + y_offset;
 
 
         // TODO: use colour conversion function
         switch (scene_object.tracking_id) {
 
-            case 1:
+          case 1:
                 cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5); // orange
                 break;
             case 2:
-                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,125,125), 5); // green
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,0,255), 5); // green
                 break;
             case 3:
-                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0, 255, 255), 5); // yellow
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0, 255, 0), 5); // yellow
                 break;
             case 4:
                 cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,0,255), 5); // pink
@@ -138,13 +138,22 @@ void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::Ros
                 cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,255,255), 5);  // white
                 break;
             case 8:
-                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(196,228,255), 5); // bisque
+                cv::circle(display,cv::Point(x_display, y_display), 2, CV_RGB(196,228,255), 5); // bisque
                 break;
             case 9:
                 cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(180, 105, 255), 5);  // blue
                 break;
             case 10:
                 cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(42,42,165), 5);  // brown
+                break;
+            case 11:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(35, 142, 107), 5);
+                break;
+            case 12:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(45, 82, 160), 5);
+                break;
+            case 13:
+                cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(60, 20, 220), 5);
                 break;
             default:
                 ROS_WARN_STREAM("No case for this segmentaion index yet");
