@@ -177,6 +177,7 @@ add_library(${PROJECT_NAME}
 	src/RosVdoSlam.cpp
 	src/RosScene.cpp
 	src/RosSceneManager.cpp
+	src/CameraInformation.cpp
 	src/utils/RosUtils.cpp)
 
 

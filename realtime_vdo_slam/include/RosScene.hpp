@@ -1,5 +1,5 @@
-#ifndef _ROS_SCENE
-#define _ROS_SCENE
+#ifndef _ROS_VDO_SLAM_SCENE
+#define _ROS_VDO_SLAM_SCENE
 
 #include <ros/ros.h>
 #include <nodelet/loader.h>

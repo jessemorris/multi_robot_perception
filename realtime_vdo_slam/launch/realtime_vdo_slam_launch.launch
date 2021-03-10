@@ -5,10 +5,59 @@
 
    <!-- If True VDO will load the System parameters from the calibtration file in the config folder
    If False, will use the calibration params defined here and the specified camera info topic  -->
-  <arg name="use_calibtration_file" default="true" />
+  <arg name="use_calibration_file" default="false" />
+
+
+  <!-- If true, and use calibration file is false, the system will get the camera intrinsics
+  from the camera info topic defined in the config file. If False, the camera information
+  properties must be defined here (K, D etc)-->
+  <arg name="use_camera_info_topic" default="true" />
 
   <!-- System params for VDO SLAM. Used if  use_calibtration_file is true-->
-	<arg name="calibtration_file" default="realtime_vdo.yaml"/>
+	<arg name="calibration_file" default="vdo_config.yaml"/>
+
+  <!-- Config file for the realtime vdo slam package. Used to define input camera and camer info topics
+  for both the ros_vdoslam and image_preprocessing node -->
+  <arg name="config_file" default="realtime_vdo.yaml"/>
+
+  <!--  MONOCULAR=0, STEREO=1, RGBD=2-->
+  <arg name="sensor_mode" default="0"/>
+
+  <!--VDO SLAM params. Used if use_calibration_file is false-->
+  <arg name="fx" default="396.707"/>
+  <arg name="fy" default=" 469.5846480794702"/>
+  <arg name="cx" default="396.707"/>
+  <arg name="cy" default="396.707"/>
+
+  <arg name="width" default="640"/>
+  <arg name="height" default="480"/>
+  <arg name="fps" default="12"/>
+  <arg name="bf" default="387.5744"/>
+  <arg name="RGB" default="1"/>
+  <arg name="data_code" default="2"/>
+  <arg name="depth_map_factor" default="1000"/>
+  <arg name="thdepth_bg" default="40"/>
+  <arg name="thdepth_obj" default="25"/>
+  <arg name="max_track_points_bg" default="1700"/>
+  <arg name="max_track_points_obj" default="800"/>
+
+  <arg name="sf_mg_thresh" default="0.05"/>
+  <arg name="sf_ds_thresh" default="0.99"/>
+
+  <arg name="window_size" default="20"/>
+  <arg name="overlap_size" default="4"/>
+
+  <arg name="use_sample_feature" default="0"/>
+  <arg name="n_features" default="2500"/>
+  <arg name="scale_factor" default="1.2"/>
+  <arg name="n_levels" default="8"/>
+  <arg name="ini_th_fast" default="20"/>
+  <arg name="min_th_fast" default="7"/>
+
+
+
+
+
 
   <!-- Empty string ("") means no ground-truth available. Used for init if
    requested to do ground-truth initialization. -->
@@ -18,6 +67,8 @@
   <arg name="map_frame_id"       default="vdomap"/>
   <arg name="odom_frame_id"     default="vdoodom"/>
   <arg name="base_link_frame_id" default="vdobase_link"/>
+
+
 
 
   <!-- <param name="frame_id" value="vdo_camera_link" />
@@ -30,6 +81,7 @@
   <node pkg="realtime_vdo_slam" type="ros_vdoslam_node" name="ros_vdoslam" output="screen">
 
     <param name="online" value="$(arg online)" />
+    <param name="sensor_mode" value="$(arg sensor_mode)" />
 
 
     <!-- Remap if needed from vdo generated topics to vdo_slam expected topics. These are the same as the ImageProcessing node. Remapping used 
@@ -39,11 +91,19 @@
     <remap to="/vdoslam/input/camera/flow/image_raw" from="/camera/flow/image_raw" if="$(arg online)"/>
     <remap to="/vdoslam/input/camera/depth/image_raw" from="/camera/depth/image_raw" if="$(arg online)"/>
 
-    <param name="use_calibtration_file" value="$(arg use_calibtration_file)"/>
+    <param name="use_calibration_file" value="$(arg use_calibration_file)"/>
 
-    <!-- System params for VDO SLAM. Used if  use_calibtration_file is true-->
-    <param name="calibtration_file" value="$(arg calibtration_file)"/>
-    <rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg calibtration_file)" if="$(arg use_calibtration_file)"/>
+    <!-- System params for VDO SLAM. Used if  use_calibration_file is true-->
+    <param name="calibration_file" value="$(arg calibration_file)"/>
+    <!-- <rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg calibtration_file)" if="$(arg use_calibtration_file)"/> -->
+
+    <!--Config file for the realtime_vdo_slam package -->
+    <param name="config_file" value="$(arg config_file)"/>
+    <rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg config_file)"/>
+
+    <!--only check if we load the information from this launc file. Wait for camera_info msg
+    on topic defined in config file. Else, use the camera info defined here. -->
+    <param name="use_camera_info_topic" value="$(arg use_camera_info_topic)" unless="$(arg use_calibration_file)"/>
 
     <!-- Empty string ("") means no ground-truth available. Used for init if
     requested to do ground-truth initialization. -->

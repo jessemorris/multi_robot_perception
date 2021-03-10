@@ -1,5 +1,5 @@
-#ifndef _ROS_SCENE_MANAGER_HPP
-#define _ROS_SCENE_MANAGER_HPP
+#ifndef _ROS_VDO_SLAM_SCENE_MANAGER_HPP
+#define _ROS_VDO_SLAM_SCENE_MANAGER_HPP
 
 #include <ros/ros.h>
 #include <nodelet/loader.h>

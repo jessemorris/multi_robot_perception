@@ -10,6 +10,7 @@
 #include "vdo_slam/System.h"
 #include "vdo_slam/Tracking.h"
 #include "vdo_slam/Scene.h"
+#include "vdo_slam/Params.h"
 
 #include "vdo_slam/color.h"
 #include "vdo_slam/cvplot.h"

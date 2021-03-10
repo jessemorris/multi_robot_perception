@@ -66,6 +66,7 @@ set(PUBLIC_HEADER_FILES
     include/${PROJECT_NAME}/System.h
     include/${PROJECT_NAME}/Scene.h
     include/${PROJECT_NAME}/Tracking.h
+    include/${PROJECT_NAME}/Params.h
 
     include/${PROJECT_NAME}/cvplot/color.h
     include/${PROJECT_NAME}/cvplot/cvplot.h

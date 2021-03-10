@@ -31,6 +31,7 @@
 #include <mask_rcnn/MaskRcnnInterface.hpp>
 #include "RosScene.hpp"
 #include "RosSceneManager.hpp"
+#include "VdoSlamInput.hpp"
 
 #include <string>
 #include <vector>
@@ -42,29 +43,6 @@
 #include <thread>
 
 
-
-struct VdoSlamInput {
-    cv::Mat raw, flow, depth, mask;
-    std::vector<std::vector<float> > object_pose_gt;
-    cv::Mat ground_truth;
-    double time_diff;
-    ros::Time image_time; //when the image was created so we can keep track of the real time despite algorithmic delays
-
-    VdoSlamInput(cv::Mat& _raw, cv::Mat& _flow, cv::Mat& _depth, cv::Mat& _mask, double _time_diff, ros::Time& _image_time) : 
-        raw(_raw),
-        flow(_flow),
-        depth(_depth),
-        time_diff(_time_diff),
-        image_time(_image_time)
-
-    {
-        ground_truth = cv::Mat::eye(4,4,CV_32F);
-        // _depth.convertTo(depth, CV_32F);
-        // _depth.convertTo(depth, CV_16UC1);
-        _mask.convertTo(mask, CV_32SC1);
-    }
-
-};
 
 typedef const sensor_msgs::ImageConstPtr& ImageConst;
 
@@ -121,6 +99,17 @@ class RosVdoSlam {
          */
         void set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene);
 
+
+        /**
+         * @brief Constructs the desired slam system with parameters and configuration defined
+         * in the launch file.
+         * 
+         * @param nh Ros::NodeHandle
+         * @return std::unique_ptr<VDO_SLAM::System> 
+         */
+        std::unique_ptr<VDO_SLAM::System> construct_slam_system(ros::NodeHandle& nh);
+
+
         /**
          * @brief Worker thread for the VDO_SLAM queue. Will continue as long as ros::okay() returns true. 
          * 
@@ -133,7 +122,7 @@ class RosVdoSlam {
          * 
          * @return std::shared_ptr<VdoSlamInput> 
          */
-        std::shared_ptr<VdoSlamInput> pop_vdo_input();
+        std::shared_ptr<VDO_SLAM::VdoSlamInput> pop_vdo_input();
 
         /**
          * @brief Adds a new input for the VDO_SLAM algorithm. This call can happen asynchronisly as the VDO algorithm
@@ -141,7 +130,7 @@ class RosVdoSlam {
          * 
          * @param input 
          */
-        void push_vdo_input(std::shared_ptr<VdoSlamInput>& input);
+        void push_vdo_input(std::shared_ptr<VDO_SLAM::VdoSlamInput>& input);
 
 
         int global_optim_trigger;
@@ -160,7 +149,7 @@ class RosVdoSlam {
         std::unique_ptr<VDO_SLAM::System> slam_system;
 
         //VdoSlam input
-        std::queue<std::shared_ptr<VdoSlamInput>> vdo_input_queue;
+        std::queue<std::shared_ptr<VDO_SLAM::VdoSlamInput>> vdo_input_queue;
         std::mutex queue_mutex;
         std::thread vdo_worker_thread;
 

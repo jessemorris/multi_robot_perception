@@ -1,5 +1,5 @@
-#ifndef _VDO_IMAGE_PREPROCESSING
-#define _VDO_IMAGE_PREPROCESSING
+#ifndef _ROS_VDO_IMAGE_PREPROCESSING
+#define _ROS_VDO_IMAGE_PREPROCESSING
 
 
 
@@ -31,6 +31,8 @@
 #include <mask_rcnn/SemanticTracker.hpp>
 #include <flow_net/FlowNetInterface.hpp>
 
+#include "CameraInformation.hpp"
+
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -39,20 +41,6 @@
 #include <queue>
 #include <mutex>
 #include <thread>
-
-
-//wrapper for camera information
-struct CameraInformation {
-
-    std::string topic;
-    cv::Mat camera_matrix;
-    cv::Mat dist_coeffs;
-    cv::Mat map1, map2, modified_camera_matrix;
-    sensor_msgs::CameraInfo camera_info_msg;
-
-};
-
-typedef std::unique_ptr<CameraInformation> CameraInformationPtr;
 
 
 namespace VDO_SLAM {

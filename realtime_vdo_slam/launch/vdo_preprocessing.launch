@@ -1,9 +1,7 @@
 <launch>
 
 	<arg name="config_file" default="realtime_vdo.yaml"/>
-    <!-- <include file="$(find python_service_starter)/launch/python_service_starter.launch"/> -->
     <rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg config_file)"/>
-    <param name="frame_id" value="vdo_camera_link" />
 
     <node pkg="realtime_vdo_slam" type="image_preprocessing_node" name="image_preprocessing" output="screen" />
 </launch>
