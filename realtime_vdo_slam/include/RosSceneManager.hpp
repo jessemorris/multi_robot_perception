@@ -74,9 +74,9 @@ namespace VDO_SLAM {
             cv::Mat& get_display_mat();
 
             /**
-             * @brief Subscribes to nav_msgs::Odometry messages that will be used for ground truth. Listenes to the /odom_repub topic
-             *  (see VDO_SLAM::Utils in RosScene.cpp) that is essentially the gt odom (simply /odom) that is then offset by some amount 
-             * such that the /odom_repub starts at [0,0,0][0,0,0,1] even if the ROS information playing does not start centerd at the world 
+             * @brief Subscribes to nav_msgs::Odometry messages that will be used for ground truth. Listenes to the /ros_vdo/odometry_ground_truth_topic
+             * defined in the launch file. (see VDO_SLAM::Utils in RosScene.cpp) It will offset the odom gt bt some amount 
+             * such that the gt odom starts at [0,0,0][0,0,0,1] even if the ROS information playing does not start centerd at the world 
              * coordinates. This purpose of this is to start the VDO_SLAM odom and the gt odom at the same place so we can compare them visually.
              * 
              * If odom started at the world frame, this would not be necessary as the VDO_SLAM odom starts at [0,0,0][0,0,0,1].
@@ -84,7 +84,7 @@ namespace VDO_SLAM {
              * 
              * @param msg 
              */
-            void odom_repub_callback(const nav_msgs::OdometryConstPtr& msg);
+            void odom_gt_callback(const nav_msgs::OdometryConstPtr& msg);
 
 
             const nav_msgs::Odometry& get_latest_gt_odom();
@@ -103,9 +103,14 @@ namespace VDO_SLAM {
 
             nav_msgs::Odometry gt_odom;
 
-            const int x_offset = 300;
-            const int y_offset = 300;
+            const int x_offset = 150;
+            const int y_offset = 150;
             const int scale = 6;
+
+            //Info needed for gt odom
+            bool is_first;
+            float odom_x_offset;
+            float odom_y_offset;
             
 
         

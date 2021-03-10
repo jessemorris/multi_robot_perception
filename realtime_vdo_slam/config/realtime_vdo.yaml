@@ -1,11 +1,13 @@
-scene_flow_delay_count: 1
+################################
+# Config file for entire realtime vdo slam package.
+# Both the ImagePrerocessing node and RosVdoSlam node will use the
+# params set here (or at least one of them, depending on launch file
+# settings).
+################################
 
-# #taken from multicamera lidar config
-# topic_prefix: "/gmsl/"
-# camera_suffix: "/image_color"
-# info_msg_suffix: "/camera_info"
-input_camera_topic: /gmsl/A0/image_color
-# input_camera_topic: /read/camera/rgb/raw_image
+
+# input_camera_topic: /gmsl/A0/image_color
+input_camera_topic: /read/camera/rgb/raw_image
 # input_camera_topic: /camera/rgb/raw_image
 input_camera_info_topic: /gmsl/A0/camera_info
 
@@ -14,22 +16,7 @@ run_flow_net: True
 run_mask_rcnn: True
 run_mono_depth: True
 
-#for now so I can just select one camera
-camera_selection: "A1"
-
-global_optim_trigger: 10 #for now we want this to triggger the get dynamic and static tracklets
-
-
-camera_topics_prefixes:
-  gmsl_left_side_link: B0
-  gmsl_right_side_link: B1
-  gmsl_left_link: A1
-  gmsl_centre_link: A0
-  gmsl_right_link: A2
-  gmsl_back_link: A3
-
-
 #options for images
-apply_undistortion: True
+apply_undistortion: False
 
 #launch-prefix="valgrind --tool=memcheck --xtree-memory=full --xml=yes --xml-file='memcheck.realtime_vdo_slam.%p'"

@@ -38,7 +38,7 @@
 
   <arg name="width" default="640"/>
   <arg name="height" default="480"/>
-  <arg name="fps" default="12"/>
+  <arg name="fps" default="15"/>
   <arg name="bf" default="387.5744"/>
   <arg name="RGB" default="1"/>
   <arg name="data_code" default="2"/>
@@ -51,13 +51,14 @@
   <arg name="max_track_points_bg" default="1700"/>
   <arg name="max_track_points_obj" default="800"/>
 
-  <arg name="sf_mg_thresh" default="0.12"/>
-  <arg name="sf_ds_thresh" default="0.3"/>
+  <arg name="sf_mg_thresh" default="0.05"/>
+  <arg name="sf_ds_thresh" default="0.6"/>
 
   <arg name="window_size" default="20"/>
   <arg name="overlap_size" default="4"/>
 
   <arg name="use_sample_feature" default="0"/>
+
   <arg name="n_features" default="2500"/>
   <arg name="scale_factor" default="1.2"/>
   <arg name="n_levels" default="8"/>
@@ -71,7 +72,7 @@
 
   <!-- Empty string ("") means no ground-truth available. Used for init if
    requested to do ground-truth initialization. -->
-  <arg name="odometry_ground_truth_topic"       default=""/>
+  <arg name="odometry_ground_truth_topic"       default="/odom"/>
 
   <!-- Frame IDs -->
   <arg name="map_frame_id"       default="vdomap"/>
@@ -104,7 +105,7 @@
     <remap to="/vdoslam/input/camera/flow/image_raw" from="/camera/flow/image_raw" if="$(arg online)"/>
     <remap to="/vdoslam/input/camera/depth/image_raw" from="/camera/depth/image_raw" if="$(arg online)"/>
 
-    <remap to="$(param input_camera_info_topic)" from="/camera/camera_info" if="$(arg online)"/>
+    <!-- <remap to="$(param input_camera_info_topic)" from="/camera/camera_info" if="$(arg online)"/> -->
 
     <param name="use_calibration_file" value="$(arg use_calibration_file)"/>
 

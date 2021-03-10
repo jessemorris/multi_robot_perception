@@ -226,7 +226,7 @@ void RosVdoSlam::vdo_input_callback(ImageConst raw_image, ImageConst mask, Image
     current_time = raw_image->header.stamp;
     ros::Duration diff = current_time - previous_time;
     //time should be in n seconds or seconds (or else?)
-    double time_difference = diff.toNSec();
+    double time_difference = diff.toSec();
 
     cv::Mat image, scene_flow_mat, mono_depth_mat, mask_rcnn_mat;
     cv_bridge::CvImagePtr cv_ptr;

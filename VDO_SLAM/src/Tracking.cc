@@ -54,16 +54,16 @@ Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) :
     mpSystem(pSys), 
     mpMap(pMap)
 {
-    mSensor = params.sensor_type;
-    VDO_SLAM::eSensor sensor;
-    if (mSensor == 0) {
-        sensor = VDO_SLAM::eSensor::MONOCULAR;
+    // mSensor = params.sensor_type;
+    // VDO_SLAM::eSensor sensor;
+    if (params.sensor_type == 0) {
+        mSensor = VDO_SLAM::eSensor::MONOCULAR;
     }
-    else if (mSensor == 1) {
-        sensor = VDO_SLAM::eSensor::STEREO;
+    else if (params.sensor_type == 1) {
+        mSensor = VDO_SLAM::eSensor::STEREO;
     }
-    else if (mSensor == 2) {
-        sensor = VDO_SLAM::eSensor::RGBD;
+    else if (params.sensor_type == 2) {
+        mSensor = VDO_SLAM::eSensor::RGBD;
     }
 
 
@@ -123,7 +123,7 @@ Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) :
 
     mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
-    if(sensor== eSensor::STEREO)
+    if(mSensor== eSensor::STEREO)
         mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
     cout << endl << "System Parameters: " << endl << endl;
@@ -145,14 +145,14 @@ Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) :
             break;
     }
 
-    if(sensor==eSensor::STEREO || sensor==eSensor::RGBD ||sensor==eSensor::MONOCULAR)
+    if(mSensor==eSensor::STEREO || mSensor==eSensor::RGBD ||mSensor==eSensor::MONOCULAR)
     {
         mThDepth = (float)params.thdepth_bg;
         mThDepthObj = (float)params.thdepth_obj;
         cout << "- depth threshold (background/object): " << mThDepth << "/" << mThDepthObj << endl;
     }
 
-    if(sensor==eSensor::RGBD || sensor==eSensor::MONOCULAR)
+    if(mSensor==eSensor::RGBD || mSensor==eSensor::MONOCULAR)
     {
         mDepthMapFactor = params.depth_map_factor;
         cout << "- depth map factor: " << mDepthMapFactor << endl;
@@ -313,7 +313,6 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
 
     mImGray = imRGB;
     mDepthMap = cv::Mat::zeros(imD.size(), CV_32F);
-    std::cout << imD.size() << std::endl;
     // preprocess depth  !!! important for kitti and oxford dataset
     for (int i = 0; i < imD.rows; i++)
     {
@@ -554,7 +553,6 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
             if (l>25)
                 l = l/2;
             // int l = mCurrentFrame.vSemObjLabel[i];
-            // cout << "label: " << l << endl;
             KeyPoints_tmp[0] = mCurrentFrame.mvObjKeys[i];
             if (KeyPoints_tmp[0].pt.x>=(mImGray.cols-1) || KeyPoints_tmp[0].pt.x<=0 || KeyPoints_tmp[0].pt.y>=(mImGray.rows-1) || KeyPoints_tmp[0].pt.y<=0)
                 continue;
@@ -714,7 +712,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         // cout << "v obj center " << mCurrentFrame.vObjCentre3D.size() << endl;
         for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
         {
-            if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(1,0)==0) {
+            if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0) {
                 continue;
             }
 
@@ -774,9 +772,49 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                 case 12:
                     cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(45, 82, 160), thic);
                     break;
+                case 13:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(0,0,255), thic); // red
+                    break;
+                case 14:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(255, 165, 0), thic);
+                    break;
+                case 15:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(0,255,0), thic);
+                    break;
+                case 16:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(255,255,0), thic);
+                    break;
+                case 17:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(255,192,203), thic);
+                    break;
+                case 18:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(0,255,255), thic);
+                    break;
+                case 19:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(128, 0, 128), thic);
+                    break;
+                case 20:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(255,255,255), thic);
+                    break;
+                case 21:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(255,228,196), thic);
+                    break;
+                case 22:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(180, 105, 255), thic);
+                    break;
+                case 23:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(165,42,42), thic);
+                    break;
+                case 24:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(35, 142, 107), thic);
+                    break;
+                case 25:
+                    cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(45, 82, 160), thic);
+                    break;
                 case 41:
                     cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(60, 20, 220), thic);
                     break;
+
             }
         }
 

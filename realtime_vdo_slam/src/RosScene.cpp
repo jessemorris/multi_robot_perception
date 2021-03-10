@@ -135,7 +135,6 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time, std::string& _fram
         //update tf pose for ROS
         transform_stamped.header.stamp = time;
         transform_stamped.header.frame_id = frame_id;
-        //TODO: want this to be param eventaully but lazy design currently and lack of time to refactor
         transform_stamped.child_frame_id = child_frame_id;
         transform_stamped.transform.translation.x = camera_pos_translation.x;
         transform_stamped.transform.translation.y = camera_pos_translation.y;
@@ -210,7 +209,6 @@ realtime_vdo_slam::VdoSlamScenePtr VDO_SLAM::RosScene::to_msg() {
 
 void VDO_SLAM::RosScene::make_vizualisation(visualization_msgs::MarkerArray& marker_array) {
     for (SceneObject& scene_object: scene_objects) {
-        ROS_INFO_STREAM(scene_object);
         visualization_msgs::Marker marker;
         marker.header.frame_id = child_frame_id;
         marker.header.stamp = time;
@@ -237,8 +235,8 @@ void VDO_SLAM::RosScene::make_vizualisation(visualization_msgs::MarkerArray& mar
         marker.color.g = 1.0;
         marker.color.b = 0.0;
         marker.lifetime = ros::Duration();
-        marker.text = scene_object.label;
-
+        // marker.text = scene_object.label;
+        marker.text = scene_object.tracking_id;
         marker_array.markers.push_back(marker);
         // vis_count++;
     }

@@ -61,7 +61,7 @@ class MaskRcnnRos(RosCppCommunicator):
             cfg,
             confidence_threshold=0.75,
             show_mask_heatmaps=False,
-            masks_per_dim=20
+            masks_per_dim=5
         )
 
         self._greyscale_colours = self._generate_grayscale_values()
@@ -96,7 +96,6 @@ class MaskRcnnRos(RosCppCommunicator):
             response.output_viz = display_image_msg
             response.bounding_boxes = bounding_box_msgs
 
-            self.log_to_ros(response.labels)
 
             del response_image
             del labels
@@ -254,7 +253,7 @@ class MaskRcnnRos(RosCppCommunicator):
         coloured_img = np.zeros((mask.shape[0], mask.shape[1], 3))
         max_value = np.amax(mask)
 
-        for index in range(max_value):
+        for index in range(max_value+1):
             colour = self._colours[index]
             coloured_img[mask == index] = colour
         coloured_img = coloured_img.astype('uint8')
@@ -271,12 +270,13 @@ class MaskRcnnTopic():
     def __init__(self, mask_rcnn, topic):
         self.mask_rcnn = mask_rcnn
         self.image = None
-        self.sub = rospy.Subscriber(topic, Image, self.image_callback)
+        self.sub = rospy.Subscriber(topic, Image, self.image_callback, queue_size=30)
 
     def image_callback(self, data):
         input_image = ros_numpy.numpify(data)
         response_image, labels, label_indexs, bb = self.mask_rcnn.analyse_image(input_image)
         display_image = self.mask_rcnn._generate_coloured_mask(response_image, labels, label_indexs)
+        bounding_box_image = self.mask_rcnn.generated_bounding_boxes(input_image, bb)
         cv2.imshow("detections", display_image)
         cv2.waitKey(1)
 
