@@ -151,29 +151,6 @@ int main(int argc, char **argv) {
         //NOTE: in order to display we convert to a CV_32SC1!!!! This doesnt make sense!!! 
         // mask_mat.convertTo(mask_mat, CV_32SC1);
 
-        cout << "Bounding boxes" << endl;
-        for(auto& b : bb) {
-            cout << b << endl;
-        }
-
-        mask_rcnn.create_semantic_objects(mask_rcnn_labels, mask_rcnn_label_indexs, bb, semantic_objects);
-
-        cout << "Semantic Objects" << endl;
-        for(auto& b : semantic_objects) {
-            cout << b << endl;
-        }
-
-        cv::Mat tracked_viz;
-        tracker.assign_tracking_labels(semantic_objects,mask_mat,tracked_mask, tracked_viz);
-        ROS_INFO_STREAM(mask_mat.size());
-
-        tracked_mask.convertTo(tracked_mask_converted, CV_32SC1);
-
-        cout << "After assignment" << endl;
-        for(auto& b : semantic_objects) {
-            cout << b << endl;
-        }
-
 
 
         // mask_mat.convertTo(mask_mat, CV_32SC1);
@@ -190,11 +167,7 @@ int main(int argc, char **argv) {
             vObjPose_gt[i] = vObjPoseGT[vObjPoseID[ni][i]];
         }
 
-        auto sceneptr = slam.TrackRGBD(imRGB, imD_f, flow_mat, tracked_mask_converted,mTcw_gt,vObjPose_gt,tframe,imTraj,nImages);
-
-        cv::imshow("Tracked", tracked_viz);
-        cv::waitKey(1);
-
+        auto sceneptr = slam.TrackRGBD(imRGB, imD_f, flow_mat, mask_mat,mTcw_gt,vObjPose_gt,tframe,imTraj,nImages);
 
         cv::imshow("MASK Viz", mask_viz);
         cv::waitKey(1);

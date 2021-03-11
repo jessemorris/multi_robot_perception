@@ -11,6 +11,17 @@ IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
+
+option(DEBUG "Builds with Debug flag on" OFF)
+
+if (DEBUG)
+        message("Setting VDO_DEBUG to True.")
+        add_definitions(-DVDO_DEBUG)
+else()
+   message("VDO_DEBUG flag set to False.")
+endif()
+
+
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
 # ======  start c++ compile  ======
@@ -67,6 +78,7 @@ set(PUBLIC_HEADER_FILES
     include/${PROJECT_NAME}/Scene.h
     include/${PROJECT_NAME}/Tracking.h
     include/${PROJECT_NAME}/Params.h
+    include/${PROJECT_NAME}/Macros.h
 
     include/${PROJECT_NAME}/cvplot/color.h
     include/${PROJECT_NAME}/cvplot/cvplot.h

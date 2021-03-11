@@ -309,7 +309,7 @@ if __name__ == "__main__":
 
 
         cam = cv2.VideoCapture(0)
-        while True:
+        while not rospy.is_shutdown():
             start_time = time.time()
             ret_val, img = cam.read()
             # response_image, labels, label_indexs = maskrcnn.analyse_image(img)
@@ -323,7 +323,6 @@ if __name__ == "__main__":
             # cv2.imshow("Preds", test_image)
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
-        cv2.destroyAllWindows()
 
         
 

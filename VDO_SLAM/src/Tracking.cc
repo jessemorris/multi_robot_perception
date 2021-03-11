@@ -37,6 +37,7 @@
 #include "vdo_slam/Tracking.h"
 #include "vdo_slam/System.h"
 #include "vdo_slam/vdo_slam.hpp"
+#include "vdo_slam/Macros.h"
 
 using namespace std;
 using namespace VDO_SLAM;
@@ -304,7 +305,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     bJoint = true;
     cv::RNG rng((unsigned)time(NULL));
 
-    cout << "Starting M state " << mState << endl;
+    VDO_INFO_MSG("Starting M state");
 
     // Initialize Global ID
     if (mState==NO_IMAGES_YET) {
@@ -409,7 +410,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
 
     if(mState!=NO_IMAGES_YET)
     {
-        cout << "Update Current Frame From Last....." << endl;
+        VDO_DEBUG_MSG("Update Current Frame From Last.....");
 
         mCurrentFrame.mvStatKeys = mLastFrame.mvCorres;
         mCurrentFrame.N_s = mCurrentFrame.mvStatKeys.size();
@@ -468,7 +469,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         // cv::drawKeypoints(mImGray, mCurrentFrame.mvObjKeys, img_show, cv::Scalar::all(-1), cv::DrawMatchesFlags::DEFAULT);
         // cv::imshow("Dense Feature Distribution 2", img_show);
         // cv::waitKey(0);
-        cout << "Update Current Frame, Done!" << endl;
+        VDO_DEBUG_MSG("Update Current Frame, Done!");
     }
 
     // ---------------------------------------------------------------------------------------
@@ -482,11 +483,11 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     }
     else
     {
-         cout << "After assign pose ground truth" << endl;
+        VDO_DEBUG_MSG("After assign pose ground truth" );
         // mCurrentFrame.mTcw_gt = Converter::toInvMatrix(mTcw_gt)*mOriginInv;
     }
-    cout << "After assign pose ground truth" << endl;
 
+    VDO_DEBUG_MSG("After assign pose ground truth");
     // Assign object pose ground truth
     // mCurrentFrame.nSemPosi_gt.resize(vObjPose_gt.size());
     // mCurrentFrame.vObjPose_gt.resize(vObjPose_gt.size());
@@ -506,10 +507,9 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     mCurrentFrame.vObjLabel.resize(mCurrentFrame.mvObjKeys.size(),-2);
 
     // *** main ***
-    cout << "Start Tracking ......" << endl;
+    // VDO_DEBUG_MSG("Start Tracking ......");
     Track();
-    cout << "End Tracking ......" << endl;
-    // ************
+    // VDO_DEBUG_MSG("End Tracking ......");
 
     // Update Global ID
     f_id = f_id + 1;
@@ -519,11 +519,11 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     // ---------------------------------------------------------------------------------------------
 
     // // // ************** display label on the image ***************  // //
-    cout << "bFrame2Frame " << bFrame2Frame << endl;
+    VDO_DEBUG_MSG("bFrame2Frame " << bFrame2Frame);
     cout << "timestamp " << timestamp << endl;
     if(timestamp!=0 && bFrame2Frame == true)
     {
-        cout << " TemperalMatch_subset size " << TemperalMatch_subset.size() << endl;
+        VDO_DEBUG_MSG(" TemperalMatch_subset size " << TemperalMatch_subset.size());
         std::vector<cv::KeyPoint> KeyPoints_tmp(1);
         // background features
         // for (int i = 0; i < mCurrentFrame.mvStatKeys.size(); i=i+1)
@@ -681,12 +681,10 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     // // ************** show trajectory results ***************
     if (mTestData==KITTI && !mCurrentFrame.mTcw.empty())
     {
-        cout << "Showing trajectory results on KITTi" << endl;
+        // cout << "Showing trajectory results on KITTi" << endl;
         int sta_x = 300, sta_y = 100, radi = 2, thic = 5;  // (160/120/2/5)
         float scale = 6; // 6
-        cout << "mTcw shape: rows " << mCurrentFrame.mTcw.rows << " cols " <<mCurrentFrame.mTcw.cols << endl;
         cv::Mat CamPos = Converter::toInvMatrix(mCurrentFrame.mTcw);
-        cout << "Made cam pos" << endl;
 
         //x is 0, 3 y is 2,3?
         int x = int(CamPos.at<float>(0,3)*scale) + sta_x;
@@ -916,7 +914,7 @@ void Tracking::Track()
         // // ********************************************
 
         if (TemperalMatch.size() < 2) {
-            cout << "Temperal Match size is < 2" << endl;
+            VDO_DEBUG_MSG("Temperal Match size is < 2");
             return;
         }
 
