@@ -1,6 +1,5 @@
 #include "mask_rcnn/MaskRcnnInterface.hpp"
 
-#include <mask_rcnn/MaskRcnnVisualise.h>
 #include <mask_rcnn/MaskRcnnVdoSlam.h>
 #include <mask_rcnn/MaskRcnnLabel.h>
 #include <mask_rcnn/MaskRcnnLabelList.h>

@@ -7,9 +7,10 @@
 
 
 # input_camera_topic: /gmsl/A0/image_color
-input_camera_topic: /read/camera/rgb/raw_image
-# input_camera_topic: /camera/rgb/raw_image
-input_camera_info_topic: /gmsl/A0/camera_info
+# input_camera_topic: /read/camera/rgb/raw_image
+# input_depth_camera_topic: ""
+# # input_camera_topic: /camera/rgb/raw_image
+# input_camera_info_topic: /gmsl/A0/camera_info
 
 #options for which analysis to run
 run_flow_net: True

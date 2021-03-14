@@ -30,7 +30,8 @@ namespace VDO_SLAM {
     enum eSensor{
         MONOCULAR=0,
         STEREO=1,
-        RGBD=2
+        RGBD=2,
+        INVALID=3
     };
 
 

@@ -51,8 +51,12 @@
   <arg name="max_track_points_bg" default="1700"/>
   <arg name="max_track_points_obj" default="800"/>
 
-  <arg name="sf_mg_thresh" default="0.05"/>
-  <arg name="sf_ds_thresh" default="0.6"/>
+  <!-- <arg name="sf_mg_thresh" default="0.05"/>
+  <arg name="sf_ds_thresh" default="0.6"/> -->
+
+  <arg name="sf_mg_thresh" default="1000"/>
+  <arg name="sf_ds_thresh" default="1000"/>
+
 
   <arg name="window_size" default="20"/>
   <arg name="overlap_size" default="4"/>

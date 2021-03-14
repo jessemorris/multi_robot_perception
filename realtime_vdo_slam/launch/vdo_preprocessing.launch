@@ -1,7 +1,0 @@
-<launch>
-
-	<arg name="config_file" default="realtime_vdo.yaml"/>
-    <rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg config_file)"/>
-
-    <node pkg="realtime_vdo_slam" type="image_preprocessing_node" name="image_preprocessing" output="screen" />
-</launch>

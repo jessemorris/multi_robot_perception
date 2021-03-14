@@ -1,0 +1,18 @@
+<launch>
+
+    <arg name="color_topic" default="/camera/rgb/raw_image"/>
+    <arg name="color_info" default="/camera/camera_info"/>
+
+    
+
+	<arg name="config_file" default="realtime_vdo.yaml"/>
+    <rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg config_file)"/>
+
+    <node pkg="realtime_vdo_slam" type="image_preprocessing_node_rgb" name="vdo_preprocessing" output="screen">
+        <param name="camera_type" value="rgb"/>
+
+        <param name="color_topic" value="$(arg color_topic)"/>
+        <param name="color_info" value="$(arg color_info)"/>
+    </node>
+
+</launch>

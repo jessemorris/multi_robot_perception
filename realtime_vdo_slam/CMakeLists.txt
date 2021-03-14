@@ -173,7 +173,9 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-	src/ImagePreprocessing.cpp
+	src/preprocessing/ImagePreprocessingBase.cpp
+	src/preprocessing/ImagePreprocessingRGB.cpp
+	src/preprocessing/ImagePreprocessingRGBD.cpp
 	src/RosVdoSlam.cpp
 	src/RosScene.cpp
 	src/RosSceneManager.cpp
@@ -208,20 +210,41 @@ endif()
 
 
 
-add_executable(image_preprocessing_node
-		src/ImagePreprocessingNode.cpp
+add_executable(image_preprocessing_node_rgb
+		src/ImagePreprocessingNodeRGB.cpp
 		)
 
 
 
-target_link_libraries(image_preprocessing_node
+target_link_libraries(image_preprocessing_node_rgb
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
 		${PROJECT_NAME}
 		)
 
 if(catkin_EXPORTED_LIBRARIES)
-  add_dependencies(image_preprocessing_node
+  add_dependencies(image_preprocessing_node_rgb
+		  ${catkin_EXPORTED_LIBRARIES}
+		  ${catkin_LIBRARIES}
+		  ${OpenCV_LIBS})
+endif()
+
+
+#### RGBD node
+add_executable(image_preprocessing_node_rgbd
+		src/ImagePreprocessingNodeRGBD.cpp
+		)
+
+
+
+target_link_libraries(image_preprocessing_node_rgbd
+		${catkin_LIBRARIES}
+		${OpenCV_LIBS}
+		${PROJECT_NAME}
+		)
+
+if(catkin_EXPORTED_LIBRARIES)
+  add_dependencies(image_preprocessing_node_rgbd
 		  ${catkin_EXPORTED_LIBRARIES}
 		  ${catkin_LIBRARIES}
 		  ${OpenCV_LIBS})
@@ -270,7 +293,11 @@ endif()
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS ros_vdoslam_node image_preprocessing_node
+install(TARGETS ros_vdoslam_node image_preprocessing_node_rgb
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS ros_vdoslam_node image_preprocessing_node_rgbd
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
