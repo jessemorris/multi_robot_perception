@@ -1,7 +1,7 @@
 <launch>
 
   <!-- If True expects topics directly from the vdo_slam_preprocessing node. This results in a remapping -->
-  <arg name="online" default="false" />
+  <arg name="online" default="true" />
 
    <!-- If True VDO will load the System parameters from the calibtration file in the config folder
    If False, will use the calibration params defined here and the specified camera info topic  -->
@@ -11,7 +11,7 @@
   <!-- If true, and use calibration file is false, the system will get the camera intrinsics
   from the camera info topic defined in the config file. If False, the camera information
   properties must be defined here (K, D etc)-->
-  <arg name="use_camera_info_topic" default="false" />
+  <arg name="use_camera_info_topic" default="true" />
 
   <!-- System params for VDO SLAM. Used if  use_calibtration_file is true-->
 	<arg name="calibration_file" default="vdo_config.yaml"/>
@@ -39,23 +39,25 @@
   <arg name="width" default="640"/>
   <arg name="height" default="480"/>
   <arg name="fps" default="15"/>
+
   <arg name="bf" default="387.5744"/>
+
   <arg name="RGB" default="1"/>
   <arg name="data_code" default="2"/>
 
-  <arg name="depth_map_factor" default="1000.0"/>
+  <arg name="depth_map_factor" default="255.0"/>
 
 
-  <arg name="thdepth_bg" default="40"/>
-  <arg name="thdepth_obj" default="25"/>
+  <arg name="thdepth_bg" default="100"/>
+  <arg name="thdepth_obj" default="30"/>
   <arg name="max_track_points_bg" default="1700"/>
   <arg name="max_track_points_obj" default="800"/>
 
-  <!-- <arg name="sf_mg_thresh" default="0.05"/>
-  <arg name="sf_ds_thresh" default="0.6"/> -->
+  <arg name="sf_mg_thresh" default="0.05"/>
+  <arg name="sf_ds_thresh" default="0.6"/>
 
-  <arg name="sf_mg_thresh" default="1000"/>
-  <arg name="sf_ds_thresh" default="1000"/>
+  <!-- <arg name="sf_mg_thresh" default="1000"/>
+  <arg name="sf_ds_thresh" default="1000"/> -->
 
 
   <arg name="window_size" default="20"/>
@@ -109,7 +111,7 @@
     <remap to="/vdoslam/input/camera/flow/image_raw" from="/camera/flow/image_raw" if="$(arg online)"/>
     <remap to="/vdoslam/input/camera/depth/image_raw" from="/camera/depth/image_raw" if="$(arg online)"/>
 
-    <!-- <remap to="$(param input_camera_info_topic)" from="/camera/camera_info" if="$(arg online)"/> -->
+    <remap to="/camera/color/camera_info" from="/camera/camera_info" if="$(arg online)"/>
 
     <param name="use_calibration_file" value="$(arg use_calibration_file)"/>
 

@@ -45,6 +45,8 @@ VDO_SLAM::CameraInformation::CameraInformation(sensor_msgs::CameraInfoConstPtr& 
     }
     else {
         ROS_WARN_STREAM("Distortion Model [" << camera_info_msg.distortion_model << " not recognised.");
+        camera_matrix = cv::Mat(3, 3, CV_64F, &camera_info_msg.K[0]);
+        dist_coeffs = cv::Mat(4, 1, CV_64F, &camera_info_msg.D[0]);
         distortion_model = DistortionModel::INVALID;
     }
 }

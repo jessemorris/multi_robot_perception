@@ -88,7 +88,7 @@ BaseProcessing::BaseProcessing(ros::NodeHandle& n) :
        sceneflow.start_service();
     }
 
-    if(run_mono_depth && camera_type == eSensor::STEREO) {
+    if(run_mono_depth && camera_type == eSensor::MONOCULAR) {
         mono_depth.start_service();
     }
 

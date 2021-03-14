@@ -18,7 +18,8 @@
 #include <iostream>
 #include <stdio.h>
 
-
+#include <vision_msgs/BoundingBox2D.h>
+#include <mask_rcnn/SemanticObject.h>
 
 // #incl
 #include <mono_depth_2/MonoDepthInterface.hpp>
@@ -39,6 +40,23 @@ ImageRGBD::ImageRGBD(ros::NodeHandle& n):
 
 void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
     cv_bridge::CvImagePtr cv_ptr_rgb = cv_bridge::toCvCopy(*raw_image, sensor_msgs::image_encodings::RGB8);
+
+    //we assume we can do this as the VDO pipeline expects the format to be in MONO16
+    // if (depth->encoding == "16UC1"){
+        sensor_msgs::Image img;
+        img.header = depth->header;
+        img.height = depth->height;
+        img.width = depth->width;
+        img.is_bigendian = depth->is_bigendian;
+        img.step = depth->step;
+        img.data = depth->data;
+        img.encoding = "mono16";
+
+        cv_bridge::CvImagePtr cv_ptr_depth = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::MONO16);
+        monodepth_raw.publish(cv_ptr_depth->toImageMsg());
+	// }
+
+
 
     cv::Mat distored = cv_ptr_rgb->image;
     cv::Mat undistorted;
@@ -118,7 +136,6 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
 
         sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
         input_image.publish(img_msg);
-        monodepth_raw.publish(depth);
 
         previous_image = current_image;
 

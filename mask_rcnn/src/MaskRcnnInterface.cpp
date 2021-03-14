@@ -9,6 +9,7 @@
 #include <opencv2/core.hpp>
 #include <nlohmann/json.hpp>
 #include <ros/package.h>
+#include <ros/ros.h>
 
 #include <iostream>
 #include <fstream>
@@ -33,6 +34,7 @@ MaskRcnnInterface::MaskRcnnInterface(ros::NodeHandle& n) :
 bool MaskRcnnInterface::start_service(bool wait_for_services) {
 
     if (ros::service::exists("maskrcnn/analyse_image", true)) {
+        service_started = true;
         return true;
     }
 
@@ -45,7 +47,7 @@ bool MaskRcnnInterface::start_service(bool wait_for_services) {
     client = nh.serviceClient<mask_rcnn::MaskRcnnVdoSlam>("maskrcnn/analyse_image");
 
     if (wait_for_services) {
-        MaskRcnnInterface::wait_for_services();
+        service_started = MaskRcnnInterface::wait_for_services();
     }
 
     return service_started;
@@ -60,6 +62,7 @@ bool MaskRcnnInterface::wait_for_services(ros::Duration timeout) {
 bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz,
     std::vector<std::string>& labels, std::vector<int>& label_indexs, 
     std::vector<vision_msgs::BoundingBox2D>& bounding_box) {
+
 
     if (!service_started) {
         return false;
