@@ -4,6 +4,19 @@
 #include <ros/ros.h>
 #include <opencv2/opencv.hpp>
 
+cv_bridge::CvImagePtr VDO_SLAM::convert_img_msg(const sensor_msgs::ImageConstPtr& msg, const std::string& encoding) {
+    sensor_msgs::Image img;
+    img.header = msg->header;
+    img.height = msg->height;
+    img.width = msg->width;
+    img.is_bigendian = msg->is_bigendian;
+    img.step = msg->step;
+    img.data = msg->data;
+    img.encoding = encoding;
+
+    return cv_bridge::toCvCopy(img, encoding);
+}
+
 VDO_SLAM::CameraInformation::CameraInformation(sensor_msgs::CameraInfoConstPtr& info_msg_ptr) {
     camera_info_msg = *info_msg_ptr;
 
@@ -23,12 +36,6 @@ VDO_SLAM::CameraInformation::CameraInformation(sensor_msgs::CameraInfoConstPtr& 
         camera_matrix = cv::Mat(3, 3, CV_64F, &camera_info_msg.K[0]);
         dist_coeffs = cv::Mat(4, 1, CV_64F, &camera_info_msg.D[0]);
 
-        // ROS_INFO_STREAM(camera_matrix);
-
-        //cv::Mat scaled_camera_matrix = camera_matrix *
-        // camera_info.camera_matrix.at<double>(2, 2) = 1.;
-
-        //cv::Mat output_image;
         cv::Mat identity_mat = cv::Mat::eye(3, 3, CV_64F);
 
         cv::fisheye::estimateNewCameraMatrixForUndistortRectify(camera_matrix, dist_coeffs, image_size,

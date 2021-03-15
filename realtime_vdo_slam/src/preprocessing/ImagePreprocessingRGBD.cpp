@@ -42,25 +42,13 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
     cv_bridge::CvImagePtr cv_ptr_rgb = cv_bridge::toCvCopy(*raw_image, sensor_msgs::image_encodings::RGB8);
 
     //we assume we can do this as the VDO pipeline expects the format to be in MONO16
-    // if (depth->encoding == "16UC1"){
-        sensor_msgs::Image img;
-        img.header = depth->header;
-        img.height = depth->height;
-        img.width = depth->width;
-        img.is_bigendian = depth->is_bigendian;
-        img.step = depth->step;
-        img.data = depth->data;
-        img.encoding = "mono16";
-
-        cv_bridge::CvImagePtr cv_ptr_depth = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::MONO16);
-        monodepth_raw.publish(cv_ptr_depth->toImageMsg());
-	// }
+    cv_bridge::CvImagePtr cv_ptr_depth = convert_img_msg(depth, sensor_msgs::image_encodings::MONO16);
+    monodepth_raw.publish(cv_ptr_depth->toImageMsg());
 
 
 
     cv::Mat distored = cv_ptr_rgb->image;
     cv::Mat undistorted;
-    // distored.copyTo(undistorted);
     
     cv::Mat image;
     if (undistord_images) {
@@ -92,8 +80,6 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
         cv::Mat current_image = image;
         current_time = raw_image->header.stamp;
 
-        // //TODO: what should this be
-        // original_header.frame_id = "base_link";
         if (run_scene_flow) {
             scene_flow_success = sceneflow.analyse(current_image, previous_image, scene_flow_mat, scene_flow_viz);
 
@@ -112,14 +98,8 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
 
         if (run_mask_rcnn) {
             mask_rcnn_success = mask_rcnn_interface.analyse(current_image, mask_rcnn_mat, mask_rcnn_viz, mask_rcnn_labels, mask_rcnn_label_indexs, bb);
-            // mask_rcnn_interface.create_semantic_objects(mask_rcnn_labels, mask_rcnn_label_indexs, bb, semantic_objects);
 
             if (mask_rcnn_success) {
-                // mask_rcnn_mat.convertTo(mask_rcnn_mat, CV_32SC1);
-
-                // tracker.assign_tracking_labels(semantic_objects,mask_rcnn_mat,tracked_mask, tracked_viz);
-                // tracked_mask.convertTo(tracked_mask, CV_32SC1);
-
 
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "mono8", mask_rcnn_mat).toImageMsg();
                 maskrcnn_raw.publish(img_msg);

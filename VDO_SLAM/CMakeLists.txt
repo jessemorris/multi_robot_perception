@@ -1,9 +1,7 @@
-cmake_minimum_required(VERSION 2.8)
-project(vdo_slam)
+cmake_minimum_required(VERSION 3.10)
+project(vdo_slam VERSION 1.0)
 
 set(PACKAGE_NAME ${PROJECT_NAME})
-set(PACKAGE_LIB_PREFIX "obj_slam")
-set(LIB_NAME ${PACKAGE_LIB_PREFIX}${PROJECT_NAME})
 
 
 
@@ -131,6 +129,9 @@ target_link_libraries(
    ${vdo_slam_g2o_LIB_DIRS}
 )
 
+# Configure target warnings (PRIVATE doesn't pass on options to targets linking to target)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wno-psabi)
+
 # Set include directories for build and install
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -140,10 +141,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         )
 
 
-
-# Configure target warnings (PRIVATE doesn't pass on options to targets linking to target)
-target_compile_options(${PROJECT_NAME} PRIVATE -Wno-psabi)
-
 # Install library as an export target
 install(TARGETS ${PACKAGE_NAME}
         EXPORT ${PROJECT_NAME}-export
@@ -152,6 +149,13 @@ install(TARGETS ${PACKAGE_NAME}
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
         )
+
+# Install header files
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/${PROJECT_NAME}/
+        DESTINATION include/${PROJECT_NAME}
+        FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN "*.hpp")
 
 # Install export library to generate cmake
 install(EXPORT ${PROJECT_NAME}-export
@@ -166,9 +170,9 @@ install(FILES
    DESTINATION lib/cmake/${PROJECT_NAME}
    )
 
-# Install Header Files
-install(FILES ${PUBLIC_HEADER_FILES} DESTINATION include/${PROJECT_NAME})
-install(FILES include/${PROJECT_NAME}.hpp DESTINATION include/${PACKAGE_NAME})
+# # Install Header Files
+# install(FILES ${PUBLIC_HEADER_FILES} DESTINATION include/${PROJECT_NAME})
+# install(FILES include/${PROJECT_NAME}.hpp DESTINATION include/${PACKAGE_NAME})
 
 
 
