@@ -28,7 +28,6 @@ add_service_files(
   MaskRcnnVdoSlam.srv
   MaskRcnnLabel.srv
   MaskRcnnLabelList.srv
-  MaskRcnnFrame.srv
 )
 
 

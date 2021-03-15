@@ -79,6 +79,7 @@ add_message_files(
    FILES
    VdoSlamScene.msg
    VdoSceneObject.msg
+   VdoInput.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -96,7 +97,7 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs std_msgs sensor_msgs)
+generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs std_msgs sensor_msgs mask_rcnn)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

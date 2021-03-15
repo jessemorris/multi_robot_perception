@@ -18,7 +18,7 @@
 #include <iostream>
 #include <stdio.h>
 
-
+#include <realtime_vdo_slam/VdoInput.h>
 
 // #incl
 #include <mono_depth_2/MonoDepthInterface.hpp>
@@ -58,6 +58,9 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     cv::Mat tracked_mask;
     cv::Mat tracked_viz;
 
+    realtime_vdo_slam::VdoInput input_msg;
+    input_msg.rgb = *msg;
+
 
     if (is_first) {
         previous_image = image;
@@ -78,9 +81,12 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
                 //#TODO: cannot fisplay until convert from scene flow to rgb               
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "32FC2", scene_flow_mat).toImageMsg();
                 flownet_raw.publish(img_msg);
+                input_msg.flow = *img_msg;
+
 
                 img_msg = cv_bridge::CvImage(original_header, "rgb8", scene_flow_viz).toImageMsg();
                 flownet_viz.publish(img_msg);
+
             }
             else {
                 ROS_WARN_STREAM("Could not analyse scene flow images");
@@ -100,9 +106,13 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "mono8", mask_rcnn_mat).toImageMsg();
                 maskrcnn_raw.publish(img_msg);
+                input_msg.mask = *img_msg;
+                input_msg.semantic_objects = semantic_objects;
+
 
                 img_msg = cv_bridge::CvImage(original_header, "rgb8", mask_rcnn_viz).toImageMsg();
                 maskrcnn_viz.publish(img_msg);
+
                 
             }
             else {
@@ -116,6 +126,7 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
             if (mono_depth_success) {
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "mono16", mono_depth_mat).toImageMsg();
                 monodepth_raw.publish(img_msg);
+                input_msg.depth = *img_msg;
             }
             else {
                 ROS_WARN_STREAM("Could not analyse mono depthimages");
@@ -125,7 +136,8 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
         input_image.publish(img_msg);
 
-        previous_image = current_image;
+        vdo_input_pub.publish(input_msg);
+
 
     }
 

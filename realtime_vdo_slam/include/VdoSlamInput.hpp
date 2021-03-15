@@ -9,6 +9,8 @@
 
 namespace VDO_SLAM {
 
+    typedef std::vector<mask_rcnn::SemanticObject> SemanticObjectVector;
+
     // /**
     //  * @brief We need the semantic mask and semantic objects for data association so we wrap them
     //  * 
@@ -25,6 +27,7 @@ namespace VDO_SLAM {
      */
     struct VdoSlamInput {
         cv::Mat raw, flow, depth, mask;
+        SemanticObjectVector semantic_objects;
         std::vector<std::vector<float> > object_pose_gt;
         cv::Mat ground_truth;
         double time_diff;
@@ -38,14 +41,17 @@ namespace VDO_SLAM {
          * @param _flow Optical flow mat. This is the output of the flow_net node.
          * @param _depth Dense depth mat. This is the output of the mono_depth_2 node.
          * @param _mask Semantic instance masking. This is the output of the mask_rcnn node.
+         * @param _semantic_objects SemanticObjectVector vector of semantic objects for this image
          * @param _time_diff The time (in nano seconds) between this frame and the previous frame.
          * @param _image_time The ros::Time the original image was captured (not the time it was processed). This is used
          * to synchronize the data streams as the VDO algorithm runs at a much slower frequency than a usual camera data stream. 
          */
-        VdoSlamInput(cv::Mat& _raw, cv::Mat& _flow, cv::Mat& _depth, cv::Mat& _mask, double _time_diff, ros::Time& _image_time) : 
+        VdoSlamInput(cv::Mat& _raw, cv::Mat& _flow, cv::Mat& _depth, cv::Mat& _mask, SemanticObjectVector& _semantic_objects, 
+                            double _time_diff, ros::Time& _image_time) : 
             raw(_raw),
             flow(_flow),
             depth(_depth),
+            semantic_objects(_semantic_objects),
             time_diff(_time_diff),
             image_time(_image_time)
 

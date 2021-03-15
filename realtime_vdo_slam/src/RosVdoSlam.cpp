@@ -4,9 +4,7 @@
 #include "VdoSlamInput.hpp"
 #include "CameraInformation.hpp"
 #include "utils/RosUtils.hpp"
-
-#include <mask_rcnn/MaskRcnnFrame.h>
-
+#include <realtime_vdo_slam/VdoInput.h>
 
 #include <ros/package.h>
 #include <sensor_msgs/CameraInfo.h>
@@ -20,12 +18,12 @@ using namespace VDO_SLAM;
 
 RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         handle(n),
-        ros_scene_manager(handle),
-        raw_img(handle,"/camera/rgb/image_raw", 100),
-        mask_img(handle,"/camera/mask/image_raw", 100),
-        flow_img(handle,"/camera/flow/image_raw", 100),
-        depth_img(handle,"/camera/depth/image_raw", 100),
-        sync(raw_img, mask_img, flow_img, depth_img, 100)
+        ros_scene_manager(handle)
+        // raw_img(handle,"/camera/rgb/image_raw", 100),
+        // mask_img(handle,"/camera/mask/image_raw", 100),
+        // flow_img(handle,"/camera/flow/image_raw", 100),
+        // depth_img(handle,"/camera/depth/image_raw", 100),
+        // sync(raw_img, mask_img, flow_img, depth_img, 100)
 
     {
         //Getting Frame ID's
@@ -33,9 +31,6 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         handle.getParam("/ros_vdoslam/odom_frame_id", odom_frame_id);
         handle.getParam("/ros_vdoslam/base_link_frame_id", base_link_frame_id);
 
-
-        //allows request from mask rcnn interface to get semantic object list by image time
-        semantic_object_client = handle.serviceClient<mask_rcnn::MaskRcnnFrame>("maskrcnninterface/semantic_objects");
 
         nav_msgs::Odometry odom;
         odom.pose.pose.position.x = 0;
@@ -67,7 +62,8 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         // slam_system = std::move(construct_slam_system(handle));
         slam_system = construct_slam_system(handle);
 
-        sync.registerCallback(boost::bind(&RosVdoSlam::vdo_input_callback, this, _1, _2, _3, _4));
+        // sync.registerCallback(boost::bind(&RosVdoSlam::vdo_input_callback, this, _1, _2, _3, _4));
+        vdo_input_sub = handle.subscribe("/vdoslam/input/all", 100, &RosVdoSlam::vdo_input_callback, this);
         vdo_worker_thread = std::thread(&RosVdoSlam::vdo_worker, this);
 
 
@@ -225,31 +221,33 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
 
 }
 
-void RosVdoSlam::vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth) {
+// void RosVdoSlam::vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth) {
+void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& vdo_input) {
     //the actual time the image was craeted
-    current_time = raw_image->header.stamp;
+    current_time = vdo_input->rgb.header.stamp;
     ros::Duration diff = current_time - previous_time;
     //time should be in n seconds or seconds (or else?)
     double time_difference = diff.toSec();
 
     cv::Mat image, scene_flow_mat, mono_depth_mat, mask_rcnn_mat;
     cv_bridge::CvImagePtr cv_ptr;
-    cv_ptr = cv_bridge::toCvCopy(*raw_image, sensor_msgs::image_encodings::RGB8);
+    cv_ptr = cv_bridge::toCvCopy(vdo_input->rgb, sensor_msgs::image_encodings::RGB8);
     image = cv_ptr->image;
 
-    cv_ptr = cv_bridge::toCvCopy(*mask, sensor_msgs::image_encodings::MONO8);
+    cv_ptr = cv_bridge::toCvCopy(vdo_input->mask, sensor_msgs::image_encodings::MONO8);
     mask_rcnn_mat = cv_ptr->image;
 
-    cv_ptr = cv_bridge::toCvCopy(*flow, sensor_msgs::image_encodings::TYPE_32FC2);
+    cv_ptr = cv_bridge::toCvCopy(vdo_input->flow, sensor_msgs::image_encodings::TYPE_32FC2);
     scene_flow_mat = cv_ptr->image;
 
-    cv_ptr = cv_bridge::toCvCopy(*depth, sensor_msgs::image_encodings::MONO16);
+    cv_ptr = cv_bridge::toCvCopy(vdo_input->depth, sensor_msgs::image_encodings::MONO16);
     mono_depth_mat = cv_ptr->image;
 
+    SemanticObjectVector semantic_objects = vdo_input->semantic_objects;
 
 
     std::shared_ptr<VdoSlamInput> input = std::make_shared<VdoSlamInput>(image,scene_flow_mat,
-            mono_depth_mat, mask_rcnn_mat, time_difference, current_time);
+            mono_depth_mat, mask_rcnn_mat, semantic_objects, time_difference, current_time);
 
     //add the input to the thread queue so we can deal with it later
     push_vdo_input(input);
@@ -297,18 +295,14 @@ void RosVdoSlam::vdo_worker() {
                 input->image_time.toSec(),
                 image_trajectory,global_optim_trigger);
 
-            mask_rcnn::MaskRcnnFrame frame;
-            frame.request.data = image_time;
-
             std::vector<mask_rcnn::SemanticObject> semantic_objects;
 
             // if(semantic_object_client.call(frame)) {
             //     semantic_objects = frame.response.semantic_objects;
 
-            //     for(auto& object : semantic_objects) {
-            //         ROS_INFO_STREAM(object);
-            //     }
-            // }
+            for(auto& object : input->semantic_objects) {
+                    ROS_INFO_STREAM(object);
+                }
 
             // set_scene_labels(unique_scene);
             scene = std::move(unique_scene);

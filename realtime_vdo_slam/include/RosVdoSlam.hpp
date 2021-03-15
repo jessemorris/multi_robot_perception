@@ -28,10 +28,10 @@
 #include <vdo_slam/vdo_slam.hpp>
 
 
-#include <mask_rcnn/MaskRcnnInterface.hpp>
 #include "RosScene.hpp"
 #include "RosSceneManager.hpp"
 #include "VdoSlamInput.hpp"
+#include  <realtime_vdo_slam/VdoInput.h>
 
 #include <string>
 #include <vector>
@@ -74,12 +74,10 @@ class RosVdoSlam {
          * This callback creates as pointer to a VdoSlamInput which contains all the input necessary to the VDO_SLAM algorithm and adds 
          * it to the worker queue. 
          * 
-         * @param raw_image 
-         * @param mask 
-         * @param flow 
-         * @param depth 
+         * @param vdo_input realtime_vdo_slam::VdoInput
          */
-        void vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth);
+        void vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& vdo_input);
+        // void vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth);
 
     private:
         ros::NodeHandle handle;
@@ -151,15 +149,14 @@ class RosVdoSlam {
         std::mutex queue_mutex;
         std::thread vdo_worker_thread;
 
-        ros::ServiceClient semantic_object_client;
-
+        ros::Subscriber vdo_input_sub;
         //data synchronizers
-        message_filters::Subscriber<sensor_msgs::Image> raw_img;
-        message_filters::Subscriber<sensor_msgs::Image> mask_img;
-        message_filters::Subscriber<sensor_msgs::Image> flow_img;
-        message_filters::Subscriber<sensor_msgs::Image> depth_img;
+        // message_filters::Subscriber<sensor_msgs::Image> raw_img;
+        // message_filters::Subscriber<sensor_msgs::Image> mask_img;
+        // message_filters::Subscriber<sensor_msgs::Image> flow_img;
+        // message_filters::Subscriber<sensor_msgs::Image> depth_img;
 
-        message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> sync;
+        // message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> sync;
 
         ros::Time current_time;
         ros::Time previous_time;

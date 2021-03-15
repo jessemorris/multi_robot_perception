@@ -10,6 +10,7 @@
 
 #include <mask_rcnn/SemanticObject.h>
 #include <vision_msgs/BoundingBox2D.h>
+#include <realtime_vdo_slam/VdoInput.h>
 #include "CameraInformation.hpp"
 #include <vdo_slam/System.h>
 
@@ -104,6 +105,8 @@ BaseProcessing::BaseProcessing(ros::NodeHandle& n) :
     flownet_raw = image_transport.advertise("/vdoslam/input/camera/flow/image_raw", 10);
     flownet_viz = image_transport.advertise("/vdoslam/input/camera/flow/colour_map", 10);
     monodepth_raw = image_transport.advertise("/vdoslam/input/camera/depth/image_raw", 10);
+
+    vdo_input_pub = handler.advertise<realtime_vdo_slam::VdoInput>("/vdoslam/input/all", 100);
 
 }
 

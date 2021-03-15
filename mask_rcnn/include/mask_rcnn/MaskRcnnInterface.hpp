@@ -72,18 +72,6 @@ namespace mask_rcnn {
 
 
             /**
-             * @brief Allows other nodes to query semantic object information by a ros::Time. When analysis is called
-             * a vector of semantic objects are added to a map using the timestamp of the image analysed. This timestamp
-             * cam then be used to query this vector.
-             * 
-             * @param req mask_rcnn::MaskRcnnFrame::Request
-             * @param res  mask_rcnn::MaskRcnnFrame::Response
-             * @return true 
-             * @return false 
-             */
-            bool request_semantic_objects(mask_rcnn::MaskRcnnFrame::Request& req, mask_rcnn::MaskRcnnFrame::Response& res);
-
-            /**
              * @brief begins the python program found in the scripts file.
              * 
              * @param wait_for_services if true the function should use the wait for services function to wait for the 
@@ -152,10 +140,6 @@ namespace mask_rcnn {
             static std::string invalid_name;
             static std::string coco_file_name;
 
-            //allows information about a semantic frame to be required. Time will be the time of the image
-            // std::map<ROS_TIME_SEC, std::vector<mask_rcnn::SemanticObject>> semantic_object_map;
-            std::map<ros::Time, std::vector<mask_rcnn::SemanticObject>> semantic_object_map;
-            ros::ServiceServer semantic_object_request_service;
             
 
     };

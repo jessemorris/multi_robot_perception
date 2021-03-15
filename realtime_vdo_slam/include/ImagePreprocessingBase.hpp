@@ -139,6 +139,8 @@ namespace VDO_SLAM {
 
             image_transport::Publisher monodepth_raw;
 
+            ros::Publisher vdo_input_pub; //will publish realtime_vdo_slam::VdoInput msgs
+
             bool is_first;
             cv::Mat previous_image;
 

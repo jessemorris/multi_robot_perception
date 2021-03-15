@@ -51,7 +51,7 @@ ChooseData: 2
 
 # Deptmap values factor
 # DepthMapFactor: 500
-DepthMapFactor: 700
+DepthMapFactor: 2000
 
 # Close/Far Depth threshold
 #ThDepthBG: 40.0
