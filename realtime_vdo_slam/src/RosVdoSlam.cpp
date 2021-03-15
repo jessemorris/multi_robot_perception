@@ -5,6 +5,8 @@
 #include "CameraInformation.hpp"
 #include "utils/RosUtils.hpp"
 
+#include <mask_rcnn/MaskRcnnFrame.h>
+
 
 #include <ros/package.h>
 #include <sensor_msgs/CameraInfo.h>
@@ -19,7 +21,6 @@ using namespace VDO_SLAM;
 RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         handle(n),
         ros_scene_manager(handle),
-        mask_rcnn_interface(n),
         raw_img(handle,"/camera/rgb/image_raw", 100),
         mask_img(handle,"/camera/mask/image_raw", 100),
         flow_img(handle,"/camera/flow/image_raw", 100),
@@ -31,6 +32,10 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         handle.getParam("/ros_vdoslam/map_frame_id", map_frame_id);
         handle.getParam("/ros_vdoslam/odom_frame_id", odom_frame_id);
         handle.getParam("/ros_vdoslam/base_link_frame_id", base_link_frame_id);
+
+
+        //allows request from mask rcnn interface to get semantic object list by image time
+        semantic_object_client = handle.serviceClient<mask_rcnn::MaskRcnnFrame>("maskrcnninterface/semantic_objects");
 
         nav_msgs::Odometry odom;
         odom.pose.pose.position.x = 0;
@@ -52,9 +57,6 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         handle.getParam("/ros_vdoslam/optimization_trigger_frame", global_optim_trigger);
         ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
 
-        // first we check if the services exist so we dont start them again
-        mask_rcnn_interface.start_service();
-        mask_rcnn::MaskRcnnInterface::set_mask_labels(handle, ros::Duration(2));
 
         //TODO: should get proper previous time
         previous_time = ros::Time::now();
@@ -256,17 +258,8 @@ void RosVdoSlam::vdo_input_callback(ImageConst raw_image, ImageConst mask, Image
 }
 
 
-void RosVdoSlam::set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene) {
-    int size = scene->scene_objects_size();
-    VDO_SLAM::SceneObject* object_ptr = scene->get_scene_objects_ptr();
-    ROS_DEBUG_STREAM("Updating scene labels (size " << size << ")");
-    for(int i = 0; i < size; i++) {
-        std::string label = mask_rcnn::MaskRcnnInterface::request_label(object_ptr->label_index);
-        object_ptr->label = label;
-        ROS_DEBUG_STREAM(*object_ptr);  
-        object_ptr++;      
+void RosVdoSlam::update_with_semantics(std::unique_ptr<VDO_SLAM::Scene>& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
 
-    }
 }
 
 std::shared_ptr<VdoSlamInput> RosVdoSlam::pop_vdo_input() {
@@ -294,16 +287,30 @@ void RosVdoSlam::vdo_worker() {
         if (!vdo_input_queue.empty()) {
 
             std::shared_ptr<VdoSlamInput> input = pop_vdo_input();
+            ros::Time image_time = input->image_time;
 
             std::unique_ptr<VDO_SLAM::Scene> unique_scene =  slam_system->TrackRGBD(input->raw,input->depth,
                 input->flow,
                 input->mask,
                 input->ground_truth,
                 input->object_pose_gt,
-                input->time_diff,
+                input->image_time.toSec(),
                 image_trajectory,global_optim_trigger);
 
-            set_scene_labels(unique_scene);
+            mask_rcnn::MaskRcnnFrame frame;
+            frame.request.data = image_time;
+
+            std::vector<mask_rcnn::SemanticObject> semantic_objects;
+
+            // if(semantic_object_client.call(frame)) {
+            //     semantic_objects = frame.response.semantic_objects;
+
+            //     for(auto& object : semantic_objects) {
+            //         ROS_INFO_STREAM(object);
+            //     }
+            // }
+
+            // set_scene_labels(unique_scene);
             scene = std::move(unique_scene);
             std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(
                     new VDO_SLAM::RosScene(*scene, input->image_time, odom_frame_id, base_link_frame_id));

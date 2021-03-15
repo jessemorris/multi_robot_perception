@@ -14,6 +14,7 @@
 
 #include "vdo_slam/Frame.h"
 #include "vdo_slam/Converter.h"
+#include "vdo_slam/Macros.h"
 #include <thread>
 #include <time.h>
 #include <chrono>
@@ -64,7 +65,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
      mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth), mThDepthObj(thDepthObj)
 {
 
-    cout << "Start Constructing Frame......" << endl;
+    // cout << "Start Constructing Frame......" << endl;
 
     // Frame ID
     mnId=nNextId++;
@@ -93,7 +94,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
     // cout << "feature detection time: " << fea_det_time << endl;
 
     N = mvKeys.size();
-    cout << "mvKeys size " << mvKeys.size() << endl;
+    VDO_DEBUG_MSG("mvKeys size " << mvKeys.size());
     if(mvKeys.empty())
         return;
 
@@ -101,7 +102,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
 
     if (UseSampleFea==0)
     {
-        std::cout << "Using detected features" << std::endl;
+        VDO_DEBUG_MSG("Using detected features");
         // // // Option I: ~~~~~~~ use detected features ~~~~~~~~~~ // // //
         for (int i = 0; i < mvKeys.size(); ++i)
         {
@@ -111,21 +112,21 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
             if (maskSEM.at<int>(y,x)!=0) {  // new added in Jun 13 2019
                 if (mask_id_map.find(maskSEM.at<int>(y,x)) == mask_id_map.end()) {
                     mask_id_map[maskSEM.at<int>(y,x)] = true;
-                    std::cout << "Found id " <<   maskSEM.at<int>(y,x) << std::endl;
+                    VDO_INFO_MSG("Found id " <<   maskSEM.at<int>(y,x));
                 }
                 continue;
             }
 
             if (imDepth.at<float>(y,x)>mThDepth || imDepth.at<float>(y,x)<=0)  {// new added in Aug 21 2019
-                // std::cout << "Depth was bad " << imDepth.at<float>(y,x) << std::endl;
+                // VDO_DEBUG_MSG("Depth was bad " << imDepth.at<float>(y,x));
                 continue;
             }
 
             float flow_xe = imFlow.at<cv::Vec2f>(y,x)[0];
             float flow_ye = imFlow.at<cv::Vec2f>(y,x)[1];
 
-            // std::cout << "flow xe " << flow_xe << std::endl;
-            // std::cout << "flow ye " << flow_ye << std::endl;
+            // VDO_DEBUG_MSG("flow xe " << flow_xe);
+            // VDO_DEBUG_MSG("flow ye " << flow_ye);
 
 
             if(flow_xe!=0 && flow_ye!=0)
@@ -142,15 +143,15 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
     else
     {
         // // // Option II: ~~~~~~~ use sampled features ~~~~~~~~~~ // // //
-        cout << imFlow.size() << endl;
+        // cout << imFlow.size() << endl;
         clock_t s_1, e_1;
         double fea_det_time;
         s_1 = clock();
         std::vector<cv::KeyPoint> mvKeysSamp = SampleKeyPoints(imGray.rows, imGray.cols);
-        cout << "number key points: " << mvKeysSamp.size() << endl;
+        VDO_INFO_MSG("number key points: " << mvKeysSamp.size());
         e_1 = clock();
         fea_det_time = (double)(e_1-s_1)/CLOCKS_PER_SEC*1000;
-        std::cout << "feature detection time: " << fea_det_time << std::endl;
+        // std::cout << "feature detection time: " << fea_det_time << std::endl;
 
 
         for (int i = 0; i < mvKeysSamp.size(); ++i)
@@ -199,7 +200,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
     // cv::waitKey(0);
 
     N_s_tmp = mvCorres.size();
-    cout << "number of random sample points: " << mvCorres.size() << endl;
+    VDO_INFO_MSG("number of random sample points: " << mvCorres.size());
 
     // assign the depth value to each keypoint
     mvStatDepthTmp = vector<float>(N_s_tmp,-1);
@@ -253,10 +254,10 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
     // ---------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------
 
-    std::cout << "Result of semi dense object flow" << std::endl;
-    std::cout << "mvObjFlowNext size: " << mvObjFlowNext.size() << std::endl;
-    std::cout << "mvObjCorres size: " << mvObjCorres.size() << std::endl;
-    std::cout << "vSemObjLabel size: " << vSemObjLabel.size() << std::endl;
+    VDO_DEBUG_MSG("Result of semi dense object flow");
+    VDO_DEBUG_MSG("mvObjFlowNext size: " << mvObjFlowNext.size());
+    VDO_DEBUG_MSG("mvObjCorres size: " << mvObjCorres.size());
+    VDO_DEBUG_MSG("vSemObjLabel size: " << vSemObjLabel.size());
     UndistortKeyPoints();
 
     ComputeStereoFromRGBD(imDepth);
@@ -283,7 +284,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
 
     AssignFeaturesToGrid();
 
-    cout << "Constructing Frame, Done!" << endl;
+    VDO_INFO_MSG("Constructing Frame, Done!");
 }
 
 

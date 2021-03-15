@@ -5,7 +5,18 @@
 #include <vector>
 #include <ros/ros.h>
 
+#include <mask_rcnn/SemanticObject.h>
+
 namespace VDO_SLAM {
+
+    // /**
+    //  * @brief We need the semantic mask and semantic objects for data association so we wrap them
+    //  * 
+    //  */
+    // struct SemanticWrapper {
+    //     std::vector<mask_rcnn::SemanticObject> semantic_objects;
+    //     cv::Mat mask;
+    // }
 
     /**
      * @brief Defines a wrapper that holds the all the required input to the VDO algorithm. Requires RGB image,

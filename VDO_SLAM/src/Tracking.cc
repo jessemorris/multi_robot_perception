@@ -319,6 +319,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     {
         for (int j = 0; j < imD.cols; j++)
         {
+            // VDO_DEBUG_MSG( imD.at<uint16_t>(i,j));
             if (imD.at<uint16_t>(i,j)<0) {
                 mDepthMap.at<float>(i,j)=0;
             }
@@ -1723,6 +1724,7 @@ std::vector<std::vector<int> > Tracking::DynObjTracking()
             obj_center_depth = obj_center_depth + mCurrentFrame.mvObjDepth[ObjId[i][j]];
             // const float sf_norm = cv::norm(mCurrentFrame.vFlow_3d[ObjId[i][j]]);
             float sf_norm = std::sqrt(mCurrentFrame.vFlow_3d[ObjId[i][j]].x*mCurrentFrame.vFlow_3d[ObjId[i][j]].x + mCurrentFrame.vFlow_3d[ObjId[i][j]].z*mCurrentFrame.vFlow_3d[ObjId[i][j]].z);
+            // VDO_INFO_MSG("sf norm " <<sf_norm);
             if (sf_norm<fSFMgThres)
                 sf_count = sf_count+1;
             if(sf_norm<sf_min)

@@ -97,8 +97,6 @@ class MaskRcnnRos(RosCppCommunicator):
 
 
             del response_image
-            del labels
-            del label_indexs
             return response
 
 

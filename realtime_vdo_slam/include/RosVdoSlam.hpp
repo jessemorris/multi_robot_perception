@@ -84,20 +84,18 @@ class RosVdoSlam {
     private:
         ros::NodeHandle handle;
         
-        //we need this to request labels TODO: take out dependancy
-        mask_rcnn::MaskRcnnInterface mask_rcnn_interface;
+        // //we need this to request labels TODO: take out dependancy
+        // mask_rcnn::MaskRcnnInterface mask_rcnn_interface;
 
         /**
-         * @brief Set the scene labels (from the index semantic index of each object) for a particular scene.
+         * @brief Updates the scene using the aquired semantic objects from mask rcnn
          * 
-         * Uses the mask_rcnn::MaskRcnnInterface to query the categories list and then sets the label for each object
-         * which has the associated index. This is required becuase the VDO_SLAM::Scene object does not have access to the 
-         * direct label (in order to keep the VDO_SLAM module separate to the mask_rcnn interface). Once the scene has been generated
-         * we must use this function to set the labels (as each image has the index semantic label).
+         * TODO
          * 
-         * @param scene 
+         * @param scene std::unique_ptr<VDO_SLAM::Scene>&
+         * @param semantic_objects const std::vector<mask_rcnn::SemanticObject>&
          */
-        void set_scene_labels(std::unique_ptr<VDO_SLAM::Scene>& scene);
+        void update_with_semantics(std::unique_ptr<VDO_SLAM::Scene>& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects);
 
 
         /**
@@ -152,6 +150,8 @@ class RosVdoSlam {
         std::queue<std::shared_ptr<VDO_SLAM::VdoSlamInput>> vdo_input_queue;
         std::mutex queue_mutex;
         std::thread vdo_worker_thread;
+
+        ros::ServiceClient semantic_object_client;
 
         //data synchronizers
         message_filters::Subscriber<sensor_msgs::Image> raw_img;

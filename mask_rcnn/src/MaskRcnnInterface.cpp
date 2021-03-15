@@ -4,6 +4,7 @@
 #include <mask_rcnn/MaskRcnnLabel.h>
 #include <mask_rcnn/MaskRcnnLabelList.h>
 #include <mask_rcnn/SemanticObject.h>
+#include <mask_rcnn/MaskRcnnFrame.h>
 
 #include <python_service_starter/StartMaskRcnn.h>
 #include <cv_bridge/cv_bridge.h>
@@ -15,8 +16,8 @@
 #include <iostream>
 #include <fstream>
 
-using json = nlohmann::json;
 using namespace mask_rcnn;
+using json = nlohmann::json;
 
 std::string MaskRcnnInterface::coco_file_name = "";
 
@@ -29,6 +30,7 @@ MaskRcnnInterface::MaskRcnnInterface(ros::NodeHandle& n) :
     nh.getParam("/mask_rcnn_interface/coco_dataset", MaskRcnnInterface::coco_file_name );
 
     ROS_INFO_STREAM("Dataset file name: " << MaskRcnnInterface::coco_file_name );
+    semantic_object_request_service = n.advertiseService("maskrcnninterface/semantic_objects", &MaskRcnnInterface::request_semantic_objects, this);
 
     }
 
@@ -61,7 +63,7 @@ bool MaskRcnnInterface::wait_for_services(ros::Duration timeout) {
 
 
 bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz,
-    std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
+    std::vector<mask_rcnn::SemanticObject>& semantic_objects, ros::Time image_time) {
 
 
     if (!service_started) {
@@ -86,6 +88,9 @@ bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::
                 semantic_objects.push_back(*it);
             }
 
+
+            //add to semantic map by time
+            semantic_object_map.insert({(image_time),semantic_objects});
             return true;
         }
         else {
@@ -106,6 +111,26 @@ bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::
 bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz) {
     std::vector<mask_rcnn::SemanticObject> objects;
     return analyse(current_image, dst, viz, objects);
+}
+
+
+bool MaskRcnnInterface::request_semantic_objects(mask_rcnn::MaskRcnnFrame::Request& req, mask_rcnn::MaskRcnnFrame::Response& res) {
+    ros::Time request_time = req.data;
+
+    if (semantic_object_map.find(request_time) == semantic_object_map.end()){
+        ROS_WARN_STREAM("Could not find object semantics at time " << request_time);
+        res.found = false;
+        return false;
+    }
+    else {
+        std::vector<mask_rcnn::SemanticObject> objects = semantic_object_map[request_time];
+        //we can probably delete it now
+        res.semantic_objects = objects;
+        res.found = true;
+
+        semantic_object_map.erase(request_time);
+        return true;
+    }
 }
 
 std::string MaskRcnnInterface::invalid_name = "invalid";

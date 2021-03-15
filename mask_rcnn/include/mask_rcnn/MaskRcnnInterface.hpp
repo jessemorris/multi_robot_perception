@@ -9,6 +9,7 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <mask_rcnn/SemanticObject.h>
+#include <mask_rcnn/MaskRcnnFrame.h>
 
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -25,6 +26,11 @@
 #include <thread>
 #include <vector>
 #include <map>
+
+//converts rostime to seconds (double)
+#define ROS_TIME_TOSEC(time) time.toSec()
+#define ROS_TIME_SEC double
+
 
 
 namespace mask_rcnn {
@@ -44,10 +50,13 @@ namespace mask_rcnn {
              * The semantic label can be found at the index of the labels vector at the using the pixel value as the idnex
              * @param viz RGB uint8 image where the masks have been colourized for easier visualisation.
              * @param semantic_objects list of Semantic Objects found in the image
+             * @param image_time ros::Time The time the image was generated. Used to add the semantic objects to a map of frames
+             * so must be included if request_semantic_objects is to be used
              * @return true 
              * @return false 
              */
-            bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz, std::vector<mask_rcnn::SemanticObject>& semantic_objects);
+            bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz, std::vector<mask_rcnn::SemanticObject>& semantic_objects,
+                ros::Time image_time = ros::Time());
 
             /**
              * @brief Analysises the image image using Mask Rcnn.
@@ -61,6 +70,18 @@ namespace mask_rcnn {
              */
             bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz);
 
+
+            /**
+             * @brief Allows other nodes to query semantic object information by a ros::Time. When analysis is called
+             * a vector of semantic objects are added to a map using the timestamp of the image analysed. This timestamp
+             * cam then be used to query this vector.
+             * 
+             * @param req mask_rcnn::MaskRcnnFrame::Request
+             * @param res  mask_rcnn::MaskRcnnFrame::Response
+             * @return true 
+             * @return false 
+             */
+            bool request_semantic_objects(mask_rcnn::MaskRcnnFrame::Request& req, mask_rcnn::MaskRcnnFrame::Response& res);
 
             /**
              * @brief begins the python program found in the scripts file.
@@ -130,6 +151,11 @@ namespace mask_rcnn {
             static std::vector<std::string> mask_labels; //we will request this at the start of the program from the mask rcnn interface
             static std::string invalid_name;
             static std::string coco_file_name;
+
+            //allows information about a semantic frame to be required. Time will be the time of the image
+            // std::map<ROS_TIME_SEC, std::vector<mask_rcnn::SemanticObject>> semantic_object_map;
+            std::map<ros::Time, std::vector<mask_rcnn::SemanticObject>> semantic_object_map;
+            ros::ServiceServer semantic_object_request_service;
             
 
     };

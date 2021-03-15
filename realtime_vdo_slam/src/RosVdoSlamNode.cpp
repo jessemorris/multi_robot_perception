@@ -29,8 +29,10 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "ros_vdoslam");
     ros::NodeHandle n;
-
     RosVdoSlam ros_vdo_slam(n);
-    ros::spin();
+    // ros::spin();
+    ros::AsyncSpinner spinner(2); // Use 4 threads
+    spinner.start();
+    ros::waitForShutdown();
     
 }

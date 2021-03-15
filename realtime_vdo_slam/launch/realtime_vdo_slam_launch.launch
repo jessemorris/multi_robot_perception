@@ -5,13 +5,13 @@
 
    <!-- If True VDO will load the System parameters from the calibtration file in the config folder
    If False, will use the calibration params defined here and the specified camera info topic  -->
-  <arg name="use_calibration_file" default="false" />
+  <arg name="use_calibration_file" default="true" />
 
 
   <!-- If true, and use calibration file is false, the system will get the camera intrinsics
   from the camera info topic defined in the config file. If False, the camera information
   properties must be defined here (K, D etc)-->
-  <arg name="use_camera_info_topic" default="true" />
+  <arg name="use_camera_info_topic" default="false" />
 
   <!-- System params for VDO SLAM. Used if  use_calibtration_file is true-->
 	<arg name="calibration_file" default="vdo_config.yaml"/>
@@ -45,16 +45,16 @@
   <arg name="RGB" default="1"/>
   <arg name="data_code" default="2"/>
 
-  <arg name="depth_map_factor" default="255.0"/>
+  <arg name="depth_map_factor" default="1500"/>
 
 
-  <arg name="thdepth_bg" default="100"/>
-  <arg name="thdepth_obj" default="30"/>
+  <arg name="thdepth_bg" default="40"/>
+  <arg name="thdepth_obj" default="25"/>
   <arg name="max_track_points_bg" default="1700"/>
   <arg name="max_track_points_obj" default="800"/>
 
-  <arg name="sf_mg_thresh" default="0.05"/>
-  <arg name="sf_ds_thresh" default="0.6"/>
+  <arg name="sf_mg_thresh" default="0.005"/>
+  <arg name="sf_ds_thresh" default="0.1"/>
 
   <!-- <arg name="sf_mg_thresh" default="1000"/>
   <arg name="sf_ds_thresh" default="1000"/> -->

@@ -133,6 +133,7 @@ namespace VDO_SLAM {
             image_transport::Publisher maskrcnn_raw;
             image_transport::Publisher maskrcnn_viz;
 
+
             image_transport::Publisher flownet_raw;
             image_transport::Publisher flownet_viz;
 

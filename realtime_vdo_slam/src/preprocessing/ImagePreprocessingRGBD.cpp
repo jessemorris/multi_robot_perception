@@ -94,7 +94,7 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
         }
 
         if (run_mask_rcnn) {
-            mask_rcnn_success = mask_rcnn_interface.analyse(current_image, mask_rcnn_mat, mask_rcnn_viz, semantic_objects);
+            mask_rcnn_success = mask_rcnn_interface.analyse(current_image, mask_rcnn_mat, mask_rcnn_viz, semantic_objects, current_time);
 
             if (mask_rcnn_success) {
 
