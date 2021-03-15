@@ -549,6 +549,26 @@ cv::Mat Frame::UnprojectStereoStat(const int &i, const bool &addnoise)
     }
 }
 
+cv::Mat Frame::ProjectStereoObject(const int i) {
+    float z = mvObjDepth[i];
+
+    if(z>0) {
+
+        const float u = mvObjKeys[i].pt.x;
+        const float v = mvObjKeys[i].pt.y;
+
+        cv::Mat x2Dc = (cv::Mat_<float>(2,1) << u, v);
+        return x2Dc;
+
+    }
+    else {
+        VDO_DEBUG_MSG("0 depth found for stereo projection");
+        return cv::Mat();
+    }
+
+}
+
+
 cv::Mat Frame::UnprojectStereoObject(const int &i, const bool &addnoise)
 {
     float z = mvObjDepth[i];

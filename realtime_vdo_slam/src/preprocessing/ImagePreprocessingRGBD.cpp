@@ -122,7 +122,10 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
         sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
         input_image.publish(img_msg);
 
-        vdo_input_pub.publish(input_msg);
+
+        if(scene_flow_success && mask_rcnn_success && scene_flow_success) {
+            vdo_input_pub.publish(input_msg);
+        }
 
         previous_image = current_image;
 

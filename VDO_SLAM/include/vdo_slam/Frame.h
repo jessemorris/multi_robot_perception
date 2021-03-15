@@ -62,6 +62,9 @@ public:
     // Associate a "right" coordinate to a keypoint if there is valid depth in the depthmap.
     void ComputeStereoFromRGBD(const cv::Mat &imDepth);
 
+    //Gets mat of u,v coorindates of a key point using an object Id, i
+    cv::Mat ProjectStereoObject(const int i);
+
     // Backprojects a keypoint (if stereo/depth info available) into 3D world coordinates.
     cv::Mat UnprojectStereo(const int &i);
     cv::Mat UnprojectStereoStat(const int &i, const bool &addnoise);

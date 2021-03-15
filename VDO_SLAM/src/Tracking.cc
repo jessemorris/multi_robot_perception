@@ -709,6 +709,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         cv::putText(imTraj, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
         cv::putText(imTraj, "Object Trajectories (COLORED CIRCLES)", cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
         // cout << "v obj center " << mCurrentFrame.vObjCentre3D.size() << endl;
+        VDO_DEBUG_MSG(mCurrentFrame.vObjCentre2D.size());
         for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
         {
             if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0) {
@@ -732,6 +733,10 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
             scene_object.velocity = cv::Point2f(vel_x, vel_y);
             scene_object.tracking_id = l;
             scene_object.label_index = mCurrentFrame.nSemPosition[i];
+            // scene_object.center_image = mCurrentFrame.vObjCentre2D[i];
+            VDO_DEBUG_MSG(mCurrentFrame.vObjCentre2D[i]);
+
+
             scene->add_scene_object(scene_object);
             switch (l)
             {
@@ -1017,6 +1022,7 @@ void Tracking::Track()
         mCurrentFrame.vSpeed.resize(ObjIdNew.size());
         mCurrentFrame.vObjBoxID.resize(ObjIdNew.size());
         mCurrentFrame.vObjCentre3D.resize(ObjIdNew.size());
+        mCurrentFrame.vObjCentre2D.resize(ObjIdNew.size());
         mCurrentFrame.vnObjID.resize(ObjIdNew.size());
         mCurrentFrame.vnObjInlierID.resize(ObjIdNew.size());
         repro_e.resize(ObjIdNew.size(),0.0);
@@ -1092,6 +1098,8 @@ void Tracking::Track()
             // cout << H_p_c << endl;
 
             // ***************************************************************************************
+            //will be u, v
+            cv::Mat ObjCentre2D_pre = (cv::Mat_<float>(2,1) << 0.f, 0.f);
 
             cv::Mat ObjCentre3D_pre = (cv::Mat_<float>(3,1) << 0.f, 0.f, 0.f);
             for (int j = 0; j < ObjIdNew[i].size(); ++j)
@@ -1100,9 +1108,15 @@ void Tracking::Track()
                 cv::Mat x3D_p = mLastFrame.UnprojectStereoObject(ObjIdNew[i][j],0);
                 ObjCentre3D_pre = ObjCentre3D_pre + x3D_p;
 
+                cv::Mat x2D_p = mLastFrame.ProjectStereoObject(ObjIdNew[i][j]);
+                ObjCentre2D_pre = ObjCentre2D_pre + x2D_p;
+
             }
             ObjCentre3D_pre = ObjCentre3D_pre/ObjIdNew[i].size();
             mCurrentFrame.vObjCentre3D[i] = ObjCentre3D_pre;
+
+            ObjCentre2D_pre = ObjCentre2D_pre/ObjIdNew[i].size();
+            mCurrentFrame.vObjCentre2D[i] = ObjCentre2D_pre;
 
 
             s_3_1 = clock();
@@ -1123,6 +1137,7 @@ void Tracking::Track()
                 mCurrentFrame.vObjMod_gt[i] = cv::Mat::eye(4,4, CV_32F);
                 mCurrentFrame.vObjMod[i] = cv::Mat::eye(4,4, CV_32F);
                 mCurrentFrame.vObjCentre3D[i] = (cv::Mat_<float>(3,1) << 0.f, 0.f, 0.f);
+                mCurrentFrame.vObjCentre2D[i] = (cv::Mat_<float>(2,1) << 0.f, 0.f);
                 mCurrentFrame.vObjSpeed_gt[i] = 0.0;
                 mCurrentFrame.vSpeed[i] = cv::Point2f(0.f, 0.f);
                 mCurrentFrame.vnObjInlierID[i] = ObjIdTest_in;

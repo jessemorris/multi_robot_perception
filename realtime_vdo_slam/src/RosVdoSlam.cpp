@@ -131,8 +131,8 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
 
             //if true -> we use the modified camera matrix P
             if(apply_undistortion) {
-                ROS_INFO_STREAM(cam_info.modified_camera_matrix.size());
-                ROS_INFO_STREAM(cam_info.modified_camera_matrix);
+                // ROS_INFO_STREAM(cam_info.modified_camera_matrix.size());
+                // ROS_INFO_STREAM(cam_info.modified_camera_matrix);
                 //should be 3x3
                 params.fx = cam_info.modified_camera_matrix.at<double>(0,0);
                 params.cx = cam_info.modified_camera_matrix.at<double>(0,2);
@@ -295,25 +295,30 @@ void RosVdoSlam::vdo_worker() {
                 input->image_time.toSec(),
                 image_trajectory,global_optim_trigger);
 
-            std::vector<mask_rcnn::SemanticObject> semantic_objects;
+            ROS_INFO_STREAM("here");
 
-            // if(semantic_object_client.call(frame)) {
-            //     semantic_objects = frame.response.semantic_objects;
+            // std::vector<mask_rcnn::SemanticObject> semantic_objects = input->semantic_objects;
 
-            for(auto& object : input->semantic_objects) {
-                    ROS_INFO_STREAM(object);
-                }
+            // // if(semantic_object_client.call(frame)) {
+            // //     semantic_objects = frame.response.semantic_objects;
+            // ROS_INFO_STREAM(semantic_objects.size());
+            // for(auto& object : semantic_objects) {
+            //         ROS_INFO_STREAM(object);
+            //     }
 
             // set_scene_labels(unique_scene);
             scene = std::move(unique_scene);
+                        ROS_INFO_STREAM("here1");
+
             std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(
                     new VDO_SLAM::RosScene(*scene, input->image_time, odom_frame_id, base_link_frame_id));
-            ros_scene = std::move(unique_ros_scene);
-            ros_scene_manager.display_scene(ros_scene);
-            ros_scene_manager.update_display_mat(ros_scene);
 
-            cv::imshow("Trajectory", ros_scene_manager.get_display_mat());
-            cv::waitKey(1);
+            ros_scene = std::move(unique_ros_scene);
+            // ros_scene_manager.display_scene(ros_scene);
+            // ros_scene_manager.update_display_mat(ros_scene);
+
+            // cv::imshow("Trajectory", ros_scene_manager.get_display_mat());
+            // cv::waitKey(1);
         }
     }
 
