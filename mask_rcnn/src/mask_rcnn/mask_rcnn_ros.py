@@ -16,6 +16,8 @@ import torch
 
 from mask_rcnn.predictor import COCODemo
 
+from mask_rcnn.msg import SemanticObject
+
 from mask_rcnn.srv import MaskRcnnVdoSlam, MaskRcnnVdoSlamResponse
 from mask_rcnn.srv import MaskRcnnLabelList, MaskRcnnLabelListResponse
 from mask_rcnn.srv import MaskRcnnLabel, MaskRcnnLabelResponse
@@ -80,8 +82,8 @@ class MaskRcnnRos(RosCppCommunicator):
         try: 
             input_image = ros_numpy.numpify(req.input_image)
 
-            response_image, labels, label_indexs, bounding_box_msgs = self.analyse_image(input_image)
-            display_image = self._generate_coloured_mask(response_image, labels, label_indexs)
+            response_image, semantic_objects = self.analyse_image(input_image)
+            display_image = self.generate_coloured_mask(response_image)
             # test_image = self.display_predictions(input_image)
 
             output_image_msg = ros_numpy.msgify(Image, response_image, encoding='mono8')
@@ -90,10 +92,8 @@ class MaskRcnnRos(RosCppCommunicator):
             response.success = True
             # response.output_image = output_image_msg
             response.output_mask = output_image_msg
-            response.labels = labels
-            response.label_indexs = label_indexs
             response.output_viz = display_image_msg
-            response.bounding_boxes = bounding_box_msgs
+            response.semantic_objects = semantic_objects
 
 
             del response_image
@@ -126,63 +126,37 @@ class MaskRcnnRos(RosCppCommunicator):
 
     @torch.no_grad()
     def analyse_image(self, image):
+        """[Analyses an image using mask rcnn. Creates a semantic instance labelled greyscale image
+        and a list of mask_rcnn.SemanticObjects which represent each detected object in the frame]
+
+        Args:
+            image ([np.array]): [uint8 rgb image to analyse]
+
+        Returns:
+            [np.ndarry, List[SemanticObjects]]: [Semantic instance image, list of detected objects in the scene]
+        """
         predictions = self.coco_demo.compute_prediction(image)
         top_predictions = self.coco_demo.select_top_predictions(predictions)
-        composite, labels, label_indexs =  self.create_pixel_masks(image, top_predictions)
 
-        if top_predictions:
-            #in form [x,y,w,h]
-            bounding_boxes = []
-            top_predictions = top_predictions.convert("xywh")
-            boxes = top_predictions.bbox
-            for box in boxes:
-                xmin, ymin, w, h = box.split(1, dim=-1)
-
-                #here we make bounding box msg types
-                #we make pose x, y which is bottom left corner of image
-                # leave theta as 0
-                pose2d = Pose2D(int(xmin.numpy()[0]), int(ymin.numpy()[0]), 0)
-
-                bounding_box_msg = BoundingBox2D()
-
-                #size x and size y will be bounding box width and height respectively
-                bounding_box_msg.size_x =  int(w.numpy()[0])
-                bounding_box_msg.size_y = int(h.numpy()[0])
-
-                bounding_box_msg.center = pose2d
-
-                # rect = [int(xmin.numpy()[0]), int(ymin.numpy()[0]), int(w.numpy()[0]), int(h.numpy()[0]) ]
-                bounding_boxes.append(bounding_box_msg)
-            
-            if len(bounding_boxes) < 1:
-                bounding_boxes = [[]]
-
-            return composite, labels, label_indexs, bounding_boxes
-        else:
-            return composite, labels, label_indexs, []
-
-
-    def create_pixel_masks(self, image, predictions):
-        """
-        Adds the instances contours for each predicted object.
-        Each label has a different color.
-
-        Arguments:
-            image (np.ndarray): an image as returned by OpenCV
-            predictions (BoxList): the result of the computation by the model.
-                It should contain the field `mask` and `labels`.
-        """
         width = image.shape[0]
         height = image.shape[1]
         blank_mask = np.zeros((width, height),np.uint8)
 
-        if predictions is None:
-            return blank_mask, [], []
-        masks = predictions.get_field("mask")
-        label_indexs = predictions.get_field("labels").numpy()
+        if top_predictions is None:
+            return blank_mask, []
+
+        #in form [x,y,w,h]
+        top_predictions = top_predictions.convert("xywh")
+        masks = top_predictions.get_field("mask")
+        boxes = top_predictions.bbox
+        label_indexs = top_predictions.get_field("labels").numpy()
         labels = self.convert_label_index_to_string(label_indexs)
 
-        # colours = self.get_greyscale_colours(label_indexs)
+        assert(len(labels) == len(label_indexs) == len(boxes))
+
+        if len(boxes) < 1:
+            return blank_mask, []
+
         
         if masks.ndim < 3:
             masks = np.expand_dims(masks, axis=0)
@@ -196,17 +170,89 @@ class MaskRcnnRos(RosCppCommunicator):
             # there is at least one of these objects in the list
             instance_track[label_index] = 1
 
-        for mask, semantic_index in zip(masks, label_indexs):
-            label = instance_track[semantic_index]
-            thresh = mask[0, :, :].astype(np.uint8) * label
+        semantic_objects = []
+
+        for mask, semantic_index, semantic_label, bounding_box in zip(masks, label_indexs, labels, boxes):
+            instance_label = instance_track[semantic_index]
+
+            # add semantic instance mask to blank masl
+            thresh = mask[0, :, :].astype(np.uint8) * instance_label
             blank_mask += thresh
+
+            # create bounding box for object
+            xmin, ymin, w, h = bounding_box.split(1, dim=-1)
+            #here we make bounding box msg types
+            #we make pose x, y which is bottom left corner of image
+            # leave theta as 0
+            pose2d = Pose2D(int(xmin.numpy()[0]), int(ymin.numpy()[0]), 0)
+            bounding_box_msg = BoundingBox2D()
+            #size x and size y will be bounding box width and height respectively
+            bounding_box_msg.size_x =  int(w.numpy()[0])
+            bounding_box_msg.size_y = int(h.numpy()[0])
+            bounding_box_msg.center = pose2d
+
+            # create semantic object 
+            semantic_object = SemanticObject()
+            semantic_object.bounding_box = bounding_box_msg
+            semantic_object.label = semantic_label 
+            semantic_object.label_index = semantic_index
+            semantic_object.semantic_instance = instance_label
+            semantic_object.tracking_label = -1 #inialise with -1
+
+            semantic_objects.append(semantic_object)
+
             instance_track[semantic_index] += 1
 
 
         composite = blank_mask
 
+        return composite, semantic_objects
 
-        return composite, labels, label_indexs
+    # def create_pixel_masks(self, image, predictions):
+    #     """
+    #     Adds the instances contours for each predicted object.
+    #     Each label has a different color.
+
+    #     Arguments:
+    #         image (np.ndarray): an image as returned by OpenCV
+    #         predictions (BoxList): the result of the computation by the model.
+    #             It should contain the field `mask` and `labels`.
+    #     """
+    #     width = image.shape[0]
+    #     height = image.shape[1]
+    #     blank_mask = np.zeros((width, height),np.uint8)
+
+    #     if predictions is None:
+    #         return blank_mask, [], []
+    #     masks = predictions.get_field("mask")
+    #     label_indexs = predictions.get_field("labels").numpy()
+    #     labels = self.convert_label_index_to_string(label_indexs)
+
+    #     # colours = self.get_greyscale_colours(label_indexs)
+        
+    #     if masks.ndim < 3:
+    #         masks = np.expand_dims(masks, axis=0)
+    #         masks = np.expand_dims(masks, axis=0)
+
+    #     #track semantic labels in this map
+    #     # we want unique instance-level semantic labelling per class (so car: [1,2], person: [1,2])
+    #     instance_track = {}
+
+    #     for label_index in label_indexs:
+    #         # there is at least one of these objects in the list
+    #         instance_track[label_index] = 1
+
+    #     for mask, semantic_index in zip(masks, label_indexs):
+    #         label = instance_track[semantic_index]
+    #         thresh = mask[0, :, :].astype(np.uint8) * label
+    #         blank_mask += thresh
+    #         instance_track[semantic_index] += 1
+
+
+    #     composite = blank_mask
+
+
+    #     return composite, labels, label_indexs
 
     def convert_label_index_to_string(self, labels):
         return [self.coco_demo.CATEGORIES[i] for i in labels]
@@ -239,14 +285,27 @@ class MaskRcnnRos(RosCppCommunicator):
         # colors = (colors % 255).astype("uint8")
         return colors
 
-    def generated_bounding_boxes(self, rgb_image, bounding_box_msgs):
+    def generated_bounding_boxes(self, rgb_image, semantic_objects):
+        """[Draw bounding boxes and semantic labels on images the original image]
+
+        Args:
+            rgb_image ([np.ndarray]): [The image you want to draw on. Normally will be the raw rgb image]
+            semantic_objects ([list[SemanticObjects]]): [list of semantic objects as generated by analyse image]
+
+        Returns:
+            [np.ndarray]: [The image drawn on]
+        """
         rgb_image_bb = rgb_image.copy()
-        for bounding_box in bounding_box_msgs:
+        for semantic_object in semantic_objects:
+            bounding_box = semantic_object.bounding_box
+            label = semantic_object.label 
             cv2.rectangle(rgb_image_bb, (bounding_box.center.x, bounding_box.center.y),
                         (bounding_box.center.x + bounding_box.size_x, bounding_box.center.y + bounding_box.size_y), (0, 255, 255), 2)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            cv2.putText(rgb_image_bb, label, (bounding_box.center.x,bounding_box.center.y), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
         return rgb_image_bb
 
-    def _generate_coloured_mask(self, mask, labels, labels_index):
+    def generate_coloured_mask(self, mask):
         # mask =  np.expand_dims(mask, 2) 
         # mask = np.repeat(mask, 3, axis=2) # give the mask the same shape as your image
         coloured_img = np.zeros((mask.shape[0], mask.shape[1], 3))
@@ -273,9 +332,9 @@ class MaskRcnnTopic():
 
     def image_callback(self, data):
         input_image = ros_numpy.numpify(data)
-        response_image, labels, label_indexs, bb = self.mask_rcnn.analyse_image(input_image)
-        display_image = self.mask_rcnn._generate_coloured_mask(response_image, labels, label_indexs)
-        bounding_box_image = self.mask_rcnn.generated_bounding_boxes(input_image, bb)
+        response_image, semantic_objects = self.mask_rcnn.analyse_image(input_image)
+        display_image = self.mask_rcnn.generate_coloured_mask(response_image)
+        bounding_box_image = self.mask_rcnn.generated_bounding_boxes(input_image, semantic_objects)
         cv2.imshow("detections", display_image)
         cv2.waitKey(1)
 
@@ -312,9 +371,9 @@ if __name__ == "__main__":
             start_time = time.time()
             ret_val, img = cam.read()
             # response_image, labels, label_indexs = maskrcnn.analyse_image(img)
-            response_image, labels, label_indexs, bb = maskrcnn.analyse_image(img)
-            display_image = maskrcnn._generate_coloured_mask(response_image, labels, label_indexs)
-            bb_imagg = maskrcnn.generated_bounding_boxes(img, bb)
+            response_image, sematic_objects = maskrcnn.analyse_image(img)
+            display_image = maskrcnn.generate_coloured_mask(response_image)
+            bb_imagg = maskrcnn.generated_bounding_boxes(img, sematic_objects)
 
             # test_image = maskrcnn.display_predictions(img)
             print("Time: {:.2f} s / img".format(time.time() - start_time))

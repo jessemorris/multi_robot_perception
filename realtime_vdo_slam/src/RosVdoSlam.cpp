@@ -91,6 +91,8 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
 
         VDO_SLAM::eSensor sensor;
 
+        
+
         if (sensor_mode == 0) {
             sensor = VDO_SLAM::eSensor::MONOCULAR;
         }

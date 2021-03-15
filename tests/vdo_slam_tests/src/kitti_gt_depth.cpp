@@ -142,11 +142,8 @@ int main(int argc, char **argv) {
         imD.convertTo(imD_f, CV_16UC1);
 
         std::vector<mask_rcnn::SemanticObject> semantic_objects;
-        std::vector<std::string> mask_rcnn_labels;
-        std::vector<int> mask_rcnn_label_indexs;
-        std::vector<vision_msgs::BoundingBox2D> bb;
         cv::Mat mask_viz, tracked_mask;
-        mask_rcnn.analyse(imRGB, mask_mat, mask_viz, mask_rcnn_labels,mask_rcnn_label_indexs, bb);
+        mask_rcnn.analyse(imRGB, mask_mat, mask_viz, semantic_objects);
 
         //NOTE: in order to display we convert to a CV_32SC1!!!! This doesnt make sense!!! 
         // mask_mat.convertTo(mask_mat, CV_32SC1);

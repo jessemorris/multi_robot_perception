@@ -3,6 +3,7 @@
 #include <mask_rcnn/MaskRcnnVdoSlam.h>
 #include <mask_rcnn/MaskRcnnLabel.h>
 #include <mask_rcnn/MaskRcnnLabelList.h>
+#include <mask_rcnn/SemanticObject.h>
 
 #include <python_service_starter/StartMaskRcnn.h>
 #include <cv_bridge/cv_bridge.h>
@@ -60,8 +61,7 @@ bool MaskRcnnInterface::wait_for_services(ros::Duration timeout) {
 
 
 bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz,
-    std::vector<std::string>& labels, std::vector<int>& label_indexs, 
-    std::vector<vision_msgs::BoundingBox2D>& bounding_box) {
+    std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
 
 
     if (!service_started) {
@@ -80,20 +80,11 @@ bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::
 
             cv_ptr = cv_bridge::toCvCopy(srv.response.output_viz, sensor_msgs::image_encodings::RGB8);
             viz = cv_ptr->image;
+            semantic_objects.clear();
 
-            for (std::vector<std::string>::iterator it = srv.response.labels.begin(); it != srv.response.labels.end(); ++it) {
-                labels.push_back(*it);
+            for (std::vector<mask_rcnn::SemanticObject>::iterator it = srv.response.semantic_objects.begin(); it != srv.response.semantic_objects.end(); ++it) {
+                semantic_objects.push_back(*it);
             }
-
-            for (std::vector<int>::iterator it = srv.response.label_indexs.begin(); it != srv.response.label_indexs.end(); ++it) {
-                label_indexs.push_back(*it);
-            }
-
-            bounding_box.clear();
-            for (std::vector<vision_msgs::BoundingBox2D>::iterator it = srv.response.bounding_boxes.begin(); it != srv.response.bounding_boxes.end(); ++it) {
-                bounding_box.push_back(*it);
-            }
-
 
             return true;
         }
@@ -110,35 +101,11 @@ bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::
 
 }
 
-bool MaskRcnnInterface::create_semantic_objects(const std::vector<std::string>& labels, const std::vector<int>& label_indexs,
-                const std::vector<vision_msgs::BoundingBox2D>& bounding_boxs, std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
-    
-    semantic_objects.clear();
-    for(int i = 0; i < bounding_boxs.size(); i++) {
-        mask_rcnn::SemanticObject semantic_object;
-        semantic_object.label = labels[i];
-        semantic_object.label_index = label_indexs[i];
-        semantic_object.tracking_label = -1; //initalise as -1
 
-        semantic_object.bounding_box = bounding_boxs[i];
-
-        semantic_objects.push_back(semantic_object);
-
-    }
-
-}
-
-bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz,
-    std::vector<std::string>& labels, std::vector<int>& label_indexs) {
-    std::vector<vision_msgs::BoundingBox2D> bb;
-    return analyse(current_image, dst, viz, labels, label_indexs, bb);
-}
 
 bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz) {
-    std::vector<std::string> labels;
-    std::vector<int> label_indexs;
-    std::vector<vision_msgs::BoundingBox2D> bb;
-    return analyse(current_image, dst, viz, labels, label_indexs, bb);
+    std::vector<mask_rcnn::SemanticObject> objects;
+    return analyse(current_image, dst, viz, objects);
 }
 
 std::string MaskRcnnInterface::invalid_name = "invalid";
@@ -166,7 +133,7 @@ bool MaskRcnnInterface::request_labels(const std::vector<int>& label_indexs, std
 
     labels.resize(0);
     if (mask_labels.size() > 0) {
-        for (int label_index :label_indexs) {
+        for (int label_index : label_indexs) {
             std::string label = mask_labels[label_index];
             labels.push_back(label);
         }
@@ -194,7 +161,7 @@ bool MaskRcnnInterface::set_mask_labels(ros::NodeHandle& nh, ros::Duration timeo
             for (std::string& label : mask_labels) {
                 labels_print += label += ", ";
             }
-            ROS_INFO_STREAM("Setting mask labels: " << labels_print);
+            ROS_DEBUG_STREAM("Setting mask labels: " << labels_print);
             MaskRcnnInterface::labels_found = true;
             return true;
         }

@@ -61,9 +61,6 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
 
     std_msgs::Header original_header = raw_image->header;
 
-    std::vector<std::string> mask_rcnn_labels;
-    std::vector<int> mask_rcnn_label_indexs;
-    std::vector<vision_msgs::BoundingBox2D> bb;
     std::vector<mask_rcnn::SemanticObject> semantic_objects;
 
     cv::Mat tracked_mask;
@@ -97,7 +94,7 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
         }
 
         if (run_mask_rcnn) {
-            mask_rcnn_success = mask_rcnn_interface.analyse(current_image, mask_rcnn_mat, mask_rcnn_viz, mask_rcnn_labels, mask_rcnn_label_indexs, bb);
+            mask_rcnn_success = mask_rcnn_interface.analyse(current_image, mask_rcnn_mat, mask_rcnn_viz, semantic_objects);
 
             if (mask_rcnn_success) {
 

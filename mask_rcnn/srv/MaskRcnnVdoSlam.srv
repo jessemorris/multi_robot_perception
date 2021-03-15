@@ -3,10 +3,5 @@ sensor_msgs/Image input_image
 ---
 sensor_msgs/Image output_mask
 sensor_msgs/Image output_viz
-string[] labels
-int32[] label_indexs
+mask_rcnn/SemanticObject[] semantic_objects
 bool success
-
-#center (x,y) will be starting x, y which is the bottom left corner of the image
-#size_x and size_y will be with and height of image
-vision_msgs/BoundingBox2D[] bounding_boxes

@@ -43,29 +43,11 @@ namespace mask_rcnn {
              * @param dst Mono uint8 image where background pixels are set to 0 and sematic labels are provided to each pixel.
              * The semantic label can be found at the index of the labels vector at the using the pixel value as the idnex
              * @param viz RGB uint8 image where the masks have been colourized for easier visualisation.
-             * @param labels A list of labels corresponding to the sematic labels in the image.
-             * @param label_indexs The index values that these semantic labels belong to accoriding to the Mask Rcnn categories.
-             * @param bounding_boxs A list of bounding box msgs objects.
+             * @param semantic_objects list of Semantic Objects found in the image
              * @return true 
              * @return false 
              */
-            bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz, std::vector<std::string>& labels, 
-                std::vector<int>& label_indexs, std::vector<vision_msgs::BoundingBox2D>& bounding_box);
-
-             /**
-             * @brief Analysises the image image using Mask Rcnn.
-             * 
-             * @param current_image RGB uint8 image to analyse
-             * @param dst Mono uint8 image where background pixels are set to 0 and sematic labels are provided to each pixel.
-             * The semantic label can be found at the index of the labels vector at the using the pixel value as the idnex
-             * @param viz RGB uint8 image where the masks have been colourized for easier visualisation.
-             * @param labels A list of labels corresponding to the sematic labels in the image.
-             * @param label_indexs The index values that these semantic labels belong to accoriding to the Mask Rcnn categories.
-             * @return true 
-             * @return false 
-             */
-            bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz, std::vector<std::string>& labels, 
-                std::vector<int>& label_indexs);
+            bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz, std::vector<mask_rcnn::SemanticObject>& semantic_objects);
 
             /**
              * @brief Analysises the image image using Mask Rcnn.
@@ -78,19 +60,6 @@ namespace mask_rcnn {
              * @return false 
              */
             bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz);
-
-            /**
-             * @brief Create a a list of semantic objects from the output of the analyse functions.
-             * 
-             * @param labels A list of labels corresponding to the sematic labels in the image.
-             * @param label_indexs The index values that these semantic labels belong to accoriding to the Mask Rcnn categories.
-             * @param bounding_boxs A list of bounding box msgs objects.
-             * @param semantic_objects A list of semantic objects
-             * @return true 
-             * @return false 
-             */
-            bool create_semantic_objects(const std::vector<std::string>& labels, const std::vector<int>& label_indexs,
-                const std::vector<vision_msgs::BoundingBox2D>& bounding_boxs, std::vector<mask_rcnn::SemanticObject>& semantic_objects);
 
 
             /**
