@@ -39,7 +39,6 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     cv::Mat distored = cv_ptr->image;
     cv::Mat undistorted;
     // distored.copyTo(undistorted);
-    
     cv::Mat image;
     if (undistord_images) {
         undistortImage(distored, undistorted);
@@ -59,7 +58,7 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
     cv::Mat tracked_viz;
 
     realtime_vdo_slam::VdoInput input_msg;
-    input_msg.rgb = *msg;
+    
 
 
     if (is_first) {
@@ -135,10 +134,13 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 
         sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
         input_image.publish(img_msg);
+        input_msg.rgb = *img_msg;
 
         if(scene_flow_success && mask_rcnn_success && scene_flow_success) {
             vdo_input_pub.publish(input_msg);
         }
+
+        previous_image = current_image;
 
 
     }

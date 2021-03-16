@@ -12,7 +12,7 @@
     <rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg config_file)"/>
 
     <node pkg="realtime_vdo_slam" type="image_preprocessing_node_rgbd" name="vdo_preprocessing" output="screen">
-        <param name="camera_type" value="rgbd"/>
+        <param name="camera_mode" value="2"/>
 
         <param name="color_topic" value="$(arg color_topic)"/>
         <param name="color_info" value="$(arg color_info)"/>

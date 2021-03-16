@@ -1,7 +1,8 @@
 #ifndef VDO_SLAM_PARAMS_H
 #define VDO_SLAM_PARAMS_H
 
-#include "vdo_slam/System.h"
+#include "System.h"
+#include "Types.h"
 #include <memory>
 
 namespace VDO_SLAM {
@@ -44,7 +45,7 @@ namespace VDO_SLAM {
         int data_code;
 
         //VDO_SLAM::eSensor
-        int sensor_type;
+        eSensor sensor_type;
 
         float depth_map_factor;
 

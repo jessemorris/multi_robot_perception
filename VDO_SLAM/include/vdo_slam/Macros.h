@@ -18,7 +18,7 @@
     file_path.substr(file_path.rfind("/") + 1)
 
 #define LOGGING_STREAM_FORMATTER(level, x) \
-    "[" << level << "] [" << EXTRACT_FILE(std::string(__FILE__)) << ": " << __LINE__ << "] " << x
+    "[ VDO: " << level << "] [" << EXTRACT_FILE(std::string(__FILE__)) << ": " << __LINE__ << "] " << x
 
 #ifdef USE_VDO_DEBUG
     #define VDO_DEBUG_MSG(x) \

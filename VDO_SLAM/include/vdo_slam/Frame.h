@@ -9,7 +9,7 @@
 #ifndef VDO_SLAM_FRAME_H
 #define VDO_SLAM_FRAME_H
 
-#include<vector>
+#include <vector>
 
 #include "ORBextractor.h"
 

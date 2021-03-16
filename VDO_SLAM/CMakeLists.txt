@@ -77,6 +77,7 @@ set(PUBLIC_HEADER_FILES
     include/${PROJECT_NAME}/Tracking.h
     include/${PROJECT_NAME}/Params.h
     include/${PROJECT_NAME}/Macros.h
+    include/${PROJECT_NAME}/Types.h
 
     include/${PROJECT_NAME}/cvplot/color.h
     include/${PROJECT_NAME}/cvplot/cvplot.h
@@ -107,6 +108,7 @@ add_library(${PROJECT_NAME} SHARED
    src/Optimizer.cc
    src/Frame.cc
    src/Scene.cc
+   src/Types.cc
 
    src/cvplot/color.cc
    src/cvplot/figure.cc

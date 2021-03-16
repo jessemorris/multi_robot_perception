@@ -57,14 +57,22 @@ Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) :
 {
     // mSensor = params.sensor_type;
     // VDO_SLAM::eSensor sensor;
+    VDO_DEBUG_MSG(params.sensor_type);
     if (params.sensor_type == 0) {
         mSensor = VDO_SLAM::eSensor::MONOCULAR;
+        cout << "- sensor: MONOCULAR " << endl;
     }
     else if (params.sensor_type == 1) {
         mSensor = VDO_SLAM::eSensor::STEREO;
+        cout << "- sensor: STEREO " << endl;
     }
     else if (params.sensor_type == 2) {
         mSensor = VDO_SLAM::eSensor::RGBD;
+        cout << "- sensor: RGBD " << endl;
+    }
+    else {
+        VDO_ERROR_MSG("param.sens_type is invalid: " << params.sensor_type);
+        //TODO: exit?
     }
 
 
@@ -180,7 +188,7 @@ Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) :
 
 }
 
-Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const int sensor):
+Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const eSensor sensor):
     mState(NO_IMAGES_YET), mSensor(sensor), mpSystem(pSys), mpMap(pMap)
 {
     // Load camera parameters from settings file

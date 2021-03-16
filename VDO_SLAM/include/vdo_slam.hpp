@@ -12,6 +12,7 @@
 #include "vdo_slam/Scene.h"
 #include "vdo_slam/Params.h"
 #include "vdo_slam/Macros.h"
+#include "vdo_slam/Types.h"
 
 #include "vdo_slam/color.h"
 #include "vdo_slam/cvplot.h"

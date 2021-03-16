@@ -15,24 +15,16 @@
 #include <memory>
 #include <opencv2/core/core.hpp>
 
-#include "vdo_slam/Tracking.h"
-#include "vdo_slam/Map.h"
-#include "vdo_slam/Scene.h"
-#include "vdo_slam/Params.h"
+#include "Tracking.h"
+#include "Map.h"
+#include "Scene.h"
+#include "Params.h"
+#include "Types.h"
 
 using namespace std;
 
 
 namespace VDO_SLAM {
-
-
-    // Input sensor
-    enum eSensor{
-        MONOCULAR=0,
-        STEREO=1,
-        RGBD=2,
-        INVALID=3
-    };
 
 
 

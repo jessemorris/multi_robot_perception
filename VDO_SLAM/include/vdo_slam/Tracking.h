@@ -16,13 +16,13 @@
 // eigen
 #include <eigen3/Eigen/Core>
 
-#include "vdo_slam/Map.h"
-#include "vdo_slam/Frame.h"
-#include "vdo_slam/ORBextractor.h"
-#include "vdo_slam/System.h"
-#include "vdo_slam/Scene.h"
-#include "vdo_slam/Tracking.h"
-#include "vdo_slam/Converter.h"
+#include "Map.h"
+#include "Frame.h"
+#include "ORBextractor.h"
+#include "System.h"
+#include "Scene.h"
+#include "Converter.h"
+#include "Types.h"
 
 #include <memory>
 #include <mutex>
@@ -64,7 +64,7 @@ class Tracking
 
     public:
         Tracking(System* pSys, Map* pMap, const VdoParams& params);
-        Tracking(System* pSys, Map* pMap, const string &strSettingPath, const int sensor);
+        Tracking(System* pSys, Map* pMap, const string &strSettingPath, const eSensor sensor);
 
         // Preprocess the input and call Track(). Extract features and performs stereo matching.
         std::unique_ptr<Scene> GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow, const cv::Mat &maskSEM,
@@ -140,7 +140,7 @@ class Tracking
         eDataState mTestData;
 
         // Input sensor
-        int mSensor;
+        eSensor mSensor;
 
         // Current Frame
         Frame mCurrentFrame;

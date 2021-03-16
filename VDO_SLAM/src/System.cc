@@ -11,6 +11,8 @@
 #include "vdo_slam/Scene.h"
 #include "vdo_slam/System.h"
 #include "vdo_slam/Tracking.h"
+#include "vdo_slam/Macros.h"
+#include "vdo_slam/Types.h"
 
 #include <thread>
 #include <iomanip>
@@ -18,8 +20,9 @@
 
 #include <unistd.h>
 
-namespace VDO_SLAM
-{
+namespace VDO_SLAM {
+
+
     System::System(const VdoParams& params) {
         //Create the Map
         mpMap = new Map();

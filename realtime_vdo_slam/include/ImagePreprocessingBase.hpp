@@ -48,8 +48,6 @@
 namespace VDO_SLAM {
     
 
-    eSensor camera_type_from_string(std::string& input);
-
     namespace preprocessing {
 
         /**

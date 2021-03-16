@@ -5,6 +5,7 @@
 #include "CameraInformation.hpp"
 #include "utils/RosUtils.hpp"
 #include <realtime_vdo_slam/VdoInput.h>
+#include <vdo_slam/Types.h>
 
 #include <ros/package.h>
 #include <sensor_msgs/CameraInfo.h>
@@ -87,19 +88,7 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         int sensor_mode;
         nh.getParam("/ros_vdoslam/sensor_mode", sensor_mode);
 
-        VDO_SLAM::eSensor sensor;
-
-        
-
-        if (sensor_mode == 0) {
-            sensor = VDO_SLAM::eSensor::MONOCULAR;
-        }
-        else if (sensor_mode == 1) {
-            sensor = VDO_SLAM::eSensor::STEREO;
-        }
-        else if (sensor_mode == 2) {
-            sensor = VDO_SLAM::eSensor::RGBD;
-        }
+        VDO_SLAM::eSensor sensor = VDO_SLAM::param_to_sensor(sensor_mode);
 
         std::string calibration_file;
         nh.getParam("/ros_vdoslam/calibration_file", calibration_file);
@@ -175,18 +164,9 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         nh.getParam("/ros_vdoslam/data_code", params.data_code);
 
         int sensor_mode;
-        nh.getParam("/ros_vdoslam/sensor_type", sensor_mode);
+        nh.getParam("/ros_vdoslam/sensor_mode", sensor_mode);
 
-        if (sensor_mode == 0) {
-            params.sensor_type = VDO_SLAM::eSensor::MONOCULAR;
-        }
-        else if (sensor_mode == 1) {
-            params.sensor_type = VDO_SLAM::eSensor::STEREO;
-        }
-        else if (sensor_mode == 2) {
-            params.sensor_type = VDO_SLAM::eSensor::RGBD;
-        }
-
+        params.sensor_type = VDO_SLAM::param_to_sensor(sensor_mode);
 
         nh.getParam("/ros_vdoslam/depth_map_factor", params.depth_map_factor);
 
@@ -227,7 +207,7 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
     current_time = vdo_input->rgb.header.stamp;
     ros::Duration diff = current_time - previous_time;
     //time should be in n seconds or seconds (or else?)
-    double time_difference = diff.toSec();
+    double time_difference = diff.toNSec();
 
     cv::Mat image, scene_flow_mat, mono_depth_mat, mask_rcnn_mat;
     cv_bridge::CvImagePtr cv_ptr;
@@ -292,7 +272,7 @@ void RosVdoSlam::vdo_worker() {
                 input->mask,
                 input->ground_truth,
                 input->object_pose_gt,
-                input->image_time.toSec(),
+                input->time_diff,
                 image_trajectory,global_optim_trigger);
 
             ROS_INFO_STREAM("here");

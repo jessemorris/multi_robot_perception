@@ -168,6 +168,7 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS}
 	${vdo_slam_INCLUDE_DIRS}
+	${CMAKE_CURRENT_SOURCE_DIR}
 	# ${PROJECT_SOURCE_DIR}/../VDO_SLAM/include/
 	# ${PROJECT_SOURCE_DIR}/../VDO_SLAM/
 )
