@@ -72,8 +72,7 @@ cv::Scalar seg_index_to_colour(int index) {
 //current timetstamp is just time difference and not unix time
 
 VDO_SLAM::RosSceneObject::RosSceneObject(realtime_vdo_slam::VdoSceneObjectConstPtr& _msg) : 
-    time(_msg->time),
-    uid(_msg->uid) {
+    time(_msg->time) {
 
         //TODO: currently ignoring rotation
         pose.x = _msg->pose.position.x;
@@ -89,10 +88,9 @@ VDO_SLAM::RosSceneObject::RosSceneObject(realtime_vdo_slam::VdoSceneObjectConstP
 
     }
 
-VDO_SLAM::RosSceneObject::RosSceneObject(SceneObject& _object, ros::Time& _time, int _uid) :
+VDO_SLAM::RosSceneObject::RosSceneObject(SceneObject& _object, ros::Time& _time) :
     SceneObject(_object),
-    time(_time),
-    uid(_uid) {}
+    time(_time) {}
 
 realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
     realtime_vdo_slam::VdoSceneObjectPtr msg(new realtime_vdo_slam::VdoSceneObject);
@@ -105,9 +103,7 @@ realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
 
     msg->semantic_label = label_index;
     msg->label = label;
-    msg->tracking_id = tracking_id;
 
-    msg->uid = uid;
     msg->time = time;
 
     return msg;
@@ -124,11 +120,9 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time, std::string& _fram
         ROS_INFO_STREAM("Camera rot: " << camera_pos_rotation);
 
         //convert them all into RosSceneObjects
-        int id = 0;
         for(int i = 0; i < scene_objects.size(); i++) {
-            RosSceneObject ros_scene_object(scene_objects[i], time, id);
+            RosSceneObject ros_scene_object(scene_objects[i], time);
             scene_objects[i] = ros_scene_object;
-            id++;
         }
 
 
@@ -177,8 +171,7 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time, std::string& _fram
 
 
 VDO_SLAM::RosScene::RosScene(realtime_vdo_slam::VdoSlamSceneConstPtr& _msg) :
-    time(_msg->header.stamp),
-    Scene(_msg->id)
+    time(_msg->header.stamp)
 {   
 
 

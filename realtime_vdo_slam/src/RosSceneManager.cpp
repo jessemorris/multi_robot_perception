@@ -24,7 +24,7 @@ VDO_SLAM::RosSceneManager::RosSceneManager(ros::NodeHandle& _nh) :
         display = cv::Mat::zeros(800, 800, CV_8UC3);
     }
 
-void VDO_SLAM::RosSceneManager::display_scene(RosScenePtr& scene) {
+void VDO_SLAM::RosSceneManager::display_scene(RosSceneUniquePtr& scene) {
     const nav_msgs::Odometry odom = scene->odom_msg();
     const geometry_msgs::TransformStamped tf = scene->tf_transform_msg();
 
@@ -56,7 +56,7 @@ cv::Mat& VDO_SLAM::RosSceneManager::get_display_mat() {
 
 
 
-void VDO_SLAM::RosSceneManager::update_display_mat(std::unique_ptr<VDO_SLAM::RosScene>& scene) {
+void VDO_SLAM::RosSceneManager::update_display_mat(RosSceneUniquePtr& scene) {
 
     const nav_msgs::Odometry odom = scene->odom_msg();
 

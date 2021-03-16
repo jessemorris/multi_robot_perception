@@ -181,7 +181,9 @@ add_library(${PROJECT_NAME}
 	src/RosScene.cpp
 	src/RosSceneManager.cpp
 	src/CameraInformation.cpp
-	src/utils/RosUtils.cpp)
+	src/utils/RosUtils.cpp
+	src/tracking/HungarianSolver.cpp
+	src/tracking/SemanticTracker.cpp)
 
 
 target_link_libraries(${PROJECT_NAME}

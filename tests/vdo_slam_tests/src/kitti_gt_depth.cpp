@@ -9,7 +9,6 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
-#include <mask_rcnn/SemanticTracker.hpp>
 #include <mask_rcnn/SemanticObject.h>
 
 #include <opencv2/core.hpp>
@@ -107,8 +106,6 @@ int main(int argc, char **argv) {
     flow_net::FlowNetInterface flow_net(n);
 
     VDO_SLAM::System slam(vdo_yaml_file,sensor);
-
-    mask_rcnn::SemanticTracker tracker;
 
 
     mask_rcnn.start_service();

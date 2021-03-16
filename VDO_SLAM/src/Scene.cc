@@ -11,8 +11,7 @@ std::ostream &VDO_SLAM::operator << (std::ostream& output, const VDO_SLAM::Scene
     return output;
 }
 
-VDO_SLAM::Scene::Scene(int _id) :
-    id(_id) 
+VDO_SLAM::Scene::Scene()
 {
     camera_pos_translation.x = 0.0;
     camera_pos_translation.y = 0.0;

@@ -47,6 +47,7 @@ namespace VDO_SLAM {
      */
     class RosSceneObject: public SceneObject {
 
+
         public:
             /**
              * @brief Construct a new Ros Scene Object object from a realtime_vdo_slam::VdoSceneObject ROS msg.
@@ -64,7 +65,7 @@ namespace VDO_SLAM {
              * @param _time 
              * @param _uid 
              */
-            RosSceneObject(SceneObject& _object,  ros::Time& _time, int _uid);
+            RosSceneObject(SceneObject& _object,  ros::Time& _time);
 
             /**
              * @brief Converts the object to a realtime_vdo_slam::VdoSceneObject so it can be broadcast. 
@@ -74,7 +75,6 @@ namespace VDO_SLAM {
             realtime_vdo_slam::VdoSceneObjectPtr to_msg();
 
             ros::Time time;
-            int uid;
     };
 
     
@@ -152,6 +152,10 @@ namespace VDO_SLAM {
 
 };
 
-typedef std::unique_ptr<VDO_SLAM::RosScene> RosScenePtr;
+typedef std::shared_ptr<VDO_SLAM::RosSceneObject> RosSceneObjectPtr;
+typedef std::unique_ptr<VDO_SLAM::RosSceneObject> RosSceneObjectUniquePtr;
+
+typedef std::shared_ptr<VDO_SLAM::RosScene> RosScenePtr;
+typedef std::unique_ptr<VDO_SLAM::RosScene> RosSceneUniquePtr;
 
 #endif

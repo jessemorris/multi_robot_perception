@@ -31,7 +31,9 @@
 #include "RosScene.hpp"
 #include "RosSceneManager.hpp"
 #include "VdoSlamInput.hpp"
+#include "tracking/SemanticTracker.hpp"
 #include  <realtime_vdo_slam/VdoInput.h>
+#include <realtime_vdo_slam/VdoSlamScene.h>
 
 #include <string>
 #include <vector>
@@ -86,14 +88,17 @@ class RosVdoSlam {
         // mask_rcnn::MaskRcnnInterface mask_rcnn_interface;
 
         /**
-         * @brief Updates the scene using the aquired semantic objects from mask rcnn
+         * @brief Updates the objects within the scene using the aquired semantic objects from mask rcnn. 
+         * This associates the bounding box of each semantic object to the centroid of a SceneObject (u, v) coordinates so 
+         * that we can add semantic labels to the scene objects. A VdoSlamScenePtr is produced which is the summary of all out information.
          * 
          * TODO
          * 
-         * @param scene std::unique_ptr<VDO_SLAM::Scene>&
+         * @param scene std::unique_ptr<VDO_SLAM::RosScene>&
          * @param semantic_objects const std::vector<mask_rcnn::SemanticObject>&
+         * @return realtime_vdo_slam::VdoSlamScenePtr summary of all information from the VDO algorithm.
          */
-        void update_with_semantics(std::unique_ptr<VDO_SLAM::Scene>& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects);
+        realtime_vdo_slam::VdoSlamScenePtr merge_sceme_semantics(RosSceneUniquePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects);
 
 
         /**
@@ -160,6 +165,8 @@ class RosVdoSlam {
 
         ros::Time current_time;
         ros::Time previous_time;
+
+        SemanticTracker tracker;
 
 
 };

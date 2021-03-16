@@ -112,7 +112,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
             if (maskSEM.at<int>(y,x)!=0) {  // new added in Jun 13 2019
                 if (mask_id_map.find(maskSEM.at<int>(y,x)) == mask_id_map.end()) {
                     mask_id_map[maskSEM.at<int>(y,x)] = true;
-                    VDO_INFO_MSG("Found id " <<   maskSEM.at<int>(y,x));
+                    VDO_DEBUG_MSG("Found id " <<   maskSEM.at<int>(y,x));
                 }
                 continue;
             }
@@ -148,7 +148,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
         double fea_det_time;
         s_1 = clock();
         std::vector<cv::KeyPoint> mvKeysSamp = SampleKeyPoints(imGray.rows, imGray.cols);
-        VDO_INFO_MSG("number key points: " << mvKeysSamp.size());
+        VDO_DEBUG_MSG("number key points: " << mvKeysSamp.size());
         e_1 = clock();
         fea_det_time = (double)(e_1-s_1)/CLOCKS_PER_SEC*1000;
         // std::cout << "feature detection time: " << fea_det_time << std::endl;

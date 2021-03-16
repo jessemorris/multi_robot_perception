@@ -13,7 +13,7 @@ namespace VDO_SLAM
         //these really should be cv::Mat so we can save them in SE(3) space - currently ignoring rotation
         cv::Point3f pose;
         cv::Point2f velocity;
-        // cv::Mat center_image; //center in the 2D image plane in the form (u, v)
+        cv::Mat center_image; //center in the 2D image plane in the form (u, v)
         int label_index; //this is semantic label
         std::string label;
         int tracking_id;
@@ -23,7 +23,7 @@ namespace VDO_SLAM
             pose(scene_object.pose),
             velocity(scene_object.velocity),
             label_index(scene_object.label_index),
-            // center_image(scene_object.center_image),
+            center_image(scene_object.center_image),
             label(scene_object.label),
             tracking_id(scene_object.tracking_id) {}
 
@@ -38,7 +38,7 @@ namespace VDO_SLAM
     class Scene {
         
         public:
-            Scene(int _id);
+            Scene();
             Scene(int _id, double _timestamp);
             // Scene(const Scene& scene) :
             //     id(scene.get_id()),

@@ -207,7 +207,7 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
     current_time = vdo_input->rgb.header.stamp;
     ros::Duration diff = current_time - previous_time;
     //time should be in n seconds or seconds (or else?)
-    double time_difference = diff.toNSec();
+    double time_difference = diff.toSec();
 
     cv::Mat image, scene_flow_mat, mono_depth_mat, mask_rcnn_mat;
     cv_bridge::CvImagePtr cv_ptr;
@@ -236,7 +236,53 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
 }
 
 
-void RosVdoSlam::update_with_semantics(std::unique_ptr<VDO_SLAM::Scene>& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
+realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_sceme_semantics(RosSceneUniquePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
+    std::vector<cv::Point2f> points;
+    std::vector<vision_msgs::BoundingBox2D> bb;
+
+    std::vector<VDO_SLAM::SceneObject> scene_objects = scene->get_scene_objects();
+    for(VDO_SLAM::SceneObject& object : scene_objects) {
+        cv::Point2f point;
+        point.x = object.center_image.at<double>(0, 0); //u
+        point.y = object.center_image.at<double>(0, 1); //v
+
+        points.push_back(point);
+    }
+
+    for(const mask_rcnn::SemanticObject& object : semantic_objects) {
+        bb.push_back(object.bounding_box);
+    }
+
+    //this will be a vector of length scene->get_scene_objects() where the value is an index
+    // associating the object semantic object. There will be more semantic objects than secene objects as not everything will be tracked
+    std::vector<int> tracked;
+    if (!points.empty()) {
+    
+        tracked = tracker.assign_tracking_labels(points, bb);
+    }
+
+    realtime_vdo_slam::VdoSlamScenePtr vdo_slam_scene(new realtime_vdo_slam::VdoSlamScene);
+    //make pose out of camera pose
+    vdo_slam_scene->camera_pose = scene->odom_msg().pose.pose;
+    vdo_slam_scene->camera_twist = scene->odom_msg().twist.twist;
+
+    //we give the msg the same header as the scene, which is the same header time as the original img
+    ros::Time scene_time = scene->get_ros_time();
+    vdo_slam_scene->header.stamp = scene_time;
+
+
+    for(int i = 0; i < scene_objects.size(); i++) {
+        int association = tracked[i];
+
+        VDO_SLAM::RosSceneObject scene_object(scene_objects[i], scene_time);
+        mask_rcnn::SemanticObject semantic_object = semantic_objects[association];
+
+        realtime_vdo_slam::VdoSceneObjectPtr vdo_scene_object_ptr = scene_object.to_msg();
+        vdo_slam_scene->objects.push_back(*vdo_scene_object_ptr);
+
+    }
+
+    return vdo_slam_scene;
 
 }
 
@@ -275,25 +321,25 @@ void RosVdoSlam::vdo_worker() {
                 input->time_diff,
                 image_trajectory,global_optim_trigger);
 
-            ROS_INFO_STREAM("here");
 
-            // std::vector<mask_rcnn::SemanticObject> semantic_objects = input->semantic_objects;
+            std::vector<mask_rcnn::SemanticObject> semantic_objects = input->semantic_objects;
 
-            // // if(semantic_object_client.call(frame)) {
-            // //     semantic_objects = frame.response.semantic_objects;
-            // ROS_INFO_STREAM(semantic_objects.size());
-            // for(auto& object : semantic_objects) {
-            //         ROS_INFO_STREAM(object);
-            //     }
+            // if(semantic_object_client.call(frame)) {
+            //     semantic_objects = frame.response.semantic_objects;
+            ROS_INFO_STREAM(semantic_objects.size());
+            for(auto& object : semantic_objects) {
+                    ROS_INFO_STREAM(object);
+                }
 
             // set_scene_labels(unique_scene);
             scene = std::move(unique_scene);
-                        ROS_INFO_STREAM("here1");
 
             std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(
                     new VDO_SLAM::RosScene(*scene, input->image_time, odom_frame_id, base_link_frame_id));
 
             ros_scene = std::move(unique_ros_scene);
+            
+            realtime_vdo_slam::VdoSlamScenePtr summary_msg = merge_sceme_semantics(ros_scene, semantic_objects);
             // ros_scene_manager.display_scene(ros_scene);
             // ros_scene_manager.update_display_mat(ros_scene);
 

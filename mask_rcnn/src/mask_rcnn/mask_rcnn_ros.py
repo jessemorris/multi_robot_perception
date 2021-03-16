@@ -195,7 +195,6 @@ class MaskRcnnRos(RosCppCommunicator):
             semantic_object.label = semantic_label 
             semantic_object.label_index = semantic_index
             semantic_object.semantic_instance = instance_label
-            semantic_object.tracking_label = -1 #inialise with -1
 
             semantic_objects.append(semantic_object)
 

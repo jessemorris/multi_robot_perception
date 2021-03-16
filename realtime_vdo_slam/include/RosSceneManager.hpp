@@ -55,7 +55,7 @@ namespace VDO_SLAM {
              * 
              * @param scene 
              */
-            void display_scene(std::unique_ptr<VDO_SLAM::RosScene>& scene);
+            void display_scene(RosSceneUniquePtr& scene);
 
             /**
              * @brief Updates and visualises the birdseye view of the scene. It plots the camera pos as a red square and all tracked
@@ -64,7 +64,7 @@ namespace VDO_SLAM {
              * 
              * @param scene 
              */
-            void update_display_mat(std::unique_ptr<VDO_SLAM::RosScene>& scene);
+            void update_display_mat(RosSceneUniquePtr& scene);
 
             /**
              * @brief Get the display mat object

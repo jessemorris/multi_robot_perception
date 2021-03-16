@@ -25,7 +25,6 @@
 // #incl
 #include <mono_depth_2/MonoDepthInterface.hpp>
 #include <mask_rcnn/MaskRcnnInterface.hpp>
-#include <mask_rcnn/SemanticTracker.hpp>
 #include <flow_net/FlowNetInterface.hpp>
 
 using namespace VDO_SLAM::preprocessing;

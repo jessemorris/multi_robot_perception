@@ -42,8 +42,6 @@ include_directories(
 
 add_library(${PROJECT_NAME}
 	src/MaskRcnnInterface.cpp
-  src/SemanticTracker.cpp
-  src/HungarianSolver.cpp
   )
 
 
