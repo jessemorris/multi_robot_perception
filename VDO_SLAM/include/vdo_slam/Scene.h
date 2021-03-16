@@ -14,7 +14,7 @@ namespace VDO_SLAM
         cv::Point3f pose;
         cv::Point2f velocity;
         cv::Mat center_image; //center in the 2D image plane in the form (u, v)
-        int label_index; //this is semantic label
+        int semantic_instance_index; 
         std::string label;
         int tracking_id;
 
@@ -22,7 +22,7 @@ namespace VDO_SLAM
         SceneObject(const SceneObject& scene_object) :
             pose(scene_object.pose),
             velocity(scene_object.velocity),
-            label_index(scene_object.label_index),
+            semantic_instance_index(scene_object.semantic_instance_index),
             center_image(scene_object.center_image),
             label(scene_object.label),
             tracking_id(scene_object.tracking_id) {}

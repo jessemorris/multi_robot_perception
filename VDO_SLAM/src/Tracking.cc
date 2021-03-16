@@ -717,7 +717,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         cv::putText(imTraj, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
         cv::putText(imTraj, "Object Trajectories (COLORED CIRCLES)", cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
         // cout << "v obj center " << mCurrentFrame.vObjCentre3D.size() << endl;
-        VDO_DEBUG_MSG(mCurrentFrame.vObjCentre2D.size());
+        VDO_INFO_MSG(mCurrentFrame.vObjCentre2D.size());
         for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
         {
             if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0) {
@@ -740,9 +740,8 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
             scene_object.pose = cv::Point3f(world_x, world_y, 0);
             scene_object.velocity = cv::Point2f(vel_x, vel_y);
             scene_object.tracking_id = l;
-            scene_object.label_index = mCurrentFrame.nSemPosition[i];
+            scene_object.semantic_instance_index = mCurrentFrame.nSemPosition[i];
             scene_object.center_image = mCurrentFrame.vObjCentre2D[i];
-            VDO_INFO_MSG(mCurrentFrame.vObjCentre2D[i]);
 
 
             scene->add_scene_object(scene_object);

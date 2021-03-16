@@ -82,7 +82,7 @@ VDO_SLAM::RosSceneObject::RosSceneObject(realtime_vdo_slam::VdoSceneObjectConstP
         velocity.x = _msg->twist.linear.x;
         velocity.y = _msg->twist.linear.y;
 
-        label_index = _msg->semantic_label;
+        semantic_instance_index = _msg->semantic_label;
         label = _msg->label;
         tracking_id = _msg->tracking_id;
 
@@ -100,9 +100,9 @@ realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
 
     msg->twist.linear.x = velocity.x;
     msg->twist.linear.y = velocity.y;
+    msg->semantic_label = semantic_instance_index;
 
-    msg->semantic_label = label_index;
-    msg->label = label;
+    msg->tracking_id = tracking_id;
 
     msg->time = time;
 

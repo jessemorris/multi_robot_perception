@@ -11,8 +11,8 @@ double get_euclid_distance(const vision_msgs::BoundingBox2D& bb, const cv::Point
     double center_x = bb.size_x/2.0 + bb.center.x;
     double center_y = bb.size_y/2.0 + bb.center.y;
 
-    double u = point.x;
-    double v = point.y;
+    double u = static_cast<double>(point.x);
+    double v = static_cast<double>(point.y);
 
     double dx = center_x - u;
     double dy = center_y - v;

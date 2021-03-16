@@ -97,7 +97,7 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs std_msgs sensor_msgs mask_rcnn)
+generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs std_msgs sensor_msgs mask_rcnn vision_msgs)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -183,7 +183,8 @@ add_library(${PROJECT_NAME}
 	src/CameraInformation.cpp
 	src/utils/RosUtils.cpp
 	src/tracking/HungarianSolver.cpp
-	src/tracking/SemanticTracker.cpp)
+	src/tracking/SemanticTracker.cpp
+	src/visualizer/RosVisualizer.cpp)
 
 
 target_link_libraries(${PROJECT_NAME}

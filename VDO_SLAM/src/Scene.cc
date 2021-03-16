@@ -6,7 +6,7 @@
 std::ostream &VDO_SLAM::operator << (std::ostream& output, const VDO_SLAM::SceneObject& object) {
     output << "SceneObject [pose:\nx: " << object.pose.x <<"\ny: " << object.pose.y;
     output << "\n Velocity:\nx: " << object.velocity.x <<"\ny: " << object.velocity.y;
-    output << "\nLabel: " << object.label<< " Label index: " << object.label_index << " tracking ID " << object.tracking_id << " ]";
+    output << "\nLabel: " << object.label<< " Semantic Instance: " << object.semantic_instance_index << " tracking ID " << object.tracking_id << " ]";
 
     return output;
 }
