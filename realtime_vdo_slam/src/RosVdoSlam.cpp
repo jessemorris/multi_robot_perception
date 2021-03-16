@@ -276,6 +276,13 @@ realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_sceme_semantics(RosSceneUni
         int association = tracked[i];
 
         VDO_SLAM::RosSceneObject scene_object(scene_objects[i], scene_time);
+
+        //check association was valid
+        if (association < 0 || association >= semantic_objects.size()) {
+            ROS_WARN_STREAM("Tracking association was invalid: " << association << " from " << semantic_objects.size() << " objects.");
+            //do we skip object here?
+            continue;
+        }
         mask_rcnn::SemanticObject semantic_object = semantic_objects[association];
 
         realtime_vdo_slam::VdoSceneObjectPtr vdo_scene_object_ptr = scene_object.to_msg();

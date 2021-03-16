@@ -64,7 +64,6 @@ void VDO_SLAM::Scene::update_camera_pos(cv::Mat& pos_matrix) {
     camera_pos_translation.y = pos_matrix.at<float>(2,3);
     camera_pos_translation.z = pos_matrix.at<float>(1,3);
 
-    std::cout << "Cam pos " << camera_pos_translation << std::endl;
 
     //take rotation
     camera_pos_rotation = (cv::Mat_<float>(3,3) << pos_matrix.at<float>(0,0), pos_matrix.at<float>(0,1), pos_matrix.at<float>(0,2),

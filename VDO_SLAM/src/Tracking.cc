@@ -717,7 +717,6 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         cv::putText(imTraj, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
         cv::putText(imTraj, "Object Trajectories (COLORED CIRCLES)", cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
         // cout << "v obj center " << mCurrentFrame.vObjCentre3D.size() << endl;
-        VDO_INFO_MSG(mCurrentFrame.vObjCentre2D.size());
         for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
         {
             if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0) {

@@ -83,6 +83,7 @@ VDO_SLAM::RosSceneObject::RosSceneObject(realtime_vdo_slam::VdoSceneObjectConstP
         velocity.y = _msg->twist.linear.y;
 
         semantic_instance_index = _msg->semantic_label;
+        //this one shouold have lavel
         label = _msg->label;
         tracking_id = _msg->tracking_id;
 
@@ -101,7 +102,7 @@ realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
     msg->twist.linear.x = velocity.x;
     msg->twist.linear.y = velocity.y;
     msg->semantic_label = semantic_instance_index;
-
+    //we should not label here becuase the scene object may not have the correct label
     msg->tracking_id = tracking_id;
 
     msg->time = time;
@@ -115,9 +116,6 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time, std::string& _fram
     frame_id(_frame_id),
     child_frame_id(_child_frame_id),
     Scene(_object) {
-
-        ROS_INFO_STREAM("Camera pos: " << camera_pos_translation);
-        ROS_INFO_STREAM("Camera rot: " << camera_pos_rotation);
 
         //convert them all into RosSceneObjects
         for(int i = 0; i < scene_objects.size(); i++) {

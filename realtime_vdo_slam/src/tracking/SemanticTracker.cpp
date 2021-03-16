@@ -45,13 +45,8 @@ std::vector<int> SemanticTracker::assign_tracking_labels(const std::vector<cv::P
     }
 
     std::vector<int> assignment;
-    std::cout << "H solution" << std::endl;
     double cost = hungarian_solver.Solve(euclid_cost_matrix, assignment);
 
-    for(int i = 0; i < assignment.size(); i++) {
-        ROS_INFO_STREAM("assigned " << i << " to  " << assignment[i]);
-    }
-    
     assert(assignment.size() == object_centroids_length);
 
     return assignment;
