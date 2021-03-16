@@ -61,8 +61,9 @@ bool MaskRcnnInterface::wait_for_services(ros::Duration timeout) {
 
 
 bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz,
-    std::vector<mask_rcnn::SemanticObject>& semantic_objects, ros::Time image_time) {
+    std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
 
+    semantic_objects.clear();
 
     if (!service_started) {
         return false;
@@ -80,7 +81,6 @@ bool MaskRcnnInterface::analyse(const cv::Mat& current_image, cv::Mat& dst, cv::
 
             cv_ptr = cv_bridge::toCvCopy(srv.response.output_viz, sensor_msgs::image_encodings::RGB8);
             viz = cv_ptr->image;
-            semantic_objects.clear();
 
             for (std::vector<mask_rcnn::SemanticObject>::iterator it = srv.response.semantic_objects.begin(); it != srv.response.semantic_objects.end(); ++it) {
                 semantic_objects.push_back(*it);

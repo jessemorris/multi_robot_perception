@@ -258,8 +258,10 @@ realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_sceme_semantics(RosSceneUni
     // associating the object semantic object. There will be more semantic objects than secene objects as not everything will be tracked
     std::vector<int> tracked;
     if (!points.empty()) {
-    
         tracked = tracker.assign_tracking_labels(points, bb);
+    }
+    else {
+        return nullptr;
     }
 
     realtime_vdo_slam::VdoSlamScenePtr vdo_slam_scene(new realtime_vdo_slam::VdoSlamScene);
@@ -336,13 +338,8 @@ void RosVdoSlam::vdo_worker() {
 
 
             std::vector<mask_rcnn::SemanticObject> semantic_objects = input->semantic_objects;
+            ROS_INFO_STREAM(semantic_objects.size());
 
-            // ROS_INFO_STREAM(semantic_objects.size());
-            // for(auto& object : semantic_objects) {
-            //         ROS_INFO_STREAM(object);
-            //     }
-
-            // set_scene_labels(unique_scene);
             scene = std::move(unique_scene);
 
             std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(
@@ -351,12 +348,15 @@ void RosVdoSlam::vdo_worker() {
             ros_scene = std::move(unique_ros_scene);
             
             realtime_vdo_slam::VdoSlamScenePtr summary_msg = merge_sceme_semantics(ros_scene, semantic_objects);
-            cv::Mat disp = VDO_SLAM::overlay_scene_image(input->raw, summary_msg);
-            // ros_scene_manager.display_scene(ros_scene);
-            // ros_scene_manager.update_display_mat(ros_scene);
 
-            cv::imshow("Trajectory", disp);
-            cv::waitKey(1);
+            if(summary_msg) {
+                cv::Mat disp = VDO_SLAM::overlay_scene_image(input->raw, summary_msg);
+                // ros_scene_manager.display_scene(ros_scene);
+                // ros_scene_manager.update_display_mat(ros_scene);
+
+                cv::imshow("Trajectory", disp);
+                cv::waitKey(1);
+            }
         }
     }
 

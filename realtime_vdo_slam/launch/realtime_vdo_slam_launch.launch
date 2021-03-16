@@ -5,7 +5,7 @@
 
    <!-- If True VDO will load the System parameters from the calibtration file in the config folder
    If False, will use the calibration params defined here and the specified camera info topic  -->
-  <arg name="use_calibration_file" default="false" />
+  <arg name="use_calibration_file" default="true" />
 
 
   <!-- If true, and use calibration file is false, the system will get the camera intrinsics

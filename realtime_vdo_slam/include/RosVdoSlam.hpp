@@ -92,7 +92,7 @@ class RosVdoSlam {
          * This associates the bounding box of each semantic object to the centroid of a SceneObject (u, v) coordinates so 
          * that we can add semantic labels to the scene objects. A VdoSlamScenePtr is produced which is the summary of all out information.
          * 
-         * Essentially we try and associate a point (representing a centroid in the image frame), to a bounding box in the same image frame
+         * Essentially we try and associate a point (representing a centroid in the image frame), to a bounding box in the same image frame.
          * 
          * @param scene std::unique_ptr<VDO_SLAM::RosScene>&
          * @param semantic_objects const std::vector<mask_rcnn::SemanticObject>&

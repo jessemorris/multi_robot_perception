@@ -99,7 +99,7 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
         }
 
         if (run_mask_rcnn) {
-            mask_rcnn_success = mask_rcnn_interface.analyse(current_image, mask_rcnn_mat, mask_rcnn_viz, semantic_objects, current_time);
+            mask_rcnn_success = mask_rcnn_interface.analyse(current_image, mask_rcnn_mat, mask_rcnn_viz, semantic_objects);
 
             if (mask_rcnn_success) {
 
@@ -122,7 +122,7 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
         input_image.publish(img_msg);
 
 
-        if(scene_flow_success && mask_rcnn_success && scene_flow_success) {
+        if(scene_flow_success && mask_rcnn_success) {
             vdo_input_pub.publish(input_msg);
         }
 

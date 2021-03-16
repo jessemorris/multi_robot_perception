@@ -92,7 +92,7 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         }
 
         if (run_mask_rcnn) {
-            mask_rcnn_success = mask_rcnn_interface.analyse(current_image, mask_rcnn_mat, mask_rcnn_viz, semantic_objects, current_time);
+            mask_rcnn_success = mask_rcnn_interface.analyse(current_image, mask_rcnn_mat, mask_rcnn_viz, semantic_objects);
             // mask_rcnn_interface.create_semantic_objects(mask_rcnn_labels, mask_rcnn_label_indexs, bb, semantic_objects);
 
             if (mask_rcnn_success) {

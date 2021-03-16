@@ -50,13 +50,10 @@ namespace mask_rcnn {
              * The semantic label can be found at the index of the labels vector at the using the pixel value as the idnex
              * @param viz RGB uint8 image where the masks have been colourized for easier visualisation.
              * @param semantic_objects list of Semantic Objects found in the image
-             * @param image_time ros::Time The time the image was generated. Used to add the semantic objects to a map of frames
-             * so must be included if request_semantic_objects is to be used
              * @return true 
              * @return false 
              */
-            bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz, std::vector<mask_rcnn::SemanticObject>& semantic_objects,
-                ros::Time image_time = ros::Time());
+            bool analyse(const cv::Mat& current_image, cv::Mat& dst, cv::Mat& viz, std::vector<mask_rcnn::SemanticObject>& semantic_objects);
 
             /**
              * @brief Analysises the image image using Mask Rcnn.
