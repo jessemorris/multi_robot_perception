@@ -1,6 +1,5 @@
 #include "RosVdoSlam.hpp"
 #include "RosScene.hpp"
-#include "RosSceneManager.hpp"
 #include "VdoSlamInput.hpp"
 #include "CameraInformation.hpp"
 #include "utils/RosUtils.hpp"
@@ -15,13 +14,14 @@
 #include <tf2/transform_datatypes.h>
 #include <tf2/convert.h>
 #include <memory>
+#include <future>
+
 
 using namespace VDO_SLAM;
 
 RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
-        handle(n),
-        ros_scene_manager(handle)
-        // raw_img(handle,"/camera/rgb/image_raw", 100),
+        handle(n)
+                // raw_img(handle,"/camera/rgb/image_raw", 100),
         // mask_img(handle,"/camera/mask/image_raw", 100),
         // flow_img(handle,"/camera/flow/image_raw", 100),
         // depth_img(handle,"/camera/depth/image_raw", 100),
@@ -50,11 +50,23 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         // //setting base link starting point to be the same as odom
         // VDO_SLAM::utils::publish_static_tf(odom, odom_frame_id, base_link_frame_id);
 
+        handle.getParam("/ros_vdoslam/use_viz", use_viz);
+        handle.getParam("/ros_vdoslam/viz_rate", viz_rate);
+
 
         handle.getParam("/ros_vdoslam/optimization_trigger_frame", global_optim_trigger);
         ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
 
+        ros_viz = std::make_shared<VDO_SLAM::RosVisualizer>(n);
+        // std::future<bool> data_provider_handle =
+    //     std::async(std::launch::async,
+    //                &VIO::RosDataProviderInterface::spin,
 
+        if (use_viz) {
+            ros_viz_handler = std::async(std::launch::async,
+                   &VDO_SLAM::RosVisualizer::spin_viz,
+                   ros_viz.get(), viz_rate);
+        }
         //TODO: should get proper previous time
         previous_time = ros::Time::now();
         image_trajectory = cv::Mat::zeros(800, 600, CV_8UC3);
@@ -237,7 +249,7 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
 }
 
 
-realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_sceme_semantics(RosSceneUniquePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
+realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_scene_semantics(RosSceneUniquePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
     std::vector<cv::Point2f> points;
     std::vector<vision_msgs::BoundingBox2D> bb;
 
@@ -328,6 +340,9 @@ void RosVdoSlam::vdo_worker() {
             std::shared_ptr<VdoSlamInput> input = pop_vdo_input();
             ros::Time image_time = input->image_time;
 
+            cv::Mat original_rgb;
+            input->raw.copyTo(original_rgb);
+
             std::unique_ptr<VDO_SLAM::Scene> unique_scene =  slam_system->TrackRGBD(input->raw,input->depth,
                 input->flow,
                 input->mask,
@@ -338,24 +353,27 @@ void RosVdoSlam::vdo_worker() {
 
 
             std::vector<mask_rcnn::SemanticObject> semantic_objects = input->semantic_objects;
-            ROS_INFO_STREAM(semantic_objects.size());
 
             scene = std::move(unique_scene);
 
             std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(
-                    new VDO_SLAM::RosScene(*scene, input->image_time, odom_frame_id, base_link_frame_id));
+                    new VDO_SLAM::RosScene(*scene, input->image_time));
 
             ros_scene = std::move(unique_ros_scene);
             
-            realtime_vdo_slam::VdoSlamScenePtr summary_msg = merge_sceme_semantics(ros_scene, semantic_objects);
+            realtime_vdo_slam::VdoSlamScenePtr summary_msg = merge_scene_semantics(ros_scene, semantic_objects);
+            sensor_msgs::ImagePtr image_ptr;
+            utils::image_to_msg_ptr(original_rgb, image_ptr, sensor_msgs::image_encodings::RGB8);
+            summary_msg->original_frame = *image_ptr;
 
-            if(summary_msg) {
-                cv::Mat disp = VDO_SLAM::overlay_scene_image(input->raw, summary_msg);
-                // ros_scene_manager.display_scene(ros_scene);
-                // ros_scene_manager.update_display_mat(ros_scene);
+            if(summary_msg && use_viz) {
+                ros_viz->queue_slam_scene(summary_msg);
+                // cv::Mat disp = VDO_SLAM::overlay_scene_image(input->raw, summary_msg);
+                // // ros_scene_manager.display_scene(ros_scene);
+                // // ros_scene_manager.update_display_mat(ros_scene);
 
-                cv::imshow("Trajectory", disp);
-                cv::waitKey(1);
+                // cv::imshow("Trajectory", disp);
+                // cv::waitKey(1);
             }
         }
     }

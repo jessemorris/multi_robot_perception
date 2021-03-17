@@ -6,12 +6,14 @@
 #include <geometry_msgs/Transform.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
+#include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PointStamped.h>
 #include <tf/transform_listener.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Twist.h>
+#include <sensor_msgs/Image.h>
 
 #include <opencv2/opencv.hpp>
 
@@ -19,6 +21,18 @@ namespace VDO_SLAM {
 
     namespace utils {
 
+        void image_to_msg_ptr(const cv::Mat& img, sensor_msgs::ImagePtr& img_ptr, const std::string& encoding, const std_msgs::Header& header = std_msgs::Header());
+        void image_msg_to_mat(cv::Mat& img, const sensor_msgs::Image& image_msg, const std::string& encoding);
+
+        /**
+         * @brief Converts an odom to a transform with header details and 
+         * updates the tf tree
+         * 
+         * @param odom const nav_msgs::Odometry&
+         * @param parent_frame_id const std::string& 
+         * @param child_frame_id const std::string& 
+         * @param time const ros::Time& defaults to ros::now()
+         */
         void publish_static_tf(const nav_msgs::Odometry& odom,
                                 const std::string& parent_frame_id,
                                 const std::string& child_frame_id, const ros::Time& time = ros::Time::now());
@@ -35,6 +49,21 @@ namespace VDO_SLAM {
          * @param odom nav_msgs::Odometry
          */
         void geometry_to_odom(const geometry_msgs::Pose& pose, const geometry_msgs::Twist& twist, const ros::Time& time, nav_msgs::Odometry& odom);
+
+
+        /**
+         * @brief Takes a pose and twist pair and converts them to a Odometry msg.
+         * Header frame information will be added.
+         * 
+         * @param pose const geometry_msgs::Pose
+         * @param twist  const geometry_msgs::Twist
+         * @param time const ros::Time
+         * @param frame_id const std::string 
+         * @param child_frame_id const std::string 
+         * @param odom nav_msgs::Odometry
+         */
+        void geometry_to_odom(const geometry_msgs::Pose& pose, const geometry_msgs::Twist& twist, const ros::Time& time, 
+                                        const std::string& frame_id, const std::string& child_frame_id, nav_msgs::Odometry& odom);
 
         /**
          * @brief Apply transform between two objects. The objects should contain a header but will only be transformed in translation space (and not orientation)

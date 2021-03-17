@@ -29,8 +29,8 @@
 
 
 #include "RosScene.hpp"
-#include "RosSceneManager.hpp"
 #include "VdoSlamInput.hpp"
+#include "visualizer/RosVisualizer.hpp"
 #include "tracking/SemanticTracker.hpp"
 #include  <realtime_vdo_slam/VdoInput.h>
 #include <realtime_vdo_slam/VdoSlamScene.h>
@@ -98,7 +98,7 @@ class RosVdoSlam {
          * @param semantic_objects const std::vector<mask_rcnn::SemanticObject>&
          * @return realtime_vdo_slam::VdoSlamScenePtr summary of all information from the VDO algorithm.
          */
-        realtime_vdo_slam::VdoSlamScenePtr merge_sceme_semantics(RosSceneUniquePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects);
+        realtime_vdo_slam::VdoSlamScenePtr merge_scene_semantics(RosSceneUniquePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects);
 
 
         /**
@@ -138,7 +138,12 @@ class RosVdoSlam {
 
 
         //VdoSlam
-        VDO_SLAM::RosSceneManager ros_scene_manager;
+        int viz_rate;
+        bool use_viz;
+        VDO_SLAM::RosVisualizerPtr ros_viz;
+        VDO_SLAM::RosVizualizerSpinHandler ros_viz_handler;
+
+
         std::unique_ptr<VDO_SLAM::RosScene> ros_scene;
 
         cv::Mat image_trajectory;

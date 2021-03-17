@@ -179,7 +179,6 @@ add_library(${PROJECT_NAME}
 	src/preprocessing/ImagePreprocessingRGBD.cpp
 	src/RosVdoSlam.cpp
 	src/RosScene.cpp
-	src/RosSceneManager.cpp
 	src/CameraInformation.cpp
 	src/utils/RosUtils.cpp
 	src/tracking/HungarianSolver.cpp

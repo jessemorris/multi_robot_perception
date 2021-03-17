@@ -58,15 +58,6 @@ namespace VDO_SLAM {
             void display_scene(RosSceneUniquePtr& scene);
 
             /**
-             * @brief Updates and visualises the birdseye view of the scene. It plots the camera pos as a red square and all tracked
-             * 3D objects as coloured dots (currently coloured by classification). If gt odom is present it will also plot this as a green 
-             * squares.
-             * 
-             * @param scene 
-             */
-            void update_display_mat(RosSceneUniquePtr& scene);
-
-            /**
              * @brief Get the display mat object
              * 
              * @return cv::Mat& 

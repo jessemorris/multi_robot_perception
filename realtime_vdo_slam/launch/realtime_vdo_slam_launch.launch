@@ -23,6 +23,12 @@
   <!--  MONOCULAR=0, STEREO=1, RGBD=2-->
   <arg name="sensor_mode" default="0"/>
 
+  <!--If tru the ros visualizer will be created-->
+  <arg name="use_viz" default="true"/>
+
+  <!-- the rate (Hz) the viz should run at -->
+  <arg name="viz_rate" default="1"/>
+
   <!--After how many frames to run global optimization -->
   <arg name="optimization_trigger_frame" default="-1"/>
 
@@ -123,6 +129,9 @@
     <!--Config file for the realtime_vdo_slam package -->
     <param name="config_file" value="$(arg config_file)"/>
     <rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg config_file)"/>
+
+    <param name="use_viz" value="$(arg use_viz)"/>
+    <param name="viz_rate" value="$(arg viz_rate)"/>
 
     <!--only check if we load the information from this launc file. Wait for camera_info msg
     on topic defined in config file. Else, use the camera info defined here. -->

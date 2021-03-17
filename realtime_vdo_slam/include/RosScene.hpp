@@ -101,10 +101,8 @@ namespace VDO_SLAM {
              * 
              * @param _object 
              * @param _time
-             * @param _frame_id The frame with which to plot relative too. Usually the odom frame.
-             * @param _child_frame_id The frame which the scene is in. Usually base_link/camera_link equivalent.
              */
-            RosScene(Scene& _object, ros::Time _time, std::string& _frame_id, std::string& _child_frame_id);
+            RosScene(Scene& _object, ros::Time _time);
 
             /**
              * @brief Gets the odometry of the camera as determined by the camera translation and rotation matrix.
@@ -114,18 +112,11 @@ namespace VDO_SLAM {
             const nav_msgs::Odometry& odom_msg() const;
 
             /**
-             * @brief Gets the transform stamped messaged realtive to the vdo_slam world frame.
-             * 
-             * @return const geometry_msgs::TransformStamped& 
-             */
-            const geometry_msgs::TransformStamped& tf_transform_msg() const;
-
-            /**
-             * @brief Constructs a visualisation in ROS of all the objects in the scene realtive to the vdo_slam world frame.
-             * 
-             * @param marker_array 
-             */
-            void make_vizualisation(visualization_msgs::MarkerArray& marker_array);
+            //  * @brief Constructs a visualisation in ROS of all the objects in the scene realtive to the vdo_slam world frame.
+            //  * 
+            //  * @param marker_array 
+            //  */
+            // void make_vizualisation(visualization_msgs::MarkerArray& marker_array);
 
             /**
              * @brief Converts the object to a ROS msg so it can be broadcast. 
@@ -134,15 +125,17 @@ namespace VDO_SLAM {
              */
             realtime_vdo_slam::VdoSlamScenePtr to_msg();
 
-            const std::string& get_frame_id();
-            const std::string& get_child_frame_id();
+            /**
+             * @brief Get the ros time object
+             * 
+             * @return const ros::Time& 
+             */
             const ros::Time& get_ros_time();
 
         private:
             ros::Time time;
 
             nav_msgs::Odometry odom;
-            geometry_msgs::TransformStamped transform_stamped;
 
 
         

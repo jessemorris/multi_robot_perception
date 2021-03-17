@@ -2,7 +2,7 @@
 
 #include <image_transport/image_transport.h>
 #include <tf2_ros/transform_broadcaster.h>
-#include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Transform.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <iostream>
@@ -14,10 +14,7 @@
 
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <opencv2/core.hpp>
-
-#include <mask_rcnn/MaskRcnnInterface.hpp>
-
-using namespace mask_rcnn;
+;
 
 
 /**
@@ -83,7 +80,8 @@ VDO_SLAM::RosSceneObject::RosSceneObject(realtime_vdo_slam::VdoSceneObjectConstP
         velocity.y = _msg->twist.linear.y;
 
         semantic_instance_index = _msg->semantic_label;
-        //this one shouold have lavel
+        //this one should have lavel
+        //TODO: some assert if label not default - shoudl set this somehwere?
         label = _msg->label;
         tracking_id = _msg->tracking_id;
 
@@ -111,10 +109,8 @@ realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
 
 }
 
-VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time, std::string& _frame_id, std::string& _child_frame_id) :
+VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
     time(_time),
-    frame_id(_frame_id),
-    child_frame_id(_child_frame_id),
     Scene(_object) {
 
         //convert them all into RosSceneObjects
@@ -122,15 +118,6 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time, std::string& _fram
             RosSceneObject ros_scene_object(scene_objects[i], time);
             scene_objects[i] = ros_scene_object;
         }
-
-
-        //update tf pose for ROS
-        transform_stamped.header.stamp = time;
-        transform_stamped.header.frame_id = frame_id;
-        transform_stamped.child_frame_id = child_frame_id;
-        transform_stamped.transform.translation.x = camera_pos_translation.x;
-        transform_stamped.transform.translation.y = camera_pos_translation.y;
-        transform_stamped.transform.translation.z = camera_pos_translation.z;
 
         tf2::Quaternion quat;
         tf2::Matrix3x3 rotation_matrix_pos(camera_pos_rotation.at<float>(0, 0), camera_pos_rotation.at<float>(0, 1), camera_pos_rotation.at<float>(0, 2),
@@ -140,16 +127,8 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time, std::string& _fram
 
         rotation_matrix_pos.getRotation(quat);
         
-        //must provide quaternion!
-        transform_stamped.transform.rotation.x = quat.x();
-        transform_stamped.transform.rotation.y = quat.y();
-        transform_stamped.transform.rotation.z = quat.z();
-        transform_stamped.transform.rotation.w = quat.w();
-
-        // ROS_INFO_STREAM("Published transform");
+        //Note: we dont add transform frame and child frame here
         odom.header.stamp = time;
-        odom.header.frame_id = frame_id;
-        odom.child_frame_id = child_frame_id;
         odom.pose.pose.position.x = camera_pos_translation.x;
         odom.pose.pose.position.y = camera_pos_translation.y;
         odom.pose.pose.position.z = camera_pos_translation.z;
@@ -179,16 +158,7 @@ VDO_SLAM::RosScene::RosScene(realtime_vdo_slam::VdoSlamSceneConstPtr& _msg) :
 const nav_msgs::Odometry& VDO_SLAM::RosScene::odom_msg() const {
     return odom;
 }
-const geometry_msgs::TransformStamped& VDO_SLAM::RosScene::tf_transform_msg() const {
-    return transform_stamped;
-}
 
-const std::string& VDO_SLAM::RosScene::get_frame_id() {
-    return frame_id;
-}
-const std::string& VDO_SLAM::RosScene::get_child_frame_id() {
-    return child_frame_id;
-}
 
 const ros::Time& VDO_SLAM::RosScene::get_ros_time() {
     return time;
@@ -198,38 +168,38 @@ realtime_vdo_slam::VdoSlamScenePtr VDO_SLAM::RosScene::to_msg() {
 
 }
 
-void VDO_SLAM::RosScene::make_vizualisation(visualization_msgs::MarkerArray& marker_array) {
-    for (SceneObject& scene_object: scene_objects) {
-        visualization_msgs::Marker marker;
-        marker.header.frame_id = child_frame_id;
-        marker.header.stamp = time;
-        marker.ns = "vdoslam";
-        marker.id = scene_object.tracking_id;
-        // marker.type = visualization_msgs::Marker::SPHERE;
-        marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-        marker.action = visualization_msgs::Marker::ADD;
-        marker.pose.position.x = scene_object.pose.x;
-        marker.pose.position.y = scene_object.pose.y;
-        marker.pose.position.z = 0;
+// void VDO_SLAM::RosScene::make_vizualisation(visualization_msgs::MarkerArray& marker_array) {
+//     for (SceneObject& scene_object: scene_objects) {
+//         visualization_msgs::Marker marker;
+//         marker.header.frame_id = child_frame_id;
+//         marker.header.stamp = time;
+//         marker.ns = "vdoslam";
+//         marker.id = scene_object.tracking_id;
+//         // marker.type = visualization_msgs::Marker::SPHERE;
+//         marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+//         marker.action = visualization_msgs::Marker::ADD;
+//         marker.pose.position.x = scene_object.pose.x;
+//         marker.pose.position.y = scene_object.pose.y;
+//         marker.pose.position.z = 0;
 
 
 
-        marker.pose.orientation.x = 0.0;
-        marker.pose.orientation.y = 0.0;
-        marker.pose.orientation.z = 0.0;
-        marker.pose.orientation.w = 1.0;
-        marker.scale.x = 2;
-        marker.scale.y = 2;
-        marker.scale.z = 2;
-        marker.color.a = 1.0; // Don't forget to set the alpha!
-        marker.color.r = 0.0;
-        marker.color.g = 1.0;
-        marker.color.b = 0.0;
-        marker.lifetime = ros::Duration();
-        // marker.text = scene_object.label;
-        marker.text = scene_object.tracking_id;
-        marker_array.markers.push_back(marker);
-        // vis_count++;
-    }
-
-}
+//         marker.pose.orientation.x = 0.0;
+//         marker.pose.orientation.y = 0.0;
+//         marker.pose.orientation.z = 0.0;
+//         marker.pose.orientation.w = 1.0;
+//         marker.scale.x = 2;
+//         marker.scale.y = 2;
+//         marker.scale.z = 2;
+//         marker.color.a = 1.0; // Don't forget to set the alpha!
+//         marker.color.r = 0.0;
+//         marker.color.g = 1.0;
+//         marker.color.b = 0.0;
+//         marker.lifetime = ros::Duration();
+//         // marker.text = scene_object.label;
+//         marker.text = scene_object.tracking_id;
+//         marker_array.markers.push_back(marker);
+//         // vis_count++;
+//     }
+//
+//}

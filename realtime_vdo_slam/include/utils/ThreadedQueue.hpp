@@ -35,6 +35,8 @@ class ThreadsafeQueueBase {
 
 		virtual ~ThreadsafeQueueBase() = default;
 
+	public:
+
 		/** \brief Push by value. Returns false if the queue has been shutdown.
 		 * Not optimal, since it will make two move operations.
 		 * But it does the job: see Item 41 Effective Modern C++

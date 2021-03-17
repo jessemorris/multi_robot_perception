@@ -2,14 +2,13 @@
 #define _ROS_VDO_VISUALIZER
 
 #include <mutex>
-
+#include <future>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
+#include <image_transport/image_transport.h>
 
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
@@ -40,10 +39,11 @@ namespace VDO_SLAM {
     cv::Mat overlay_scene_image(const cv::Mat& image, const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
 
-    class RosVisuazlier {
+    class RosVisualizer {
 
         public:
-            RosVisuazlier(ros::NodeHandle& _nh);
+            RosVisualizer(ros::NodeHandle& _nh);
+            ~RosVisualizer();
 
             /**
              * @brief Spins the vizualizer asynchronously at a given rate. Upon execution all vdo slam scene messages
@@ -83,6 +83,14 @@ namespace VDO_SLAM {
         private:
 
             /**
+             * @brief Updates all display and topic messages. Called by spin viz
+             * 
+             * @param slam_scene realtime_vdo_slam::VdoSlamScenePtr&
+             * @param bool if success
+             */
+            bool update_spin(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
+
+            /**
              * @brief Publishes the latest odometry from the VDO slam algorithm. If tf transforms are available,
              * the tf tree will also be updated.
              * 
@@ -99,6 +107,24 @@ namespace VDO_SLAM {
             void publish_3D_viz(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
 
+            /**
+             * @brief Publishes and visualises the birdseye view of the scene. It plots the camera pos as a red square and all tracked
+             * 3D objects as coloured dots (currently coloured by classification). If gt odom is present it will also plot this as a green 
+             * squares.
+             * 
+             * @param scene const realtime_vdo_slam::VdoSlamScenePtr&
+             */
+            void publish_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene);
+
+            /**
+             * @brief Publishes the slam image with bounding box, class and velocity information draw
+             * over the image. Makes a call to overlay_scene_image
+             * 
+             * @param scene const realtime_vdo_slam::VdoSlamScenePtr
+             */
+            void publish_bounding_box_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene);
+
+
             ros::NodeHandle nh;
 
             //publish VdoSlamScene msg
@@ -110,6 +136,12 @@ namespace VDO_SLAM {
             //publish camera pose from VDO as odom
             ros::Publisher odom_pub;
 
+            image_transport::ImageTransport image_transport;
+            image_transport::Publisher bounding_box_pub;
+
+            cv::Mat display; //static and dynamic object track
+            image_transport::Publisher object_track_pub;
+
             //Thread safe queue for VdoSlamScene's
             ThreadsafeQueue<realtime_vdo_slam::VdoSlamScenePtr> slam_scene_queue;
 
@@ -117,7 +149,6 @@ namespace VDO_SLAM {
             // subcrsibes to gt odom if exists. Odom gt topic defined in vdo_slam launch file
             std::string odom_gt_topic;
             ros::Subscriber odom_gt_sub;
-            cv::Mat display;
             std::mutex display_mutex;
 
             tf2_ros::TransformBroadcaster broadcaster;
@@ -144,6 +175,15 @@ namespace VDO_SLAM {
 
             static int vis_count; //used for marker visualisation
     };
+
+    typedef std::shared_ptr<RosVisualizer> RosVisualizerPtr;
+    typedef std::unique_ptr<RosVisualizer> RosVisualizerUniquePtr;
+    typedef std::future<bool> RosVizualizerSpinHandler;
+
+    // std::future<bool> data_provider_handle =
+    //     std::async(std::launch::async,
+    //                &VIO::RosDataProviderInterface::spin,
+
 
 }
 

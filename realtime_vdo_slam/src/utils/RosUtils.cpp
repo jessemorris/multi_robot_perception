@@ -7,6 +7,14 @@ namespace VDO_SLAM {
 
     namespace utils {
 
+        void image_to_msg_ptr(const cv::Mat& img, sensor_msgs::ImagePtr& img_ptr, const std::string& encoding, const std_msgs::Header& header) {
+            img_ptr = cv_bridge::CvImage(header, encoding, img).toImageMsg();
+        }
+
+        void image_msg_to_mat(cv::Mat& img, const sensor_msgs::Image& image_msg, const std::string& encoding) {
+                cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(image_msg, encoding);
+                img = cv_ptr->image;
+        }
 
         void publish_static_tf(const nav_msgs::Odometry& odom,
                                 const std::string& parent_frame_id,
@@ -41,6 +49,16 @@ namespace VDO_SLAM {
             odom.header.stamp = time;
             odom.pose.pose = pose;
             odom.twist.twist = twist;
+        }
+
+        void geometry_to_odom(const geometry_msgs::Pose& pose, const geometry_msgs::Twist& twist, const ros::Time& time, 
+                                        const std::string& frame_id, const std::string& child_frame_id, nav_msgs::Odometry& odom) {
+            odom.header.stamp = time;
+            odom.header.frame_id = frame_id;
+            odom.child_frame_id = child_frame_id;
+            odom.pose.pose = pose;
+            odom.twist.twist = twist;
+                                    
         }
 
     }
