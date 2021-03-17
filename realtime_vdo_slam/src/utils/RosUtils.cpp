@@ -37,5 +37,11 @@ namespace VDO_SLAM {
 
         }
 
+        void geometry_to_odom(const geometry_msgs::Pose& pose, const geometry_msgs::Twist& twist, const ros::Time& time, nav_msgs::Odometry& odom) {
+            odom.header.stamp = time;
+            odom.pose.pose = pose;
+            odom.twist.twist = twist;
+        }
+
     }
 }

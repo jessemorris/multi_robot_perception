@@ -136,11 +136,6 @@ class RosVdoSlam {
 
         int global_optim_trigger;
 
-        //Frames
-        std::string odom_frame_id;
-        std::string base_link_frame_id;
-        std::string map_frame_id;
-
 
         //VdoSlam
         VDO_SLAM::RosSceneManager ros_scene_manager;

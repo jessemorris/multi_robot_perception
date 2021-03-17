@@ -28,27 +28,27 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         // sync(raw_img, mask_img, flow_img, depth_img, 100)
 
     {
-        //Getting Frame ID's
-        handle.getParam("/ros_vdoslam/map_frame_id", map_frame_id);
-        handle.getParam("/ros_vdoslam/odom_frame_id", odom_frame_id);
-        handle.getParam("/ros_vdoslam/base_link_frame_id", base_link_frame_id);
+        // //Getting Frame ID's
+        // handle.getParam("/ros_vdoslam/map_frame_id", map_frame_id);
+        // handle.getParam("/ros_vdoslam/odom_frame_id", odom_frame_id);
+        // handle.getParam("/ros_vdoslam/base_link_frame_id", base_link_frame_id);
 
 
-        nav_msgs::Odometry odom;
-        odom.pose.pose.position.x = 0;
-        odom.pose.pose.position.y = 0;
-        odom.pose.pose.position.z = 0;
+        // nav_msgs::Odometry odom;
+        // odom.pose.pose.position.x = 0;
+        // odom.pose.pose.position.y = 0;
+        // odom.pose.pose.position.z = 0;
 
-        odom.pose.pose.orientation.x = 0;
-        odom.pose.pose.orientation.y = 0;
-        odom.pose.pose.orientation.z = 0;
-        odom.pose.pose.orientation.w = 1;
+        // odom.pose.pose.orientation.x = 0;
+        // odom.pose.pose.orientation.y = 0;
+        // odom.pose.pose.orientation.z = 0;
+        // odom.pose.pose.orientation.w = 1;
 
-        //setting map frame and odom frame to be the same
-        VDO_SLAM::utils::publish_static_tf(odom, map_frame_id, odom_frame_id);
+        // //setting map frame and odom frame to be the same
+        // VDO_SLAM::utils::publish_static_tf(odom, map_frame_id, odom_frame_id);
 
-        //setting base link starting point to be the same as odom
-        VDO_SLAM::utils::publish_static_tf(odom, odom_frame_id, base_link_frame_id);
+        // //setting base link starting point to be the same as odom
+        // VDO_SLAM::utils::publish_static_tf(odom, odom_frame_id, base_link_frame_id);
 
 
         handle.getParam("/ros_vdoslam/optimization_trigger_frame", global_optim_trigger);

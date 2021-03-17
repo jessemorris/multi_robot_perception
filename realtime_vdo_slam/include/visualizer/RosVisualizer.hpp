@@ -14,6 +14,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
+#include <nav_msgs/Odometry.h>
 #include <image_transport/image_transport.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/buffer.h>
@@ -23,6 +24,8 @@
 
 #include <opencv2/opencv.hpp>
 #include <realtime_vdo_slam/VdoSlamScene.h>
+
+#include "utils/ThreadedQueue.hpp"
 
 namespace VDO_SLAM {
 
@@ -43,6 +46,26 @@ namespace VDO_SLAM {
             RosVisuazlier(ros::NodeHandle& _nh);
 
             /**
+             * @brief Spins the vizualizer asynchronously at a given rate. Upon execution all vdo slam scene messages
+             * in the callback queue will be displayed and published. 
+             * 
+             * @param rate int The rate at which the visualizer will spin. 
+             * @return true 
+             * @return false 
+             */
+            bool spin_viz(int rate = 1);
+
+            /**
+             * @brief Adds a slam scene to the visualizer queue. Each msg will be published from the queue 
+             * at the rate set from spin_viz. 
+             * 
+             * @param slam_scene realtime_vdo_slam::VdoSlamScenePtr&
+             * @return true 
+             * @return false 
+             */
+            bool queue_slam_scene(realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
+
+            /**
              * @brief Subscribes to nav_msgs::Odometry messages that will be used for ground truth. Listenes to the /ros_vdo/odometry_ground_truth_topic
              * defined in the launch file. (see VDO_SLAM::Utils in RosScene.cpp) It will offset the odom gt bt some amount 
              * such that the gt odom starts at [0,0,0][0,0,0,1] even if the ROS information playing does not start centerd at the world 
@@ -56,12 +79,44 @@ namespace VDO_SLAM {
             void odom_gt_callback(const nav_msgs::OdometryConstPtr& msg);
 
 
+
         private:
 
+            /**
+             * @brief Publishes the latest odometry from the VDO slam algorithm. If tf transforms are available,
+             * the tf tree will also be updated.
+             * 
+             *  @param slam_scene realtime_vdo_slam::VdoSlamScenePtr&
+             */
+            void publish_odom(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
+
+
+            /**
+             * @brief Publishes a slam scene as a visualization marker array to be displayed in RVIZ
+             * 
+             * @param slam_scene realtime_vdo_slam::VdoSlamScenePtr&
+             */
+            void publish_3D_viz(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
+
+
             ros::NodeHandle nh;
-            ros::Publisher visualiser;
+
+            //publish VdoSlamScene msg
+            ros::Publisher slam_scene_pub;
+            
+            //publishes the slam scene as markers for RVIZ
+            ros::Publisher slam_scene_3d_pub;
+
+            //publish camera pose from VDO as odom
             ros::Publisher odom_pub;
-            ros::Subscriber odom_repub_sub;
+
+            //Thread safe queue for VdoSlamScene's
+            ThreadsafeQueue<realtime_vdo_slam::VdoSlamScenePtr> slam_scene_queue;
+
+
+            // subcrsibes to gt odom if exists. Odom gt topic defined in vdo_slam launch file
+            std::string odom_gt_topic;
+            ros::Subscriber odom_gt_sub;
             cv::Mat display;
             std::mutex display_mutex;
 
@@ -80,8 +135,12 @@ namespace VDO_SLAM {
             float odom_x_offset;
             float odom_y_offset;
             
+            //frames for tf tree to publish on
+            std::string map_frame;
+            std::string odom_frame;
+            std::string base_frame;
+            
 
-        
 
             static int vis_count; //used for marker visualisation
     };

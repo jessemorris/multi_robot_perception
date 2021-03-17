@@ -10,6 +10,8 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PointStamped.h>
 #include <tf/transform_listener.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Twist.h>
 
 #include <opencv2/opencv.hpp>
 
@@ -22,6 +24,17 @@ namespace VDO_SLAM {
                                 const std::string& child_frame_id, const ros::Time& time = ros::Time::now());
 
         void odom_to_tf(const nav_msgs::Odometry& odom, geometry_msgs::Transform* transform);
+
+        /**
+         * @brief Takes a pose and twist pair and converts them to a Odometry msg.
+         * Header frame information is not added.
+         * 
+         * @param pose const geometry_msgs::Pose
+         * @param twist const geometry_msgs::Twist
+         * @param time const ros::Time
+         * @param odom nav_msgs::Odometry
+         */
+        void geometry_to_odom(const geometry_msgs::Pose& pose, const geometry_msgs::Twist& twist, const ros::Time& time, nav_msgs::Odometry& odom);
 
         /**
          * @brief Apply transform between two objects. The objects should contain a header but will only be transformed in translation space (and not orientation)

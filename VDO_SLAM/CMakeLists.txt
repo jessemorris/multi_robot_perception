@@ -138,10 +138,12 @@ target_compile_options(${PROJECT_NAME} PRIVATE -Wno-psabi)
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
-        ${vdo_slam_g2o_INCLUDE_DIRS}
-        ${include_EIGEN3_INCLUDE}
         )
 
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
+   ${vdo_slam_g2o_INCLUDE_DIRS}
+   ${include_EIGEN3_INCLUDE}
+)
 
 # Install library as an export target
 install(TARGETS ${PACKAGE_NAME}

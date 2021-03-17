@@ -144,8 +144,6 @@ namespace VDO_SLAM {
             nav_msgs::Odometry odom;
             geometry_msgs::TransformStamped transform_stamped;
 
-            std::string frame_id;
-            std::string child_frame_id;
 
         
     };
