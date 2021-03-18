@@ -11,7 +11,7 @@
   <!-- If true, and use calibration file is false, the system will get the camera intrinsics
   from the camera info topic defined in the config file. If False, the camera information
   properties must be defined here (K, D etc)-->
-  <arg name="use_camera_info_topic" default="false" />
+  <arg name="use_camera_info_topic" default="true" />
 
   <!-- System params for VDO SLAM. Used if  use_calibtration_file is true-->
 	<arg name="calibration_file" default="vdo_config.yaml"/>
@@ -21,13 +21,13 @@
   <arg name="config_file" default="realtime_vdo.yaml"/>
 
   <!--  MONOCULAR=0, STEREO=1, RGBD=2-->
-  <arg name="sensor_mode" default="0"/>
+  <arg name="sensor_mode" default="2"/>
 
   <!--If tru the ros visualizer will be created-->
-  <arg name="use_viz" default="true"/>
+  <arg name="use_viz" default="false"/>
 
   <!-- the rate (Hz) the viz should run at -->
-  <arg name="viz_rate" default="1"/>
+  <arg name="viz_rate" default="10"/>
 
   <!--After how many frames to run global optimization -->
   <arg name="optimization_trigger_frame" default="-1"/>
@@ -37,6 +37,8 @@
   <arg name="fy" default="467.96648747036744"/>
   <arg name="cx" default="320.7584729627735"/>
   <arg name="cy" default="243.46670267884215"/>
+
+
    <!-- <arg name="fx" default="427.7050099835501"/>
   <arg name="fy" default="510.1866599144113"/>
   <arg name="cx" default="323.5111875590873"/>
@@ -51,7 +53,9 @@
   <arg name="RGB" default="1"/>
   <arg name="data_code" default="2"/>
 
-  <arg name="depth_map_factor" default="800.0"/> <!--Should habve a decimal, ie 10.0 not 10 becuase otherwise the param
+  <arg name="depth_map_factor" default="500.0"/>
+  <!-- <arg name="depth_map_factor" default="800.0"/> -->
+   <!--Should habve a decimal, ie 10.0 not 10 becuase otherwise the param
   server rounds it to 0-->
 
 

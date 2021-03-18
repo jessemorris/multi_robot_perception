@@ -119,8 +119,7 @@ add_library(${PROJECT_NAME} SHARED
 
 message("vdo slam g2o lib ${vdo_slam_g2o_LIB_DIRS}")
 
-target_link_libraries(
-   ${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}
    ${OpenCV_LIBS}
    ${EIGEN3_LIBS}
    ${CSPARSE_LIBRARY}

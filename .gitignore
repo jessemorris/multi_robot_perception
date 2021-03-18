@@ -19,6 +19,8 @@ devel_isolated/
 .idea/
 .vscode/
 
+**.pt
+**/*.tflite
 **demo-omd/
 **demo-kitti/
 

@@ -33,16 +33,17 @@ ImageRGBD::ImageRGBD(ros::NodeHandle& n):
     BaseProcessing(n),
     raw_img(n,input_camera_topic, 100),
     depth_img(n,input_depth_camera_topic, 100),
-    sync(raw_img, depth_img, 100)
+    sync(MySyncPolicy(10), raw_img, depth_img)
 {
     sync.registerCallback(boost::bind(&ImageRGBD::image_callback, this, _1, _2));
 }
 
 void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
     cv_bridge::CvImagePtr cv_ptr_rgb = cv_bridge::toCvCopy(*raw_image, sensor_msgs::image_encodings::RGB8);
-
     //we assume we can do this as the VDO pipeline expects the format to be in MONO16
     cv_bridge::CvImagePtr cv_ptr_depth = convert_img_msg(depth, sensor_msgs::image_encodings::MONO16);
+    // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
+
     monodepth_raw.publish(cv_ptr_depth->toImageMsg());
 
 
@@ -65,7 +66,7 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
     realtime_vdo_slam::VdoInput input_msg;
 
     input_msg.rgb = *raw_image;
-    input_msg.depth = *depth;
+    input_msg.depth = *cv_ptr_depth->toImageMsg();
 
     cv::Mat tracked_mask;
     cv::Mat tracked_viz;

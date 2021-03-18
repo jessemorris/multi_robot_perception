@@ -15,22 +15,23 @@ cv::Mat VDO_SLAM::overlay_scene_image(const cv::Mat& image, const realtime_vdo_s
     cv::Mat overlayed;
     image.copyTo(overlayed);
 
+    if(slam_scene != nullptr) {
+        std::vector<realtime_vdo_slam::VdoSceneObject> objects = slam_scene->objects;
 
-    std::vector<realtime_vdo_slam::VdoSceneObject> objects = slam_scene->objects;
-
-    for(realtime_vdo_slam::VdoSceneObject& object : objects) {
-        //draw bounding box
-        cv::rectangle(overlayed, cv::Rect2d(object.bounding_box.center.x, object.bounding_box.center.y,
-            object.bounding_box.size_x, object.bounding_box.size_y), 
-            cv::Scalar(0, 255, 0), 2);
+        for(realtime_vdo_slam::VdoSceneObject& object : objects) {
+            //draw bounding box
+            cv::rectangle(overlayed, cv::Rect2d(object.bounding_box.center.x, object.bounding_box.center.y,
+                object.bounding_box.size_x, object.bounding_box.size_y), 
+                cv::Scalar(0, 255, 0), 2);
 
 
-        //add info
-        char text[200];
-        sprintf(text, "%s, [%d] %02fkm/h", object.label.c_str(), object.tracking_id, object.twist.linear.x);
-        cv::putText(overlayed, text, cv::Point(object.bounding_box.center.x, object.bounding_box.center.y), 
-            cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
+            //add info
+            char text[200];
+            sprintf(text, "%s, [%d] %02fkm/h", object.label.c_str(), object.tracking_id, object.twist.linear.x);
+            cv::putText(overlayed, text, cv::Point(object.bounding_box.center.x, object.bounding_box.center.y), 
+                cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
 
+        }
     }
 
     return overlayed;
@@ -46,6 +47,7 @@ namespace VDO_SLAM {
 
             slam_scene_pub = nh.advertise<realtime_vdo_slam::VdoSlamScene>("vdoslam/output/scene", 20);
             slam_scene_3d_pub = nh.advertise<visualization_msgs::MarkerArray>("vdoslam/output/3dscene", 20);
+            odom_pub = nh.advertise<nav_msgs::Odometry>("vdoslam/output/odom", 20);
 
             bounding_box_pub = image_transport.advertise("vdoslam/output/bounding_box_image", 20);
             object_track_pub = image_transport.advertise("vdoslam/output/object_point_image", 20);
@@ -84,6 +86,7 @@ namespace VDO_SLAM {
 
     RosVisualizer::~RosVisualizer() {
         slam_scene_queue.shutdown();
+        ROS_INFO_STREAM("Shutting down visualizer with " << slam_scene_queue.size());
     }
 
     bool RosVisualizer::spin_viz(int rate) {
@@ -93,16 +96,20 @@ namespace VDO_SLAM {
         ros::Rate r(rate);
         size_t rate_ms = rate * 1000; //convert to ms
         while(ros::ok() && !slam_scene_queue.isShutdown()) {
-            if(slam_scene_queue.popBlockingWithTimeout(slam_scene, rate_ms)) {
+            ROS_INFO_STREAM("here");
+            if(slam_scene_queue.pop(slam_scene)) {
                 ROS_INFO_STREAM("Spinning");
                 update_spin(slam_scene);
             }
+            ROS_INFO_STREAM(slam_scene_queue.size());
             r.sleep();    
         }
+        ROS_INFO_STREAM("done spin");
     }
 
     bool RosVisualizer::queue_slam_scene(realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
         ROS_INFO_STREAM("added");
+        ROS_INFO_STREAM(slam_scene_queue.size());
         return slam_scene_queue.push(slam_scene);
     }
 
@@ -151,11 +158,11 @@ namespace VDO_SLAM {
         utils::image_msg_to_mat(raw_img, scene->original_frame, sensor_msgs::image_encodings::RGB8);
         cv::Mat viz = overlay_scene_image(raw_img, scene);
 
-        sensor_msgs::ImagePtr img_ptr;
+        sensor_msgs::Image img_ptr;
 
-        utils::image_to_msg_ptr(viz, img_ptr, sensor_msgs::image_encodings::RGB8, scene->header);
+        utils::mat_to_image_msg(img_ptr, viz, sensor_msgs::image_encodings::RGB8, scene->header);
 
-        bounding_box_pub.publish(*img_ptr);
+        bounding_box_pub.publish(img_ptr);
 
     }
 

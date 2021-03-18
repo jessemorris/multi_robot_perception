@@ -37,6 +37,7 @@ class ThreadsafeQueueBase {
 
 	public:
 
+
 		/** \brief Push by value. Returns false if the queue has been shutdown.
 		 * Not optimal, since it will make two move operations.
 		 * But it does the job: see Item 41 Effective Modern C++
@@ -86,6 +87,10 @@ class ThreadsafeQueueBase {
 		 * it returns a null shared_ptr.
 		 */
 		virtual std::shared_ptr<T> pop() = 0;
+
+		int size() {
+			return data_queue_.size();
+		}
 
 		void shutdown() {
 			// VLOG(1) << "Shutting down queue: " << queue_id_;
