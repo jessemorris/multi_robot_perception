@@ -53,7 +53,7 @@
   <arg name="RGB" default="1"/>
   <arg name="data_code" default="2"/>
 
-  <arg name="depth_map_factor" default="3000.0"/>
+  <arg name="depth_map_factor" default="255.0"/>
   <!-- <arg name="depth_map_factor" default="800.0"/> -->
    <!--Should habve a decimal, ie 10.0 not 10 becuase otherwise the param
   server rounds it to 0-->

@@ -345,6 +345,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                         // when it does mbf/depth/factor. 
                         float value = (imD.at<uint16_t>(i,j)/mDepthMapFactor);
                         mDepthMap.at<float>(i,j) = value;
+                        // VDO_INFO_MSG(mDepthMap.at<float>(i,j));
                     }
 
                      // when it does mbf/depth/factor. 
