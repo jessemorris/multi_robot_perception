@@ -93,7 +93,6 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
 
         if (run_mask_rcnn) {
             mask_rcnn_success = mask_rcnn_interface.analyse(current_image, mask_rcnn_mat, mask_rcnn_viz, semantic_objects);
-            // mask_rcnn_interface.create_semantic_objects(mask_rcnn_labels, mask_rcnn_label_indexs, bb, semantic_objects);
 
             if (mask_rcnn_success) {
                 // mask_rcnn_mat.convertTo(mask_rcnn_mat, CV_32SC1);
@@ -119,8 +118,8 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         }
 
         if (run_mono_depth) {
-            // mono_depth_success = mono_depth.analyse(current_image, mono_depth_mat);
-            mono_depth_success = midas_depth.analyse(current_image, mono_depth_mat);
+            mono_depth_success = mono_depth.analyse(current_image, mono_depth_mat);
+            // mono_depth_success = midas_depth.analyse(current_image, mono_depth_mat);
 
             if (mono_depth_success) {
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "mono16", mono_depth_mat).toImageMsg();

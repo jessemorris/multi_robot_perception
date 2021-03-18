@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   python_service_starter
   cv_bridge
   flow_net
+  midas_ros
   mask_rcnn
   mono_depth_2
   sensor_msgs

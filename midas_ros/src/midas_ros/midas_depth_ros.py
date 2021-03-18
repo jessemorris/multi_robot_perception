@@ -88,6 +88,8 @@ class MidasRos(RosCppCommunicator):
         prediction = cv2.resize(output, (input_image.shape[1], input_image.shape[0]), interpolation=cv2.INTER_CUBIC)
         depth_min = prediction.min()
         depth_max = prediction.max()
+        # depth_min = 0.01
+        # depth_max = 100
         # uint8_output = (255 * (prediction - depth_min) / (depth_max - depth_min)).astype("uint8")
 
         #image normal is usual depth style imaage where closer objects are white

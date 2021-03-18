@@ -24,7 +24,7 @@
   <arg name="sensor_mode" default="0"/>
 
   <!--If tru the ros visualizer will be created-->
-  <arg name="use_viz" default="false"/>
+  <arg name="use_viz" default="true"/>
 
   <!-- the rate (Hz) the viz should run at -->
   <arg name="viz_rate" default="10"/>
@@ -53,7 +53,7 @@
   <arg name="RGB" default="1"/>
   <arg name="data_code" default="2"/>
 
-  <arg name="depth_map_factor" default="255.0"/>
+  <arg name="depth_map_factor" default="800.0"/>
   <!-- <arg name="depth_map_factor" default="800.0"/> -->
    <!--Should habve a decimal, ie 10.0 not 10 becuase otherwise the param
   server rounds it to 0-->

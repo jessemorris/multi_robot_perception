@@ -1,5 +1,6 @@
 from mono_depth_2.mono_depth_ros import MonoDepth2Ros
 from mask_rcnn.mask_rcnn_ros import MaskRcnnRos
+from midas_ros.midas_depth_ros import MidasRos
 from vdo_slam_tests.utils import *
 from sensor_msgs.msg import Image
 import ros_numpy
@@ -33,11 +34,12 @@ def image_callback(data):
 def main():
 
     
-    monodepth = MonoDepth2Ros()
+    # monodepth = MonoDepth2Ros()
+    midas_depth = MidasRos()
     mask_rcnn = MaskRcnnRos()
 
     rospy.init_node('depth_tests')
-    rospy.Subscriber("/camera/rgb/image_raw", Image, image_callback, queue_size=10)
+    rospy.Subscriber("read/camera/rgb/raw_image", Image, image_callback, queue_size=10)
     while not rospy.is_shutdown():
         
         if np_image is None:
@@ -46,24 +48,29 @@ def main():
         img = np_image
 
 
-        composite = monodepth.analyse_depth(img)
-        response_image, labels, label_indexs, bounding_boxes = mask_rcnn.analyse_image(img)
+        composite = midas_depth.analyse_image(img)
+        response_image, semantic_objects = mask_rcnn.analyse_image(img)
+        display_image = mask_rcnn.generate_coloured_mask(response_image)
         composite_scaled = composite
-        display_image = mask_rcnn._generate_coloured_mask(response_image, labels, label_indexs)
-        for i in range(len(labels)):
-            index = label_indexs[i]
-            label = labels[i]
-            rect = bounding_boxes[i]
+        for semantic_object in semantic_objects:
+
+            #note: this is the semantic index so if we have multiple of instances of the same value
+            # eg. car: 0, person: 0 the get coordinate values we get values for both objects which is bhed
+            index = semantic_object.semantic_instance
+            label = semantic_object.label
+            rect = semantic_object.bounding_box
             coordinates = get_coordinate_values(response_image, index)
             avg_depth = 0
-            x,y,w,h = rect
+            x = rect.center.x
+            y = rect.center.y
+            w = rect.size_x
+            h = rect.size_y
             for coord in coordinates:
                 row = coord[0]
                 col = coord[1]
                 avg_depth += composite_scaled[row][col]
 
             avg_depth/= len(coordinates)
-            avg_depth = 100 - avg_depth
             cv2.putText(img, 'Depth {} Class {}'.format(int(avg_depth), label), (x, y), cv2.FONT_HERSHEY_SIMPLEX,  
                    0.5, (0, 0, 255), 1, cv2.LINE_AA, False) 
             cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, 255), 2)

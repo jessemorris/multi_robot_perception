@@ -7,9 +7,9 @@ namespace VDO_SLAM {
 
     namespace utils {
 
-        void mat_to_image_msg(sensor_msgs::Image& image_msg,const cv::Mat& img, const std::string& encoding, const std_msgs::Header& header) {
-            sensor_msgs::ImagePtr img_ptr = cv_bridge::CvImage(header, encoding, img).toImageMsg();
-            image_msg = *img_ptr;
+        void mat_to_image_msg(sensor_msgs::Image& img_msg, const cv::Mat& img, const std::string& encoding, const std_msgs::Header& header) {
+            cv_bridge::CvImage img_ptr = cv_bridge::CvImage(header, encoding, img);
+            img_ptr.toImageMsg(img_msg);
         }
 
         void image_msg_to_mat(cv::Mat& img, const sensor_msgs::Image& image_msg, const std::string& encoding) {

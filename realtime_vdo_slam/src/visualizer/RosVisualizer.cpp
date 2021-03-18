@@ -96,20 +96,14 @@ namespace VDO_SLAM {
         ros::Rate r(rate);
         size_t rate_ms = rate * 1000; //convert to ms
         while(ros::ok() && !slam_scene_queue.isShutdown()) {
-            ROS_INFO_STREAM("here");
-            if(slam_scene_queue.pop(slam_scene)) {
-                ROS_INFO_STREAM("Spinning");
+            if(slam_scene_queue.popBlockingWithTimeout(slam_scene, rate_ms)) {
                 update_spin(slam_scene);
             }
-            ROS_INFO_STREAM(slam_scene_queue.size());
             r.sleep();    
         }
-        ROS_INFO_STREAM("done spin");
     }
 
     bool RosVisualizer::queue_slam_scene(realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
-        ROS_INFO_STREAM("added");
-        ROS_INFO_STREAM(slam_scene_queue.size());
         return slam_scene_queue.push(slam_scene);
     }
 
@@ -128,9 +122,9 @@ namespace VDO_SLAM {
 
     bool RosVisualizer::update_spin(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
         publish_odom(slam_scene);
-        publish_3D_viz(slam_scene);
-        publish_3D_viz(slam_scene);
-        publish_display_mat(slam_scene);
+        // publish_3D_viz(slam_scene);
+        // publish_3D_viz(slam_scene);
+        // publish_display_mat(slam_scene);
         publish_bounding_box_mat(slam_scene);
     }
 
@@ -158,11 +152,11 @@ namespace VDO_SLAM {
         utils::image_msg_to_mat(raw_img, scene->original_frame, sensor_msgs::image_encodings::RGB8);
         cv::Mat viz = overlay_scene_image(raw_img, scene);
 
-        sensor_msgs::Image img_ptr;
+        sensor_msgs::Image img_msg;
 
-        utils::mat_to_image_msg(img_ptr, viz, sensor_msgs::image_encodings::RGB8, scene->header);
+        utils::mat_to_image_msg(img_msg, viz, sensor_msgs::image_encodings::RGB8, scene->header);
 
-        bounding_box_pub.publish(img_ptr);
+        bounding_box_pub.publish(img_msg);
 
     }
 

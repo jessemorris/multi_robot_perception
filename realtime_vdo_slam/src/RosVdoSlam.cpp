@@ -362,19 +362,20 @@ void RosVdoSlam::vdo_worker() {
             ros_scene = std::move(unique_ros_scene);
             
             realtime_vdo_slam::VdoSlamScenePtr summary_msg = merge_scene_semantics(ros_scene, semantic_objects);
-            // sensor_msgs::ImagePtr image_ptr;
-            // utils::image_to_msg_ptr(original_rgb, image_ptr, sensor_msgs::image_encodings::RGB8);
-            // summary_msg->original_frame = *image_ptr;
+            if(use_viz && summary_msg != nullptr) {
+                sensor_msgs::Image image_msg;
+                utils::mat_to_image_msg(image_msg, original_rgb, sensor_msgs::image_encodings::RGB8, summary_msg->header);
+                summary_msg->original_frame = image_msg;
 
-            if(summary_msg) {
-                // ros_viz->queue_slam_scene(summary_msg);
-                cv::Mat disp = VDO_SLAM::overlay_scene_image(input->raw, summary_msg);
-                // // ros_scene_manager.display_scene(ros_scene);
-                // // ros_scene_manager.update_display_mat(ros_scene);
+                ros_viz->queue_slam_scene(summary_msg);
 
-                cv::imshow("Trajectory", disp);
-                cv::waitKey(1);
             }
+            cv::Mat disp = VDO_SLAM::overlay_scene_image(input->raw, summary_msg);
+            // // ros_scene_manager.display_scene(ros_scene);
+            // // ros_scene_manager.update_display_mat(ros_scene);
+
+            cv::imshow("Trajectory", disp);
+            cv::waitKey(1);
         }
     }
 
