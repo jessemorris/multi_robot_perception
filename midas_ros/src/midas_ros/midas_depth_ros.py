@@ -3,6 +3,7 @@ import tensorflow as tf
 import urllib.request
 from rostk_pyutils.ros_cpp_communicator import RosCppCommunicator
 from midas_ros.srv import MidasDepth, MidasDepthResponse
+from sensor_msgs.msg import Image
 
 import os
 import sys
@@ -88,7 +89,12 @@ class MidasRos(RosCppCommunicator):
         depth_min = prediction.min()
         depth_max = prediction.max()
         # uint8_output = (255 * (prediction - depth_min) / (depth_max - depth_min)).astype("uint8")
-        return (2**16 * (prediction - depth_min) / (depth_max - depth_min)).astype("uint16")
+
+        #image normal is usual depth style imaage where closer objects are white
+        image_normal =  (2**16 * (prediction - depth_min) / (depth_max - depth_min)).astype("uint16")
+
+        inverted_image = cv2.bitwise_not(image_normal)
+        return inverted_image
 
     def _normalize_input(self, input_image):
         """[Normalizes and preprocesses an input image, ready for inference]
