@@ -63,6 +63,7 @@ add_service_files(
 	   StartFlowNet.srv
 	   StartMaskRcnn.srv
 	   StartMonoDepth.srv
+	   StartMidasDepth.srv
 )
 
 ## Generate actions in the 'action' folder

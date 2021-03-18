@@ -1,5 +1,5 @@
-#ifndef _MONODEPTH2_ROS_INTERFACE
-#define _MONODEPTH2_ROS_INTERFACE
+#ifndef _MIDAS_ROS_INTERFACE
+#define _MIDAS_ROS_INTERFACE
 
 // ROS Headers
 #include <ros/ros.h>
@@ -22,16 +22,16 @@
 #include <vector>
 #include <map>
 
-namespace mono_depth_2 {
+namespace midas_ros {
 
-    class MonoDepthInterface : public ServiceStarterInterface {
+    class MidasDepthInterface : public ServiceStarterInterface {
 
         public:
-            MonoDepthInterface(ros::NodeHandle& n);
-            ~MonoDepthInterface() {};
+            MidasDepthInterface(ros::NodeHandle& n);
+            ~MidasDepthInterface() {};
 
             /**
-             * @brief Calls the Monodepth 2 service in order to inference an RGB image
+             * @brief Calls the Midas depth service in order to inference an RGB image
              * 
              * The input image is a cv::Mat RGB uint8 type image. The dst will be greyscale uint16
              * image.
@@ -55,7 +55,7 @@ namespace mono_depth_2 {
 
             /**
              * @brief Waits for the required service to be up: in this case 
-             * 'monodepth2/analyse_image
+             * 'midasdepth/analyse_image
              * 
              * @param timeout 
              * @return true 
@@ -65,7 +65,7 @@ namespace mono_depth_2 {
 
     };
 
-}; //namespace mono_depth_2
+}; //namespace midas_ros
 
 
 

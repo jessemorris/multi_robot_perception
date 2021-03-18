@@ -54,6 +54,7 @@
 
   <depend>vision_msgs</depend>
   <depend>tf</depend>
+  <depend>midas_ros</depend>
 
   <depend>roscpp</depend>
   <depend>std_msgs</depend>

@@ -29,6 +29,7 @@ find_package(catkin REQUIRED COMPONENTS
 	std_msgs
 	cv_bridge
 	nav_msgs
+	midas_ros
 	sensor_msgs)
 
 find_package(OpenCV)
@@ -152,6 +153,7 @@ catkin_package(
 	flow_net
 	mask_rcnn
 	mono_depth_2
+	midas_ros
 	message_runtime
 	DEPENDS system_lib
 )

@@ -24,6 +24,7 @@ BaseProcessing::BaseProcessing(ros::NodeHandle& n) :
         sceneflow(n),
         mask_rcnn_interface(n),
         mono_depth(n),
+        midas_depth(n),
         image_transport(n),
         is_first(true),
         scene_flow_success(false),
@@ -71,7 +72,8 @@ BaseProcessing::BaseProcessing(ros::NodeHandle& n) :
     }
 
     if(run_mono_depth && camera_type == eSensor::MONOCULAR) {
-        mono_depth.start_service();
+        // mono_depth.start_service();
+        midas_depth.start_service();
     }
 
     if (undistord_images) {

@@ -1,7 +1,7 @@
 import os
 import sys
 
-from midas_ros.midas_ros import MidasRos
+from midas_ros.midas_depth_ros import MidasRos
 import rospy
 
 

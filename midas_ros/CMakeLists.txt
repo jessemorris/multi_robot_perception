@@ -35,14 +35,14 @@ include_directories(
 	${OpenCV_INCLUDE_DIRS}
 )
 
-# add_library(${PROJECT_NAME}
-# 	#src/MonoDepthInterface.cpp
-#   )
+add_library(${PROJECT_NAME}
+	src/MidasDepthInterface.cpp
+  )
 
 
-# target_link_libraries(${PROJECT_NAME}
-# 		${catkin_LIBRARIES}
-# 		${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME}
+		${catkin_LIBRARIES}
+		${OpenCV_LIBS})
 
 
 
@@ -58,10 +58,10 @@ catkin_package(
 
 
 
-# install(TARGETS ${PROJECT_NAME}
-#         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+install(TARGETS ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
