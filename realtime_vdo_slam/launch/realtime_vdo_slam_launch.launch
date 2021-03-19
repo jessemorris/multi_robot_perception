@@ -1,7 +1,7 @@
 <launch>
 
   <!-- If True expects topics directly from the vdo_slam_preprocessing node. This results in a remapping -->
-  <arg name="online" default="true" />
+  <arg name="online" default="false" />
 
    <!-- If True VDO will load the System parameters from the calibtration file in the config folder
    If False, will use the calibration params defined here and the specified camera info topic  -->
@@ -96,6 +96,8 @@
   <arg name="odom_frame_id"     default="vdoodom"/>
   <arg name="base_link_frame_id" default="vdobase_link"/>
 
+  <!--Input gps topic name if available-->
+  <arg name="gps_topic"       default="/gps"/>
 
 
 
@@ -122,6 +124,9 @@
     <remap to="/vdoslam/input/camera/flow/image_raw" from="/camera/flow/image_raw" if="$(arg online)"/>
     <remap to="/vdoslam/input/camera/depth/image_raw" from="/camera/depth/image_raw" if="$(arg online)"/>
 
+    <remap from="/vdoslam/input/all" to="/camera/all" unless="$(arg online)"/>
+
+
     <remap to="/camera/color/camera_info" from="/camera/camera_info" if="$(arg online)"/>
 
     <param name="use_calibration_file" value="$(arg use_calibration_file)"/>
@@ -144,6 +149,7 @@
     <!-- Empty string ("") means no ground-truth available. Used for init if
     requested to do ground-truth initialization. -->
     <param name="odometry_ground_truth_topic"       value="$(arg odometry_ground_truth_topic)"/>
+    <param name="gps_topic" value="$(arg gps_topic)"/>
 
     <!-- VDO SLAM params. Used if use_calibration_file is false -->
     <param name="fx" value="$(arg fx)" unless="$(arg use_calibration_file)"/>

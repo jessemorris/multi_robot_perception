@@ -6,6 +6,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/NavSatFix.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <image_transport/image_transport.h>
@@ -98,6 +99,14 @@ namespace VDO_SLAM {
              */
             void publish_odom(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
+            /**
+             * @brief Publishes a VdoSlamScene msg.
+             * 
+             * @param slam_scene const realtime_vdo_slam::VdoSlamScenePtr&
+             */
+
+            void publish_scene(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
+
 
             /**
              * @brief Publishes a slam scene as a visualization marker array to be displayed in RVIZ
@@ -108,13 +117,22 @@ namespace VDO_SLAM {
 
 
             /**
-             * @brief Publishes and visualises the birdseye view of the scene. It plots the camera pos as a red square and all tracked
-             * 3D objects as coloured dots (currently coloured by classification). If gt odom is present it will also plot this as a green 
-             * squares.
+             * @brief Publishes and visualises the birdseye view of the scene. Uses update_display_mat() to update the 
+             * display mat
              * 
              * @param scene const realtime_vdo_slam::VdoSlamScenePtr&
              */
             void publish_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene);
+
+            /**
+             * @brief Updates the camera pos as a red square and all tracked
+             * 3D objects as coloured dots (currently coloured by classification). If gt odom is present it will also plot this as a green 
+             * squares.
+             * 
+             * 
+             * @param scene const realtime_vdo_slam::VdoSlamScenePtr&
+             */
+            void update_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene);
 
             /**
              * @brief Publishes the slam image with bounding box, class and velocity information draw
@@ -124,8 +142,12 @@ namespace VDO_SLAM {
              */
             void publish_bounding_box_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene);
 
+            inline bool gt_odom_in_use() {return !odom_gt_topic.empty();}
+
+
 
             ros::NodeHandle nh;
+            int spin_rate;
 
             //publish VdoSlamScene msg
             ros::Publisher slam_scene_pub;
@@ -149,14 +171,22 @@ namespace VDO_SLAM {
             // subcrsibes to gt odom if exists. Odom gt topic defined in vdo_slam launch file
             std::string odom_gt_topic;
             ros::Subscriber odom_gt_sub;
+            nav_msgs::Odometry gt_odom;
+
+            std::string gps_topic;
+            ros::Subscriber gps_sub;
+            sensor_msgs::NavSatFix gps_msg;
+
+
             std::mutex display_mutex;
 
             tf2_ros::TransformBroadcaster broadcaster;
             tf2_ros::Buffer tf_buffer;
             tf2_ros::TransformListener listener;
 
-            nav_msgs::Odometry gt_odom;
 
+
+            //used for display mat
             const int x_offset = 150;
             const int y_offset = 150;
             const int scale = 6;

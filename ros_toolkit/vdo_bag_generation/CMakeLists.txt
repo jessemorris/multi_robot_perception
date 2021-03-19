@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
 	mask_rcnn
 	mono_depth_2
 	python_service_starter
+	realtime_vdo_slam
 	visualization_msgs
 	message_generation
 	std_msgs
@@ -137,6 +138,7 @@ catkin_package(
 	tf2_ros
 	tf2_sensor_msgs
 	nav_msgs
+	realtime_vdo_slam
 	sensor_msgs
 	cv_bridge
 	flow_net

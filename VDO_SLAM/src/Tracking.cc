@@ -561,7 +561,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                 continue;
             int l = mCurrentFrame.vObjLabel[i];
             if (l>25)
-                l = l/2;
+                l = l % 25;
             // int l = mCurrentFrame.vSemObjLabel[i];
             KeyPoints_tmp[0] = mCurrentFrame.mvObjKeys[i];
             if (KeyPoints_tmp[0].pt.x>=(mImGray.cols-1) || KeyPoints_tmp[0].pt.x<=0 || KeyPoints_tmp[0].pt.y>=(mImGray.rows-1) || KeyPoints_tmp[0].pt.y<=0)
@@ -743,9 +743,15 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
             scene_object.semantic_instance_index = mCurrentFrame.nSemPosition[i];
             scene_object.center_image = mCurrentFrame.vObjCentre2D[i];
 
+            int track =l;
+
+            //hack for viz so colours repeat
+            if (track > 25) {
+                track = track % 25;
+            }
 
             scene->add_scene_object(scene_object);
-            switch (l)
+            switch (track)
             {
                 case 1:
                     cv::circle(imTraj, cv::Point(x, y), radi, CV_RGB(128, 0, 128), thic); // orange

@@ -136,6 +136,7 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         input_msg.rgb = *img_msg;
 
         if(scene_flow_success && mask_rcnn_success && scene_flow_success) {
+            input_msg.header = original_header;
             vdo_input_pub.publish(input_msg);
         }
 

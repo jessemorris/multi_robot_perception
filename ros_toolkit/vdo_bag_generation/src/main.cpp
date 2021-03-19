@@ -4,6 +4,9 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <nav_msgs/Odometry.h>
+#include <sensor_msgs/NavSatFix.h>
+#include <realtime_vdo_slam/VdoInput.h>
+#include <cv_bridge/cv_bridge.h>
 
 #include <tf2_msgs/TFMessage.h>
 
@@ -33,7 +36,7 @@ class VdoBagPlayback {
             bag.open(out_file, rosbag::bagmode::Write);
             ROS_INFO_STREAM("Making output bag file: " << out_file);
 
-            std::vector<std::string> topics{"/map", "/odom", "/tf", "/tf_static", "/camera/camera_info", "/camera/sync"};
+            std::vector<std::string> topics{"/map", "/odom", "/tf", "/ublox_gps/fix", "/tf_static", "/camera/camera_info", "/camera/sync"};
 
             ros::Time time = ros::Time::now();
 
@@ -114,23 +117,48 @@ class VdoBagPlayback {
             bag.write("/camera/camera_info",save_time, *msg);
         }
 
-        void image_synch_callback(ImageConst raw_image, ImageConst mask, ImageConst mask_viz, ImageConst flow, ImageConst flow_viz, ImageConst depth) {
+        void gps_info_callback(const sensor_msgs::NavSatFixConstPtr& msg) {
+            ros::Time save_time = get_timing("/camera/camera_info", msg->header.stamp);
+            bag.write("/gps",save_time, *msg);
+        }
 
-            ROS_INFO_STREAM("Synch callback time " << raw_image->header.stamp);
-            ros::Time save_time = get_timing("/camera/sync", raw_image->header.stamp);
-            ROS_INFO_STREAM("Synch callback time now " << save_time);   
-            bag.write("/camera/rgb/image_raw",save_time, *raw_image);
+        void vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& input) {
+            ros::Time save_time = get_timing("/camera/sync", input->header.stamp);
+            ROS_INFO_STREAM("Synch callback time now " << save_time);
 
-            bag.write("/camera/mask/image_raw",save_time, *mask);
-            bag.write("/camera/mask/colour_mask",save_time, *mask_viz);
 
-            bag.write("/camera/flow/image_raw",save_time, *flow);
-            bag.write("/camera/flow/colour_map",save_time, *flow_viz);
+            bag.write("/camera/rgb/image_raw",save_time, input->rgb);
 
-            bag.write("/camera/depth/image_raw",save_time, *depth);
+            bag.write("/camera/mask/image_raw",save_time, input->mask);
+            // bag.write("/camera/mask/colour_mask",save_time, *mask_viz);
+
+            bag.write("/camera/flow/image_raw",save_time, input->flow);
+            // bag.write("/camera/flow/colour_map",save_time, *flow_viz);
+
+            bag.write("/camera/depth/image_raw",save_time, input->depth);
+
+            bag.write("/camera/all", save_time, *input);
 
 
         }
+        // void image_synch_callback(ImageConst raw_image, ImageConst mask, ImageConst mask_viz, ImageConst flow, ImageConst flow_viz, ImageConst depth) {
+
+        //     ROS_INFO_STREAM("Synch callback time " << raw_image->header.stamp);
+        //     ros::Time save_time = get_timing("/camera/sync", raw_image->header.stamp);
+        //     ROS_INFO_STREAM("Synch callback time now " << save_time);   
+        //     bag.write("/camera/rgb/image_raw",save_time, *raw_image);
+
+        //     bag.write("/camera/mask/image_raw",save_time, *mask);
+        //     bag.write("/camera/mask/colour_mask",save_time, *mask_viz);
+
+        //     bag.write("/camera/flow/image_raw",save_time, *flow);
+        //     bag.write("/camera/flow/colour_map",save_time, *flow_viz);
+
+        //     bag.write("/camera/depth/image_raw",save_time, *depth);
+
+
+
+        // }
 
     private:
 
@@ -195,6 +223,7 @@ int main(int argc, char **argv)
     std::string map_topic = "/localiser/map";
     std::string tf_static_topic = "/tf_static";
     std::string tf_topic = "/tf";
+    std::string gps_topic = "/ublox_gps/fix";
 
     //TODO: add gps - not needed for paper (we just need odom)
 
@@ -205,24 +234,26 @@ int main(int argc, char **argv)
     ros::Subscriber sub_tf_static = n.subscribe(tf_static_topic, 100, &VdoBagPlayback::tf_static_callback, &playback);
     ros::Subscriber sub_tf = n.subscribe(tf_topic, 100, &VdoBagPlayback::tf_callback, &playback);
     ros::Subscriber sub_camera_info = n.subscribe(camera_info_topic, 100, &VdoBagPlayback::camera_info_callback, &playback);
+    ros::Subscriber gps_sub_info = n.subscribe(gps_topic, 100, &VdoBagPlayback::gps_info_callback, &playback);
 
-    //these ones we must synchronize to a single time
-    message_filters::Subscriber<sensor_msgs::Image> image_raw_sub(n, input_video_topic, 10);
+    // //these ones we must synchronize to a single time
+    // message_filters::Subscriber<sensor_msgs::Image> image_raw_sub(n, input_video_topic, 10);
 
-    message_filters::Subscriber<sensor_msgs::Image> mask_rcnn_sub(n, mask_rcnn_topic, 10);
-    message_filters::Subscriber<sensor_msgs::Image> mask_rcnn_viz_sub(n, mask_rcnn_viz_topic, 10);
+    // message_filters::Subscriber<sensor_msgs::Image> mask_rcnn_sub(n, mask_rcnn_topic, 10);
+    // message_filters::Subscriber<sensor_msgs::Image> mask_rcnn_viz_sub(n, mask_rcnn_viz_topic, 10);
 
-    message_filters::Subscriber<sensor_msgs::Image> flow_sub(n, flow_net_topic, 10);
-    message_filters::Subscriber<sensor_msgs::Image> flow_viz_sub(n, flow_net_viz_topic, 10);
-    message_filters::Subscriber<sensor_msgs::Image> depth_sub(n, monodepth_topic, 10);
+    // message_filters::Subscriber<sensor_msgs::Image> flow_sub(n, flow_net_topic, 10);
+    // message_filters::Subscriber<sensor_msgs::Image> flow_viz_sub(n, flow_net_viz_topic, 10);
+    // message_filters::Subscriber<sensor_msgs::Image> depth_sub(n, monodepth_topic, 10);
 
-    message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, 
-                                      sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> sync(image_raw_sub,
-                                                                                                       mask_rcnn_sub, mask_rcnn_viz_sub, 
-                                                                                                       flow_sub, flow_viz_sub, 
-                                                                                                       depth_sub,  20);
+    // message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, 
+    //                                   sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> sync(image_raw_sub,
+    //                                                                                                    mask_rcnn_sub, mask_rcnn_viz_sub, 
+    //                                                                                                    flow_sub, flow_viz_sub, 
+    //                                                                                                    depth_sub,  20);
 
-    sync.registerCallback(boost::bind(&VdoBagPlayback::image_synch_callback, &playback, _1, _2, _3, _4, _5, _6));
+    // sync.registerCallback(boost::bind(&VdoBagPlayback::image_synch_callback, &playback, _1, _2, _3, _4, _5, _6));
+    ros::Subscriber vdo_input_sub = n.subscribe("/vdoslam/input/all",100, &VdoBagPlayback::vdo_input_callback, &playback );
 
     ros::spin();
     // playback.close();
