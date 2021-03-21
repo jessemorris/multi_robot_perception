@@ -79,6 +79,13 @@ namespace VDO_SLAM {
              */
             void odom_gt_callback(const nav_msgs::OdometryConstPtr& msg);
 
+            /**
+             * @brief Subscribes to sensor_msgs::NavSatFix if availble. Listens to the /ros_vdo/gps_topic defined in the launch file. Once a message
+             * comes in we use this to set the map frame relative to the odom frame. Currently not used for data fusion. 
+             * 
+             * @param msg 
+             */
+            void gps_callback(const sensor_msgs::NavSatFixConstPtr& msg);
 
 
         private:
@@ -144,6 +151,8 @@ namespace VDO_SLAM {
 
             inline bool gt_odom_in_use() {return !odom_gt_topic.empty();}
 
+            inline bool gps_in_use() {return !gps_topic.empty();}
+
 
 
             ros::NodeHandle nh;
@@ -171,6 +180,7 @@ namespace VDO_SLAM {
             // subcrsibes to gt odom if exists. Odom gt topic defined in vdo_slam launch file
             std::string odom_gt_topic;
             ros::Subscriber odom_gt_sub;
+            bool is_first_gps = true;
             nav_msgs::Odometry gt_odom;
 
             std::string gps_topic;

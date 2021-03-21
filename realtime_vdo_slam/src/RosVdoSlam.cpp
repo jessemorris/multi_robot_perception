@@ -370,12 +370,9 @@ void RosVdoSlam::vdo_worker() {
                 ros_viz->queue_slam_scene(summary_msg);
 
             }
-            cv::Mat disp = VDO_SLAM::overlay_scene_image(input->raw, summary_msg);
-            // // ros_scene_manager.display_scene(ros_scene);
-            // // ros_scene_manager.update_display_mat(ros_scene);
-
-            cv::imshow("Trajectory", disp);
-            cv::waitKey(1);
+            // cv::Mat disp = VDO_SLAM::overlay_scene_image(input->raw, summary_msg);
+            // cv::imshow("Trajectory", disp);
+            // cv::waitKey(1);
         }
     }
 

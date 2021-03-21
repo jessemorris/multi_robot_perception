@@ -78,6 +78,31 @@ namespace VDO_SLAM {
          */
         template<typename T>
         void apply_transform(const std::string& from_frame, const std::string& target_frame, const T& object, T* transformed_object, ros::Time& time = ros::Time());
+
+
+
+        /**
+         * Determine the correct UTM letter designator for the
+         * given latitude
+         *
+         * @returns 'Z' if latitude is outside the UTM limits of 84N to 80S
+         *
+         * Taken from: https://github.com/bsb808/geonav_transform/blob/master/include/geonav_transform/navsat_conversions.h
+         */
+        char UTMLetterDesignator(double Lat);
+
+        /**
+         * Convert lat/long to UTM coords.  Equations from USGS Bulletin 1532
+         *
+         * East Longitudes are positive, West longitudes are negative.
+         * North latitudes are positive, South latitudes are negative
+         * Lat and Long are in fractional degrees
+         *
+         * Taken from: https://github.com/bsb808/geonav_transform/blob/master/include/geonav_transform/navsat_conversions.h
+         */
+        void LLtoUTM(const double Lat, const double Long,
+                           double &UTMNorthing, double &UTMEasting,
+                           std::string &UTMZone);
     }
 
 }

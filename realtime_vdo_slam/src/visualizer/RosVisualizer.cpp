@@ -6,6 +6,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
 #include <nav_msgs/Odometry.h>
+#include <string>
 
 #include "utils/RosUtils.hpp"
 
@@ -57,14 +58,19 @@ namespace VDO_SLAM {
             nh.getParam("/ros_vdoslam/odometry_ground_truth_topic", odom_gt_topic);
             nh.getParam("/ros_vdoslam/gps_topic", gps_topic);
 
+
+            //Getting Frame ID's
+            nh.getParam("/ros_vdoslam/map_frame_id", map_frame);
+            nh.getParam("/ros_vdoslam/odom_frame_id", odom_frame);
+            nh.getParam("/ros_vdoslam/base_link_frame_id", base_frame);
+
             if(gt_odom_in_use()) {
                 odom_gt_sub = nh.subscribe<nav_msgs::Odometry>(odom_gt_topic, 100, &RosVisualizer::odom_gt_callback, this);
             }
 
-                //Getting Frame ID's
-            nh.getParam("/ros_vdoslam/map_frame_id", map_frame);
-            nh.getParam("/ros_vdoslam/odom_frame_id", odom_frame);
-            nh.getParam("/ros_vdoslam/base_link_frame_id", base_frame);
+            if(gps_in_use()) {
+                gps_sub = nh.subscribe<sensor_msgs::NavSatFix>(gps_topic, 100, &RosVisualizer::gps_callback, this);
+            }
 
 
             nav_msgs::Odometry odom;
@@ -106,7 +112,7 @@ namespace VDO_SLAM {
                 update_spin(slam_scene);
             }
             ros::spinOnce();
-            r.sleep();    
+            // r.sleep();    
         }
     }
 
@@ -125,6 +131,33 @@ namespace VDO_SLAM {
         gt_odom.pose.pose.position.z = 0;
 
         gt_odom.pose.pose.orientation = msg->pose.pose.orientation;
+    }
+
+    void RosVisualizer::gps_callback(const sensor_msgs::NavSatFixConstPtr& msg) {
+        if (is_first_gps) {
+            double easting, northing;
+            std::string zone;
+
+            double lat = msg->latitude;
+            double longitude = msg->longitude;
+
+            utils::LLtoUTM(lat, longitude, northing, easting, zone);
+            ROS_INFO_STREAM("Updating map topic with easting: " << easting << " northing: " << northing);
+
+            nav_msgs::Odometry odom;
+            odom.pose.pose.position.x = easting;
+            odom.pose.pose.position.y = northing;
+            odom.pose.pose.position.z = 0;
+
+            odom.pose.pose.orientation.x = 0;
+            odom.pose.pose.orientation.y = 0;
+            odom.pose.pose.orientation.z = 0;
+            odom.pose.pose.orientation.w = 1;
+            is_first_gps = false;
+
+            VDO_SLAM::utils::publish_static_tf(odom, map_frame, odom_frame);
+
+        }
     }
 
     bool RosVisualizer::update_spin(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
