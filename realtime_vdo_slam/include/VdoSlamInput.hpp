@@ -64,6 +64,10 @@ namespace VDO_SLAM {
 
     };
 
+    typedef std::shared_ptr<VdoSlamInput> VdoSlamInputPtr;
+    typedef std::unique_ptr<VdoSlamInput> VdoSlamInputUniquePtr;
+
+
 }
 
 

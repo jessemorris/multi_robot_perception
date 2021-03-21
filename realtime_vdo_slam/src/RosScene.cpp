@@ -100,9 +100,9 @@ realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
     msg->twist.linear.x = velocity.x;
     msg->twist.linear.y = velocity.y;
     msg->semantic_label = semantic_instance_index;
+
     //we should not label here becuase the scene object may not have the correct label
     msg->tracking_id = tracking_id;
-
     msg->time = time;
 
     return msg;
@@ -148,12 +148,7 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
 
 
 VDO_SLAM::RosScene::RosScene(realtime_vdo_slam::VdoSlamSceneConstPtr& _msg) :
-    time(_msg->header.stamp)
-{   
-
-
-
-}
+    time(_msg->header.stamp) {}
 
 const nav_msgs::Odometry& VDO_SLAM::RosScene::odom_msg() const {
     return odom;

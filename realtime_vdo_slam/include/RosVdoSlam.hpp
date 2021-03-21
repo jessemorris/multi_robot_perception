@@ -32,6 +32,7 @@
 #include "VdoSlamInput.hpp"
 #include "visualizer/RosVisualizer.hpp"
 #include "tracking/SemanticTracker.hpp"
+#include "utils/ThreadedQueue.hpp"
 #include  <realtime_vdo_slam/VdoInput.h>
 #include <realtime_vdo_slam/VdoSlamScene.h>
 
@@ -117,21 +118,21 @@ class RosVdoSlam {
          */
         void vdo_worker();
 
-        /**
-         * @brief Gets the latest input for the VDO_SLAM algorithm. This call can happen asynchronisly as the VDO algorithm
-         * will run at a different rate to the input. 
-         * 
-         * @return std::shared_ptr<VdoSlamInput> 
-         */
-        std::shared_ptr<VDO_SLAM::VdoSlamInput> pop_vdo_input();
+        // /**
+        //  * @brief Gets the latest input for the VDO_SLAM algorithm. This call can happen asynchronisly as the VDO algorithm
+        //  * will run at a different rate to the input. 
+        //  * 
+        //  * @return std::shared_ptr<VdoSlamInput> 
+        //  */
+        // std::shared_ptr<VDO_SLAM::VdoSlamInput> pop_vdo_input();
 
-        /**
-         * @brief Adds a new input for the VDO_SLAM algorithm. This call can happen asynchronisly as the VDO algorithm
-         * will run at a different rate to the input and is called from the callback function
-         * 
-         * @param input 
-         */
-        void push_vdo_input(std::shared_ptr<VDO_SLAM::VdoSlamInput>& input);
+        // /**
+        //  * @brief Adds a new input for the VDO_SLAM algorithm. This call can happen asynchronisly as the VDO algorithm
+        //  * will run at a different rate to the input and is called from the callback function
+        //  * 
+        //  * @param input 
+        //  */
+        // void push_vdo_input(std::shared_ptr<VDO_SLAM::VdoSlamInput>& input);
 
 
         int global_optim_trigger;
@@ -150,8 +151,9 @@ class RosVdoSlam {
         std::shared_ptr<VDO_SLAM::System> slam_system;
 
         //VdoSlam input
-        std::queue<std::shared_ptr<VDO_SLAM::VdoSlamInput>> vdo_input_queue;
-        std::mutex queue_mutex;
+        // std::queue<std::shared_ptr<VDO_SLAM::VdoSlamInput>> vdo_input_queue;
+        ThreadsafeQueue<VDO_SLAM::VdoSlamInputPtr> vdo_input_queue;
+        // std::mutex queue_mutex;
         std::thread vdo_worker_thread;
 
         ros::Subscriber vdo_input_sub;

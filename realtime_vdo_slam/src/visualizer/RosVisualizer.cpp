@@ -108,10 +108,12 @@ namespace VDO_SLAM {
         ros::Rate r(spin_rate);
         size_t rate_ms = rate * 1000; //convert to ms
         while(ros::ok() && !slam_scene_queue.isShutdown()) {
+            ROS_INFO_STREAM("spinning " << slam_scene_queue.size());
             if(slam_scene_queue.popBlockingWithTimeout(slam_scene, rate_ms)) {
                 update_spin(slam_scene);
+                ros::spinOnce();
+
             }
-            ros::spinOnce();
             // r.sleep();    
         }
     }
@@ -229,7 +231,7 @@ namespace VDO_SLAM {
         update_display_mat(scene);
 
         sensor_msgs::Image img_msg;
-        utils::mat_to_image_msg(img_msg, display, sensor_msgs::image_encodings::RGB8, scene->header);
+        utils::mat_to_image_msg(img_msg, display, sensor_msgs::image_encodings::BGR8, scene->header);
         object_track_pub.publish(img_msg);
     }
 
@@ -270,20 +272,16 @@ namespace VDO_SLAM {
         }
 
         //draw each object
-        std::vector<realtime_vdo_slam::VdoSceneObject>& scene_objects = scene->objects;
-
+        std::vector<realtime_vdo_slam::VdoSceneObject> scene_objects = scene->objects;
         for(realtime_vdo_slam::VdoSceneObject& scene_object : scene_objects) {
-            int x = scene_object.pose.orientation.x; 
-            int y = scene_object.pose.orientation.y;
+            double x = scene_object.pose.position.x; 
+            double y = scene_object.pose.position.y;
 
             ros::Time t = scene->header.stamp;
 
 
             int x_display =  static_cast<int>(x*scale) + x_offset;
             int y_display =  static_cast<int>(y*scale) + y_offset;
-
-            // ROS_INFO_STREAM("Tracking ID " << scene_object.tracking_id);
-
             int track = scene_object.tracking_id;
 
             //hack for viz so colours repeat
@@ -371,6 +369,8 @@ namespace VDO_SLAM {
                     break;
                 case 41:
                     cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(60, 20, 220), 5);
+                    break;
+                default:
                     break;
                 // default:
                 //     ROS_WARN_STREAM("No case for this segmentaion index yet");

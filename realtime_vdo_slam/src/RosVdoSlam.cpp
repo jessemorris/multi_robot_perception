@@ -243,7 +243,8 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
             mono_depth_mat, mask_rcnn_mat, semantic_objects, time_difference, current_time);
 
     //add the input to the thread queue so we can deal with it later
-    push_vdo_input(input);
+    // push_vdo_input(input);
+    vdo_input_queue.push(input);
     previous_time = current_time;
     
 }
@@ -266,16 +267,6 @@ realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_scene_semantics(RosSceneUni
         bb.push_back(object.bounding_box);
     }
 
-    //this will be a vector of length scene->get_scene_objects() where the value is an index
-    // associating the object semantic object. There will be more semantic objects than secene objects as not everything will be tracked
-    std::vector<int> tracked;
-    if (!points.empty()) {
-        tracked = tracker.assign_tracking_labels(points, bb);
-    }
-    else {
-        return nullptr;
-    }
-
     realtime_vdo_slam::VdoSlamScenePtr vdo_slam_scene(new realtime_vdo_slam::VdoSlamScene);
     //make pose out of camera pose
     vdo_slam_scene->camera_pose = scene->odom_msg().pose.pose;
@@ -285,59 +276,73 @@ realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_scene_semantics(RosSceneUni
     ros::Time scene_time = scene->get_ros_time();
     vdo_slam_scene->header.stamp = scene_time;
 
+    //this will be a vector of length scene->get_scene_objects() where the value is an index
+    // associating the object semantic object. There will be more semantic objects than secene objects as not everything will be tracked
+    std::vector<int> tracked;
+    if (!points.empty()) {
+        tracked = tracker.assign_tracking_labels(points, bb);
+    }
+    else {
+        tracked.resize(scene_objects.size());
+        //fill with -1 such that we dont try ad associate
+        std::fill(tracked.begin(), tracked.end(), -1);
+    }
+
 
     for(int i = 0; i < scene_objects.size(); i++) {
         int association = tracked[i];
 
         VDO_SLAM::RosSceneObject scene_object(scene_objects[i], scene_time);
+        realtime_vdo_slam::VdoSceneObjectPtr vdo_scene_object_ptr = scene_object.to_msg();
+ 
 
         //check association was valid
-        if (association < 0 || association >= semantic_objects.size()) {
-            ROS_WARN_STREAM("Tracking association was invalid: " << association << " from " << semantic_objects.size() << " objects.");
-            //do we skip object here?
-            continue;
+        if (association >= 0 || association < semantic_objects.size()) {
+            mask_rcnn::SemanticObject semantic_object = semantic_objects[association];
+
+            vdo_scene_object_ptr->label = semantic_object.label;
+            vdo_scene_object_ptr->bounding_box = semantic_object.bounding_box;
+
         }
-        mask_rcnn::SemanticObject semantic_object = semantic_objects[association];
+        else {
+           ROS_WARN_STREAM("Tracking association was invalid: " << association << " from " << semantic_objects.size() << " objects.");
 
-        realtime_vdo_slam::VdoSceneObjectPtr vdo_scene_object_ptr = scene_object.to_msg();
-        vdo_scene_object_ptr->label = semantic_object.label;
-        vdo_scene_object_ptr->bounding_box = semantic_object.bounding_box;
-
+        }
         // assert(vdo_scene_object_ptr->semantic_label == semantic_object.semantic_instance);
 
         vdo_slam_scene->objects.push_back(*vdo_scene_object_ptr);
 
     }
-
     return vdo_slam_scene;
 
 }
 
-std::shared_ptr<VdoSlamInput> RosVdoSlam::pop_vdo_input() {
-    queue_mutex.lock();
-    std::shared_ptr<VdoSlamInput> input = vdo_input_queue.front();
-    vdo_input_queue.pop();
-    queue_mutex.unlock();
-    return input;
-}
+// std::shared_ptr<VdoSlamInput> RosVdoSlam::pop_vdo_input() {
+//     queue_mutex.lock();
+//     std::shared_ptr<VdoSlamInput> input = vdo_input_queue.front();
+//     vdo_input_queue.pop();
+//     queue_mutex.unlock();
+//     return input;
+// }
 
-void RosVdoSlam::push_vdo_input(std::shared_ptr<VdoSlamInput>& input) {
-    queue_mutex.lock();
-    vdo_input_queue.push(input);
-    queue_mutex.unlock();
-}
+// void RosVdoSlam::push_vdo_input(std::shared_ptr<VdoSlamInput>& input) {
+//     queue_mutex.lock();
+//     vdo_input_queue.push(input);
+//     queue_mutex.unlock();
+// }
 
 
 void RosVdoSlam::vdo_worker() {
 
     std::unique_ptr<VDO_SLAM::Scene> scene;
-    while (ros::ok()) {
+    VdoSlamInputPtr input;
+    while (ros::ok() && !vdo_input_queue.isShutdown()) {
 
 
         //cam add semaphore here so we waste less CPU time but it seems fine for now
         if (!vdo_input_queue.empty()) {
 
-            std::shared_ptr<VdoSlamInput> input = pop_vdo_input();
+            vdo_input_queue.pop(input);
             ros::Time image_time = input->image_time;
 
             cv::Mat original_rgb;
@@ -366,13 +371,11 @@ void RosVdoSlam::vdo_worker() {
                 sensor_msgs::Image image_msg;
                 utils::mat_to_image_msg(image_msg, original_rgb, sensor_msgs::image_encodings::RGB8, summary_msg->header);
                 summary_msg->original_frame = image_msg;
-
                 ros_viz->queue_slam_scene(summary_msg);
 
+                
+
             }
-            // cv::Mat disp = VDO_SLAM::overlay_scene_image(input->raw, summary_msg);
-            // cv::imshow("Trajectory", disp);
-            // cv::waitKey(1);
         }
     }
 

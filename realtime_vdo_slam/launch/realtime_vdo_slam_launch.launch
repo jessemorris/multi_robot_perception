@@ -67,8 +67,8 @@
   <!-- <arg name="sf_mg_thresh" default="0.12"/>
   <arg name="sf_ds_thresh" default="0.3"/> -->
 
-  <arg name="sf_mg_thresh" default="0.15"/>
-  <arg name="sf_ds_thresh" default="0.8"/>
+  <arg name="sf_mg_thresh" default="0.2"/>
+  <arg name="sf_ds_thresh" default="0.3"/>
 
 
   <arg name="window_size" default="20"/>
