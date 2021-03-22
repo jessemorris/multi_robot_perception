@@ -149,4 +149,7 @@ namespace VDO_SLAM {
     }
 }
 
+typedef std::shared_ptr<VDO_SLAM::RosAsyncPublisher> RosAsyncPublisherPtr;
+typedef std::unique_ptr<VDO_SLAM::RosAsyncPublisher> RosAsyncPublisherUniquePtr;
+
 #endif

@@ -112,13 +112,6 @@ namespace VDO_SLAM {
             const nav_msgs::Odometry& odom_msg() const;
 
             /**
-            //  * @brief Constructs a visualisation in ROS of all the objects in the scene realtive to the vdo_slam world frame.
-            //  * 
-            //  * @param marker_array 
-            //  */
-            // void make_vizualisation(visualization_msgs::MarkerArray& marker_array);
-
-            /**
              * @brief Converts the object to a ROS msg so it can be broadcast. 
              * 
              * @return realtime_vdo_slam::VdoSlamScenePtr 
@@ -134,7 +127,6 @@ namespace VDO_SLAM {
 
         private:
             ros::Time time;
-
             nav_msgs::Odometry odom;
 
 

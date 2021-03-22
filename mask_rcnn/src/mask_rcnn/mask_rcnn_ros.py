@@ -205,51 +205,6 @@ class MaskRcnnRos(RosCppCommunicator):
 
         return composite, semantic_objects
 
-    # def create_pixel_masks(self, image, predictions):
-    #     """
-    #     Adds the instances contours for each predicted object.
-    #     Each label has a different color.
-
-    #     Arguments:
-    #         image (np.ndarray): an image as returned by OpenCV
-    #         predictions (BoxList): the result of the computation by the model.
-    #             It should contain the field `mask` and `labels`.
-    #     """
-    #     width = image.shape[0]
-    #     height = image.shape[1]
-    #     blank_mask = np.zeros((width, height),np.uint8)
-
-    #     if predictions is None:
-    #         return blank_mask, [], []
-    #     masks = predictions.get_field("mask")
-    #     label_indexs = predictions.get_field("labels").numpy()
-    #     labels = self.convert_label_index_to_string(label_indexs)
-
-    #     # colours = self.get_greyscale_colours(label_indexs)
-        
-    #     if masks.ndim < 3:
-    #         masks = np.expand_dims(masks, axis=0)
-    #         masks = np.expand_dims(masks, axis=0)
-
-    #     #track semantic labels in this map
-    #     # we want unique instance-level semantic labelling per class (so car: [1,2], person: [1,2])
-    #     instance_track = {}
-
-    #     for label_index in label_indexs:
-    #         # there is at least one of these objects in the list
-    #         instance_track[label_index] = 1
-
-    #     for mask, semantic_index in zip(masks, label_indexs):
-    #         label = instance_track[semantic_index]
-    #         thresh = mask[0, :, :].astype(np.uint8) * label
-    #         blank_mask += thresh
-    #         instance_track[semantic_index] += 1
-
-
-    #     composite = blank_mask
-
-
-    #     return composite, labels, label_indexs
 
     def convert_label_index_to_string(self, labels):
         return [self.coco_demo.CATEGORIES[i] for i in labels]

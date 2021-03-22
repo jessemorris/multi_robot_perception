@@ -235,10 +235,6 @@ namespace VDO_SLAM {
     typedef std::unique_ptr<RosVisualizer> RosVisualizerUniquePtr;
     typedef std::future<bool> RosVizualizerSpinHandler;
 
-    // std::future<bool> data_provider_handle =
-    //     std::async(std::launch::async,
-    //                &VIO::RosDataProviderInterface::spin,
-
 
 }
 

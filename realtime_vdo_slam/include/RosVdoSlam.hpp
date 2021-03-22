@@ -81,7 +81,6 @@ class RosVdoSlam {
          * @param vdo_input realtime_vdo_slam::VdoInput
          */
         void vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& vdo_input);
-        // void vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth);
 
     private:
         ros::NodeHandle handle;
@@ -119,23 +118,6 @@ class RosVdoSlam {
          */
         void vdo_worker();
 
-        // /**
-        //  * @brief Gets the latest input for the VDO_SLAM algorithm. This call can happen asynchronisly as the VDO algorithm
-        //  * will run at a different rate to the input. 
-        //  * 
-        //  * @return std::shared_ptr<VdoSlamInput> 
-        //  */
-        // std::shared_ptr<VDO_SLAM::VdoSlamInput> pop_vdo_input();
-
-        // /**
-        //  * @brief Adds a new input for the VDO_SLAM algorithm. This call can happen asynchronisly as the VDO algorithm
-        //  * will run at a different rate to the input and is called from the callback function
-        //  * 
-        //  * @param input 
-        //  */
-        // void push_vdo_input(std::shared_ptr<VDO_SLAM::VdoSlamInput>& input);
-
-
         int global_optim_trigger;
 
 
@@ -164,16 +146,8 @@ class RosVdoSlam {
         //map to hold tracking ID's to their class label
         std::map<TrackingID, ClassType> tracking_class_map;
 
-
-
         ros::Subscriber vdo_input_sub;
-        //data synchronizers
-        // message_filters::Subscriber<sensor_msgs::Image> raw_img;
-        // message_filters::Subscriber<sensor_msgs::Image> mask_img;
-        // message_filters::Subscriber<sensor_msgs::Image> flow_img;
-        // message_filters::Subscriber<sensor_msgs::Image> depth_img;
 
-        // message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> sync;
 
         ros::Time current_time;
         ros::Time previous_time;

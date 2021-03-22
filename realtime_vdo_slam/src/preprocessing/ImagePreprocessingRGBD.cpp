@@ -22,6 +22,7 @@
 #include <mask_rcnn/SemanticObject.h>
 #include <realtime_vdo_slam/VdoInput.h>
 
+#include "utils/RosUtils.hpp"
 // #incl
 #include <mono_depth_2/MonoDepthInterface.hpp>
 #include <mask_rcnn/MaskRcnnInterface.hpp>
@@ -33,7 +34,7 @@ ImageRGBD::ImageRGBD(ros::NodeHandle& n):
     BaseProcessing(n),
     raw_img(n,input_camera_topic, 100),
     depth_img(n,input_depth_camera_topic, 100),
-    sync(MySyncPolicy(10), raw_img, depth_img)
+    sync(MySyncPolicy(100), raw_img, depth_img)
 {
     sync.registerCallback(boost::bind(&ImageRGBD::image_callback, this, _1, _2));
 }
@@ -42,13 +43,19 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
     cv_bridge::CvImagePtr cv_ptr_rgb = cv_bridge::toCvCopy(*raw_image, sensor_msgs::image_encodings::RGB8);
     //we assume we can do this as the VDO pipeline expects the format to be in MONO16
     cv_bridge::CvImagePtr cv_ptr_depth = convert_img_msg(depth, sensor_msgs::image_encodings::MONO16);
-    // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
 
+    cv::Mat image_resize_rgb;
+    cv::resize(cv_ptr_rgb->image, image_resize_rgb, cv::Size(640, 480));
+
+
+    cv::Mat image_resize_depth;
+    cv::resize(cv_ptr_depth->image, image_resize_depth, cv::Size(640, 480));
     monodepth_raw.publish(cv_ptr_depth->toImageMsg());
 
 
 
-    cv::Mat distored = cv_ptr_rgb->image;
+
+    cv::Mat distored = image_resize_rgb;
     cv::Mat undistorted;
     
     cv::Mat image;
@@ -65,8 +72,18 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
     std::vector<mask_rcnn::SemanticObject> semantic_objects;
     realtime_vdo_slam::VdoInput input_msg;
 
-    input_msg.rgb = *raw_image;
-    input_msg.depth = *cv_ptr_depth->toImageMsg();
+    sensor_msgs::Image resized_rgb_msg;
+    utils::mat_to_image_msg(resized_rgb_msg, distored, sensor_msgs::image_encodings::RGB8);
+
+
+    sensor_msgs::Image resized_depth_msg;
+    utils::mat_to_image_msg(resized_depth_msg, image_resize_depth, sensor_msgs::image_encodings::MONO16);
+
+    // input_msg.rgb = *raw_image;
+    // input_msg.depth = *cv_ptr_depth->toImageMsg();
+
+    input_msg.rgb = resized_rgb_msg;
+    input_msg.depth = resized_depth_msg;
 
     cv::Mat tracked_mask;
     cv::Mat tracked_viz;
