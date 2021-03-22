@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <memory>
 
 namespace VDO_SLAM
 {
@@ -40,15 +41,6 @@ namespace VDO_SLAM
         public:
             Scene();
             Scene(int _id, double _timestamp);
-            // Scene(const Scene& scene) :
-            //     id(scene.get_id()),
-            //     timestamp(scene.get_timestamp()),
-            //     scene_objects(scene.scene_objects),
-            //     camera_pos_translation(scene.camera_pos_translation),
-            //     camera_pos_rotation(scene.camera_pos_rotation),
-            //     camera_vel_translation(scene.camera_vel_translation),
-            //     camera_vel_rotation(scene.camera_vel_rotation) {}
-
 
             const cv::Point3f& camera_pos_T() const;
             const cv::Mat& camera_pos_R() const;
@@ -82,5 +74,11 @@ namespace VDO_SLAM
     };
     
 } // namespace VDO_SLAM
+
+typedef std::shared_ptr<VDO_SLAM::SceneObject> VdoSlamSceneObjectPtr;
+typedef std::unique_ptr<VDO_SLAM::SceneObject> VdoSlamSceneObjectUniquePtr;
+
+typedef std::shared_ptr<VDO_SLAM::Scene> VdoSlamScenePtr;
+typedef std::unique_ptr<VDO_SLAM::Scene> VdoSlamSceneUniquePtr;
 
 #endif

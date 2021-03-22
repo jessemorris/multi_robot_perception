@@ -1015,9 +1015,7 @@ void Tracking::Track()
         // // ++++++++++++++++++++++++++++++++ Dynamic Object Tracking ++++++++++++++++++++++++++++++
         // // ---------------------------------------------------------------------------------------
 
-        cout << "Object Tracking ......" << endl;
         std::vector<std::vector<int> > ObjIdNew = DynObjTracking();
-        cout << "Object Tracking, Done!" << endl;
 
         // // ---------------------------------------------------------------------------------------
         // // ++++++++++++++++++++++++++++++ Object Motion Estimation +++++++++++++++++++++++++++++++
@@ -1025,7 +1023,6 @@ void Tracking::Track()
 
         clock_t s_3_1, s_3_2, e_3_1, e_3_2;
         double obj_mot_time = 0, t_con = 0;
-        cout << "obj Id New size " << ObjIdNew.size() << endl;
 
         mCurrentFrame.bObjStat.resize(ObjIdNew.size(),true);
         mCurrentFrame.vObjMod.resize(ObjIdNew.size());
@@ -1145,7 +1142,7 @@ void Tracking::Track()
 
             if (ObjIdTest_in.size()<50)
             {
-                cout << "Object Initialization Fail! ! !" << endl;
+                VDO_DEBUG_MSG("Object Initialization Fail! ! !");
                 mCurrentFrame.bObjStat[i] = false;
                 mCurrentFrame.vObjMod_gt[i] = cv::Mat::eye(4,4, CV_32F);
                 mCurrentFrame.vObjMod[i] = cv::Mat::eye(4,4, CV_32F);
@@ -1227,7 +1224,7 @@ void Tracking::Track()
             float sp_est_norm = std::sqrt( sp_est_v.at<float>(0)*sp_est_v.at<float>(0) + sp_est_v.at<float>(1)*sp_est_v.at<float>(1) + sp_est_v.at<float>(2)*sp_est_v.at<float>(2) )*36;
 
             // cout << "estimated and ground truth object speed: " << sp_est_norm << "km/h " << sp_gt_norm << "km/h " << endl;
-            cout << "estimated speed: " << sp_est_norm << "km/h " << endl;
+            // cout << "estimated speed: " << sp_est_norm << "km/h " << endl;
 
             mCurrentFrame.vSpeed[i].x = sp_est_norm*36;
             // mCurrentFrame.vSpeed[i].y = sp_gt_norm*36;
@@ -1349,7 +1346,6 @@ void Tracking::Track()
 
         // (5) camera pose
         cv::Mat CameraPoseTmp = Converter::toInvMatrix(mCurrentFrame.mTcw);
-        cout << "camera pose tmp " << CameraPoseTmp << endl;
         mpMap->vmCameraPose.push_back(CameraPoseTmp);
         mpMap->vmCameraPose_RF.push_back(CameraPoseTmp);
         // (6) Rigid motions and label, including camera (label=0) and objects (label>0)
@@ -1358,7 +1354,6 @@ void Tracking::Track()
         std::vector<bool> Obj_Stat_Tmp;
         // (6.1) Save Camera Motion and Label
         cv::Mat CameraMotionTmp = Converter::toInvMatrix(mVelocity);
-        cout << "camera motion tmp " << CameraMotionTmp << endl;
         Mot_Tmp.push_back(CameraMotionTmp);
         ObjPose_Tmp.push_back(CameraMotionTmp); //-> jesse comments this -> just looks like it shouldn't be here...?
         Mot_Lab_Tmp.push_back(0);
@@ -1438,7 +1433,7 @@ void Tracking::Track()
         // (10.3) Save to The Map
         mpMap->vmRigidCentre.push_back(Centre_Tmp);
 
-        cout << "Save Graph Structure, Done!" << endl;
+        // cout << "Save Graph Structure, Done!" << endl;
     }
 
     // =================================================================================================
@@ -1518,7 +1513,7 @@ void Tracking::Track()
 
 void Tracking::Initialization()
 {
-    cout << "Initialization ......" << endl;
+    // cout << "Initialization ......" << endl;
 
     // initialize the 3d points
     {
@@ -1553,9 +1548,9 @@ void Tracking::Initialization()
     mpMap->vmCameraPose_RF.push_back(cv::Mat::eye(4,4,CV_32F));
     mpMap->vmCameraPose_GT.push_back(cv::Mat::eye(4,4,CV_32F));
 
-    cout << "mpMap vpFfeatSta size " << mpMap->vpFeatSta.size() << endl;
-    cout << "mpMap vfDepSta size " << mpMap->vfDepSta.size() << endl;
-    cout << "mpMap vmCameraPose_GT size " << mpMap->vmCameraPose_GT.size() << endl;
+    // cout << "mpMap vpFfeatSta size " << mpMap->vpFeatSta.size() << endl;
+    // cout << "mpMap vfDepSta size " << mpMap->vfDepSta.size() << endl;
+    // cout << "mpMap vmCameraPose_GT size " << mpMap->vmCameraPose_GT.size() << endl;
 
     // cout << "mCurrentFrame.N: " << mCurrentFrame.N << endl;
 
@@ -1580,7 +1575,7 @@ void Tracking::Initialization()
 
     mState=OK;
 
-    cout << "Initialization, Done!" << endl;
+    // cout << "Initialization, Done!" << endl;
 }
 
 void Tracking::GetSceneFlowObj()
@@ -1682,10 +1677,10 @@ std::vector<std::vector<int> > Tracking::DynObjTracking()
     std::sort(UniLab.begin(), UniLab.end());
     UniLab.erase(std::unique( UniLab.begin(), UniLab.end() ), UniLab.end() );
 
-    cout << "Unique Semantic Label: ";
-    for (int i = 0; i < UniLab.size(); ++i)
-        cout  << UniLab[i] << " ";
-    cout << endl;
+    // cout << "Unique Semantic Label: ";
+    // for (int i = 0; i < UniLab.size(); ++i)
+    //     cout  << UniLab[i] << " ";
+    // cout << endl;
 
     // Collect the predicted labels and semantic labels in vector
     std::vector<std::vector<int> > Posi(UniLab.size());
@@ -1784,10 +1779,10 @@ std::vector<std::vector<int> > Tracking::DynObjTracking()
             }
         }
 
-        cout << "scene flow distribution:"  << endl;
-        for (int j = 0; j < sf_range.size(); ++j)
-            cout << sf_range[j] << " ";
-        cout << endl;
+        // cout << "scene flow distribution:"  << endl;
+        // for (int j = 0; j < sf_range.size(); ++j)
+        //     cout << sf_range[j] << " ";
+        // cout << endl;
 
         if (sf_count/ObjId[i].size()>fSFDsThres)
         {
@@ -1924,7 +1919,7 @@ cv::Mat Tracking::GetInitModelCam(const std::vector<int> &MatchId, std::vector<i
 {
     cv::Mat Mod = cv::Mat::eye(4,4,CV_32F);
     int N = MatchId.size();
-    cout << "Mat Id " << N << endl;
+    // cout << "Mat Id " << N << endl;
 
     // construct input
     std::vector<cv::Point2f> cur_2d(N);

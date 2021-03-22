@@ -52,6 +52,7 @@ typedef const sensor_msgs::ImageConstPtr& ImageConst;
 
 class RosVdoSlam {
 
+
     public:
         /**
          * @brief Runs the Vdo Slam algorithm in the ROS environment. VDO requires input as RGB image, semantic mask,
@@ -141,6 +142,8 @@ class RosVdoSlam {
         //VdoSlam
         int viz_rate;
         bool use_viz;
+
+        ros::Publisher scene_pub;
         VDO_SLAM::RosVisualizerPtr ros_viz;
         VDO_SLAM::RosVizualizerSpinHandler ros_viz_handler;
 
@@ -151,10 +154,17 @@ class RosVdoSlam {
         std::shared_ptr<VDO_SLAM::System> slam_system;
 
         //VdoSlam input
-        // std::queue<std::shared_ptr<VDO_SLAM::VdoSlamInput>> vdo_input_queue;
         ThreadsafeQueue<VDO_SLAM::VdoSlamInputPtr> vdo_input_queue;
         // std::mutex queue_mutex;
         std::thread vdo_worker_thread;
+
+        typedef int TrackingID;
+        typedef std::string ClassType;
+
+        //map to hold tracking ID's to their class label
+        std::map<TrackingID, ClassType> tracking_class_map;
+
+
 
         ros::Subscriber vdo_input_sub;
         //data synchronizers

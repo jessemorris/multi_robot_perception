@@ -43,17 +43,55 @@ cv::Mat VDO_SLAM::overlay_scene_image(const cv::Mat& image, const realtime_vdo_s
 namespace VDO_SLAM {
 
 
-    RosVisualizer::RosVisualizer(ros::NodeHandle& _nh)
-        : nh(_nh),
+    RosVisualizer::RosVisualizer()
+        : nh("ros_visualizer"),
+          async_pubs(publish_queue_ptr),
           image_transport(nh),
           listener(tf_buffer) {
 
-            slam_scene_pub = nh.advertise<realtime_vdo_slam::VdoSlamScene>("vdoslam/output/scene", 20);
-            slam_scene_3d_pub = nh.advertise<visualization_msgs::MarkerArray>("vdoslam/output/3dscene", 20);
-            odom_pub = nh.advertise<nav_msgs::Odometry>("vdoslam/output/odom", 20);
+            //create mems for async callback queues
+            vdo_scene_queue_ptr = std::make_shared<ros::CallbackQueue>();
+            publish_queue_ptr = std::make_shared<ros::CallbackQueue>();
 
-            bounding_box_pub = image_transport.advertise("vdoslam/output/bounding_box_image", 20);
-            object_track_pub = image_transport.advertise("vdoslam/output/object_point_image", 20);
+
+            //create async subscriber to our ros scene
+            static constexpr size_t kMaxSceneQueueSize = 1000u;
+            ros::SubscribeOptions vdo_slam_subscriber_options =
+                ros::SubscribeOptions::create<realtime_vdo_slam::VdoSlamScene>(
+                    "/vdoslam/output/scene",
+                    kMaxSceneQueueSize,
+                    boost::bind(&RosVisualizer::slam_scene_callback, this, _1),
+                    ros::VoidPtr(),
+                    vdo_scene_queue_ptr.get());
+
+            vdo_slam_subscriber_options.transport_hints.tcpNoDelay(true);
+
+            // Start VdoSlamScene subscriber
+            slam_scene_sub = nh.subscribe(vdo_slam_subscriber_options);
+
+            static constexpr size_t kSceneSpinnerThreads = 2u;
+            async_spinner_scene =
+                std::make_unique<ros::AsyncSpinner>(kSceneSpinnerThreads, vdo_scene_queue_ptr.get());
+
+            async_pubs.create<visualization_msgs::MarkerArray>("/vdoslam/output/3dscene",
+                    slam_scene_3d_pub, nh);
+
+            async_pubs.create<nav_msgs::Odometry>("/vdoslam/output/odom",
+                    odom_pub, nh);
+
+            
+            // async_pubs.create<
+
+            async_pubs.create<sensor_msgs::Image>("/vdoslam/output/bounding_box_image",
+                bounding_box_pub, image_transport);
+
+            async_pubs.create<sensor_msgs::Image>("/vdoslam/output/object_point_image",
+                object_track_pub, image_transport);
+
+            static constexpr size_t kPublishSpinnerThreads = 2u;
+            async_spinner_publish =
+                std::make_unique<ros::AsyncSpinner>(kPublishSpinnerThreads, publish_queue_ptr.get());
+
 
             nh.getParam("/ros_vdoslam/odometry_ground_truth_topic", odom_gt_topic);
             nh.getParam("/ros_vdoslam/gps_topic", gps_topic);
@@ -99,27 +137,33 @@ namespace VDO_SLAM {
     RosVisualizer::~RosVisualizer() {
         slam_scene_queue.shutdown();
         ROS_INFO_STREAM("Shutting down visualizer with " << slam_scene_queue.size());
-    }
 
-    bool RosVisualizer::spin_viz(int rate) {
-        realtime_vdo_slam::VdoSlamScenePtr slam_scene;
-        ROS_INFO_STREAM("Starting viz with rate: " << rate << "Hz.");
-        spin_rate = rate;
-        ros::Rate r(spin_rate);
-        size_t rate_ms = rate * 1000; //convert to ms
-        while(ros::ok() && !slam_scene_queue.isShutdown()) {
-            ROS_INFO_STREAM("spinning " << slam_scene_queue.size());
-            if(slam_scene_queue.popBlockingWithTimeout(slam_scene, rate_ms)) {
-                update_spin(slam_scene);
-                ros::spinOnce();
-
-            }
-            // r.sleep();    
+        if(scene_spinner_started) {
+            async_spinner_scene->stop();
+        }
+        if (publish_spinner_started) {
+            async_spinner_publish->stop();
         }
     }
 
-    bool RosVisualizer::queue_slam_scene(realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
-        return slam_scene_queue.push(slam_scene);
+    bool RosVisualizer::spin_viz(int rate) {
+
+        async_spinner_scene->start();
+        scene_spinner_started = true;
+        ROS_INFO_STREAM("Async Scene spinner started");
+
+        async_spinner_publish->start();
+        publish_spinner_started = true;
+        ROS_INFO_STREAM("Async Publish spinner started");
+
+        return true;
+
+    }
+
+    void RosVisualizer::slam_scene_callback(const realtime_vdo_slam::VdoSlamSceneConstPtr& slam_scene) {
+        boost::shared_ptr<realtime_vdo_slam::VdoSlamScene> slam_scene_ptr(boost::const_pointer_cast<realtime_vdo_slam::VdoSlamScene>(slam_scene));
+        // slam_scene_queue.push(slam_scene_ptr);
+        update_spin(slam_scene_ptr);
     }
 
     void RosVisualizer::odom_gt_callback(const nav_msgs::OdometryConstPtr& msg) {
@@ -164,16 +208,14 @@ namespace VDO_SLAM {
 
     bool RosVisualizer::update_spin(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
         publish_odom(slam_scene);
-        publish_scene(slam_scene);
-        // publish_3D_viz(slam_scene);
         publish_3D_viz(slam_scene);
         publish_display_mat(slam_scene);
         publish_bounding_box_mat(slam_scene);
     }
 
-    void RosVisualizer::publish_scene(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
-        slam_scene_pub.publish(slam_scene);
-    }
+    // void RosVisualizer::publish_scene(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
+    //     slam_scene_pub.publish(slam_scene);
+    // }
 
     void RosVisualizer::publish_odom(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
         nav_msgs::Odometry odom;
@@ -203,8 +245,6 @@ namespace VDO_SLAM {
             marker.pose.position.y = scene_object.pose.position.y;
             marker.pose.position.z = 0;
 
-
-
             marker.pose.orientation.x = 0.0;
             marker.pose.orientation.y = 0.0;
             marker.pose.orientation.z = 0.0;
@@ -216,7 +256,7 @@ namespace VDO_SLAM {
             marker.color.r = 0.0;
             marker.color.g = 1.0;
             marker.color.b = 0.0;
-            marker.lifetime = ros::Duration(1.0/spin_rate);
+            marker.lifetime = ros::Duration(2.0);
             // marker.text = scene_object.label;
             marker.text = scene_object.tracking_id;
             marker_array.markers.push_back(marker);
@@ -392,6 +432,8 @@ namespace VDO_SLAM {
         utils::mat_to_image_msg(img_msg, viz, sensor_msgs::image_encodings::RGB8, scene->header);
 
         bounding_box_pub.publish(img_msg);
+        cv::imshow("BB and vel", viz);
+        cv::waitKey(1);
 
     }
 

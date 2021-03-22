@@ -72,8 +72,8 @@ BaseProcessing::BaseProcessing(ros::NodeHandle& n) :
     }
 
     if(run_mono_depth && camera_type == eSensor::MONOCULAR) {
-        mono_depth.start_service();
-        // midas_depth.start_service();
+        // mono_depth.start_service();
+        midas_depth.start_service();
     }
 
     if (undistord_images) {

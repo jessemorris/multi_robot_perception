@@ -185,7 +185,8 @@ add_library(${PROJECT_NAME}
 	src/utils/RosUtils.cpp
 	src/tracking/HungarianSolver.cpp
 	src/tracking/SemanticTracker.cpp
-	src/visualizer/RosVisualizer.cpp)
+	src/visualizer/RosVisualizer.cpp
+	src/visualizer/RosAsyncPublisher.cpp)
 
 
 target_link_libraries(${PROJECT_NAME}

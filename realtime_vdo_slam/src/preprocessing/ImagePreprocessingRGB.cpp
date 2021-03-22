@@ -118,8 +118,8 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         }
 
         if (run_mono_depth) {
-            mono_depth_success = mono_depth.analyse(current_image, mono_depth_mat);
-            // mono_depth_success = midas_depth.analyse(current_image, mono_depth_mat);
+            // mono_depth_success = mono_depth.analyse(current_image, mono_depth_mat);
+            mono_depth_success = midas_depth.analyse(current_image, mono_depth_mat);
 
             if (mono_depth_success) {
                 sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "mono16", mono_depth_mat).toImageMsg();

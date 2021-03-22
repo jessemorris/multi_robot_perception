@@ -162,39 +162,3 @@ const ros::Time& VDO_SLAM::RosScene::get_ros_time() {
 realtime_vdo_slam::VdoSlamScenePtr VDO_SLAM::RosScene::to_msg() {
 
 }
-
-// void VDO_SLAM::RosScene::make_vizualisation(visualization_msgs::MarkerArray& marker_array) {
-//     for (SceneObject& scene_object: scene_objects) {
-//         visualization_msgs::Marker marker;
-//         marker.header.frame_id = child_frame_id;
-//         marker.header.stamp = time;
-//         marker.ns = "vdoslam";
-//         marker.id = scene_object.tracking_id;
-//         // marker.type = visualization_msgs::Marker::SPHERE;
-//         marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-//         marker.action = visualization_msgs::Marker::ADD;
-//         marker.pose.position.x = scene_object.pose.x;
-//         marker.pose.position.y = scene_object.pose.y;
-//         marker.pose.position.z = 0;
-
-
-
-//         marker.pose.orientation.x = 0.0;
-//         marker.pose.orientation.y = 0.0;
-//         marker.pose.orientation.z = 0.0;
-//         marker.pose.orientation.w = 1.0;
-//         marker.scale.x = 2;
-//         marker.scale.y = 2;
-//         marker.scale.z = 2;
-//         marker.color.a = 1.0; // Don't forget to set the alpha!
-//         marker.color.r = 0.0;
-//         marker.color.g = 1.0;
-//         marker.color.b = 0.0;
-//         marker.lifetime = ros::Duration();
-//         // marker.text = scene_object.label;
-//         marker.text = scene_object.tracking_id;
-//         marker_array.markers.push_back(marker);
-//         // vis_count++;
-//     }
-//
-//}

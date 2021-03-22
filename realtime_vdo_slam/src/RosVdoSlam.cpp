@@ -57,12 +57,12 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         handle.getParam("/ros_vdoslam/optimization_trigger_frame", global_optim_trigger);
         ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
 
-        ros_viz = std::make_shared<VDO_SLAM::RosVisualizer>(n);
         // std::future<bool> data_provider_handle =
     //     std::async(std::launch::async,
     //                &VIO::RosDataProviderInterface::spin,
 
         if (use_viz) {
+            ros_viz = std::make_shared<VDO_SLAM::RosVisualizer>();
             ros_viz_handler = std::async(std::launch::async,
                    &VDO_SLAM::RosVisualizer::spin_viz,
                    ros_viz.get(), viz_rate);
@@ -71,13 +71,14 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         previous_time = ros::Time::now();
         image_trajectory = cv::Mat::zeros(800, 600, CV_8UC3);
 
+        vdo_input_sub = handle.subscribe("/vdoslam/input/all", 100, &RosVdoSlam::vdo_input_callback, this);
+        scene_pub = handle.advertise<realtime_vdo_slam::VdoSlamScene>("/vdoslam/output/scene", 20);
+
 
         // slam_system = std::make_unique< VDO_SLAM::System>(vdo_slam_config_path,VDO_SLAM::eSensor::MONOCULAR);
         // slam_system = std::move(construct_slam_system(handle));
         slam_system = construct_slam_system(handle);
 
-        // sync.registerCallback(boost::bind(&RosVdoSlam::vdo_input_callback, this, _1, _2, _3, _4));
-        vdo_input_sub = handle.subscribe("/vdoslam/input/all", 100, &RosVdoSlam::vdo_input_callback, this);
         vdo_worker_thread = std::thread(&RosVdoSlam::vdo_worker, this);
 
 
@@ -303,9 +304,20 @@ realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_scene_semantics(RosSceneUni
             vdo_scene_object_ptr->label = semantic_object.label;
             vdo_scene_object_ptr->bounding_box = semantic_object.bounding_box;
 
+            //we naively add the label to the map. Here is an opportunity to check previous label
+            //for the same tracking ID and do some probalisitic matching but for now we wont
+            tracking_class_map.insert({vdo_scene_object_ptr->tracking_id, vdo_scene_object_ptr->label});
+
         }
         else {
-           ROS_WARN_STREAM("Tracking association was invalid: " << association << " from " << semantic_objects.size() << " objects.");
+            //try to get the previous label from the tracking ID
+            if (tracking_class_map.find(vdo_scene_object_ptr->tracking_id) != tracking_class_map.end() ) {
+                //found -> assign label to scene object. Note, we will not have bounding box
+                vdo_scene_object_ptr->label = tracking_class_map[vdo_scene_object_ptr->tracking_id];
+            } 
+            else {
+                ROS_WARN_STREAM("Tracking association was invalid: Coud not find association in tracking map or by matching");
+            }
 
         }
         // assert(vdo_scene_object_ptr->semantic_label == semantic_object.semantic_instance);
@@ -317,19 +329,6 @@ realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_scene_semantics(RosSceneUni
 
 }
 
-// std::shared_ptr<VdoSlamInput> RosVdoSlam::pop_vdo_input() {
-//     queue_mutex.lock();
-//     std::shared_ptr<VdoSlamInput> input = vdo_input_queue.front();
-//     vdo_input_queue.pop();
-//     queue_mutex.unlock();
-//     return input;
-// }
-
-// void RosVdoSlam::push_vdo_input(std::shared_ptr<VdoSlamInput>& input) {
-//     queue_mutex.lock();
-//     vdo_input_queue.push(input);
-//     queue_mutex.unlock();
-// }
 
 
 void RosVdoSlam::vdo_worker() {
@@ -367,11 +366,11 @@ void RosVdoSlam::vdo_worker() {
             ros_scene = std::move(unique_ros_scene);
             
             realtime_vdo_slam::VdoSlamScenePtr summary_msg = merge_scene_semantics(ros_scene, semantic_objects);
-            if(use_viz && summary_msg != nullptr) {
+            if(summary_msg != nullptr) {
                 sensor_msgs::Image image_msg;
                 utils::mat_to_image_msg(image_msg, original_rgb, sensor_msgs::image_encodings::RGB8, summary_msg->header);
                 summary_msg->original_frame = image_msg;
-                ros_viz->queue_slam_scene(summary_msg);
+                scene_pub.publish(*summary_msg);
 
                 
 

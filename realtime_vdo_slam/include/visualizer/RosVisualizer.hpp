@@ -26,6 +26,7 @@
 #include <realtime_vdo_slam/VdoSlamScene.h>
 
 #include "utils/ThreadedQueue.hpp"
+#include "RosAsyncPublisher.hpp"
 
 namespace VDO_SLAM {
 
@@ -43,7 +44,7 @@ namespace VDO_SLAM {
     class RosVisualizer {
 
         public:
-            RosVisualizer(ros::NodeHandle& _nh);
+            RosVisualizer();
             ~RosVisualizer();
 
             /**
@@ -57,14 +58,12 @@ namespace VDO_SLAM {
             bool spin_viz(int rate = 1);
 
             /**
-             * @brief Adds a slam scene to the visualizer queue. Each msg will be published from the queue 
-             * at the rate set from spin_viz. 
+             * @brief Asychronously subscribes to to the /vdoslam/output/scene topic, before adding the slam scene to a
+             * thread safe queue to be used by publishing spinners.
              * 
-             * @param slam_scene realtime_vdo_slam::VdoSlamScenePtr&
-             * @return true 
-             * @return false 
+             * @param slam_scene realtime_vdo_slam::VdoSlamSceneConstPtr&
              */
-            bool queue_slam_scene(realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
+            void slam_scene_callback(const realtime_vdo_slam::VdoSlamSceneConstPtr& slam_scene);
 
             /**
              * @brief Subscribes to nav_msgs::Odometry messages that will be used for ground truth. Listenes to the /ros_vdo/odometry_ground_truth_topic
@@ -107,12 +106,12 @@ namespace VDO_SLAM {
             void publish_odom(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
             /**
-             * @brief Publishes a VdoSlamScene msg.
-             * 
-             * @param slam_scene const realtime_vdo_slam::VdoSlamScenePtr&
-             */
+            //  * @brief Publishes a VdoSlamScene msg.
+            //  * 
+            //  * @param slam_scene const realtime_vdo_slam::VdoSlamScenePtr&
+            //  */
 
-            void publish_scene(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
+            // void publish_scene(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
 
             /**
@@ -158,8 +157,22 @@ namespace VDO_SLAM {
             ros::NodeHandle nh;
             int spin_rate;
 
-            //publish VdoSlamScene msg
-            ros::Publisher slam_scene_pub;
+            VDO_SLAM::RosAsyncPublisher async_pubs;
+
+
+            RosCallbackQueuePtr vdo_scene_queue_ptr;
+            //used for subscribing to the vdo scene topic
+            std::unique_ptr<ros::AsyncSpinner> async_spinner_scene;
+            bool scene_spinner_started = false;
+
+
+            RosCallbackQueuePtr publish_queue_ptr;
+            //used for subscribing to the vdo scene topic
+            std::unique_ptr<ros::AsyncSpinner> async_spinner_publish;
+            bool publish_spinner_started = false;
+
+            //subscribe to VdoSlamScene msg
+            ros::Subscriber slam_scene_sub;
             
             //publishes the slam scene as markers for RVIZ
             ros::Publisher slam_scene_3d_pub;
