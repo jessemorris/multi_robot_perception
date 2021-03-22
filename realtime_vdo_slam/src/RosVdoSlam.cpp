@@ -20,46 +20,13 @@
 using namespace VDO_SLAM;
 
 RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
-        handle(n)
-                // raw_img(handle,"/camera/rgb/image_raw", 100),
-        // mask_img(handle,"/camera/mask/image_raw", 100),
-        // flow_img(handle,"/camera/flow/image_raw", 100),
-        // depth_img(handle,"/camera/depth/image_raw", 100),
-        // sync(raw_img, mask_img, flow_img, depth_img, 100)
-
-    {
-        // //Getting Frame ID's
-        // handle.getParam("/ros_vdoslam/map_frame_id", map_frame_id);
-        // handle.getParam("/ros_vdoslam/odom_frame_id", odom_frame_id);
-        // handle.getParam("/ros_vdoslam/base_link_frame_id", base_link_frame_id);
-
-
-        // nav_msgs::Odometry odom;
-        // odom.pose.pose.position.x = 0;
-        // odom.pose.pose.position.y = 0;
-        // odom.pose.pose.position.z = 0;
-
-        // odom.pose.pose.orientation.x = 0;
-        // odom.pose.pose.orientation.y = 0;
-        // odom.pose.pose.orientation.z = 0;
-        // odom.pose.pose.orientation.w = 1;
-
-        // //setting map frame and odom frame to be the same
-        // VDO_SLAM::utils::publish_static_tf(odom, map_frame_id, odom_frame_id);
-
-        // //setting base link starting point to be the same as odom
-        // VDO_SLAM::utils::publish_static_tf(odom, odom_frame_id, base_link_frame_id);
-
+    handle(n) {
         handle.getParam("/ros_vdoslam/use_viz", use_viz);
         handle.getParam("/ros_vdoslam/viz_rate", viz_rate);
 
 
         handle.getParam("/ros_vdoslam/optimization_trigger_frame", global_optim_trigger);
         ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
-
-        // std::future<bool> data_provider_handle =
-    //     std::async(std::launch::async,
-    //                &VIO::RosDataProviderInterface::spin,
 
         if (use_viz) {
             ros_viz = std::make_shared<VDO_SLAM::RosVisualizer>();
@@ -74,9 +41,6 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         vdo_input_sub = handle.subscribe("/vdoslam/input/all", 100, &RosVdoSlam::vdo_input_callback, this);
         scene_pub = handle.advertise<realtime_vdo_slam::VdoSlamScene>("/vdoslam/output/scene", 20);
 
-
-        // slam_system = std::make_unique< VDO_SLAM::System>(vdo_slam_config_path,VDO_SLAM::eSensor::MONOCULAR);
-        // slam_system = std::move(construct_slam_system(handle));
         slam_system = construct_slam_system(handle);
 
         vdo_worker_thread = std::thread(&RosVdoSlam::vdo_worker, this);
@@ -320,7 +284,6 @@ realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_scene_semantics(RosSceneUni
             }
 
         }
-        // assert(vdo_scene_object_ptr->semantic_label == semantic_object.semantic_instance);
 
         vdo_slam_scene->objects.push_back(*vdo_scene_object_ptr);
 

@@ -47,12 +47,55 @@ namespace VDO_SLAM {
 
 
         public:
+            /**
+             * @brief Construct a new Ros Async Publisher object. This objects take a pointer to a specific callback queue and all publishers
+             * will add their messages to this queue (rather than the global callback queue). If this callback queue is attached to a sync spinner
+             * any call to publish will result in the messages being published asynchronously.
+             * 
+             * Note: The callback queue here is not set up to any spinner. This must be done after the publishers are set up. An example setup could be:
+             * 
+             * RosCallbackQueuePtr callback;
+             * RosAsyncPublisher async_pubs(callback);
+             * 
+             * ros::Publisher pub;
+             * ros::NodeHandle nh;
+             * 
+             * async.create<std_msgs::String>("/chatter", pub, nh);
+             * 
+             * ros::AsyncSpinner spinner(2, callback.get());
+             * 
+             * This will set the publisher object to advertise a String message on the topic /chatter, using the queue 'callback'. Once set up, 
+             * the callback queue is attached an asynchronous spinner. 
+             * 
+             * @param _callback_queue RosCallbackQueuePtr&
+             */
             RosAsyncPublisher(RosCallbackQueuePtr& _callback_queue);
             ~RosAsyncPublisher() {};
 
+            /**
+             * @brief Sets up a ros::Publisher to to publish to an synchronous ros callback queue. This takes the place of
+             * pub = nh.advertise<Type>(...).
+             * 
+             * @tparam MsgType The ros msg type this publisher will transport. In this case, MsgType should be anything other than
+             * sensor_msgs::Image, as we have a separate function for that.
+             * @param topic const std::string& The name of the topic to advertise.
+             * @param pub ros::Publisher&  The publisher to connect.
+             * @param node_handle ros::NodeHandle& The node handler used to initalise the publisher. 
+             * @param queue_size int The queue size to use. Defaults to 20.
+             */
             template <class MsgType>
             void create(const Topic& topic, ros::Publisher& pub, ros::NodeHandle& node_handle, int queue_size = 20);
 
+            /**
+             * @brief Sets up a image_transport::Publisher to to publish to an synchronous ros callback queue. This takes the place of
+             * pub = nh.advertise(...).
+             * 
+             * @tparam MsgType Must be sensor_msgs::Image.
+             * @param topic const std::string& The name of the topic to advertise.
+             * @param pub image_transport::Publisher& The image publisher to connect.
+             * @param node_handle image_transport::ImageTransport& The image transport node to use.
+             * @param queue_size int The queue size to use. Defaults to 20.
+             */
             template <class MsgType>
             void create(const Topic& topic, image_transport::Publisher& pub, image_transport::ImageTransport& node_handle, int queue_size = 20);
 

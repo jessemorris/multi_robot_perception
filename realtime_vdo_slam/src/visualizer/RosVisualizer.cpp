@@ -127,7 +127,6 @@ namespace VDO_SLAM {
 
             display = cv::Mat::zeros(800, 800, CV_8UC3);
 
-
             ROS_INFO_STREAM("Created VDO_SLAM visualizer");
 
     }
@@ -160,7 +159,6 @@ namespace VDO_SLAM {
 
     void RosVisualizer::slam_scene_callback(const realtime_vdo_slam::VdoSlamSceneConstPtr& slam_scene) {
         boost::shared_ptr<realtime_vdo_slam::VdoSlamScene> slam_scene_ptr(boost::const_pointer_cast<realtime_vdo_slam::VdoSlamScene>(slam_scene));
-        // slam_scene_queue.push(slam_scene_ptr);
         update_spin(slam_scene_ptr);
     }
 
