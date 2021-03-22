@@ -49,7 +49,9 @@ namespace VDO_SLAM {
 
             /**
              * @brief Spins the vizualizer asynchronously at a given rate. Upon execution all vdo slam scene messages
-             * in the callback queue will be displayed and published. 
+             * in the callback queue will be displayed and published. We use asynchronous ros callback queues for each vdoscene message
+             * and for all publishers. This is required to output the visualization at a high rate without taking up time for the VDO-SLAM
+             * algorithm to run. Each callback queue is given its own asynch spinner. 
              * 
              * @param rate int The rate at which the visualizer will spin. 
              * @return true 

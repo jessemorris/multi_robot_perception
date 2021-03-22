@@ -34,6 +34,15 @@ typedef std::shared_ptr<ros::CallbackQueue> RosCallbackQueuePtr;
 
 namespace VDO_SLAM {
 
+    /**
+     * @brief Managers a specific ros::CallbackQueue and adds publishers that will use this queue to be emptied asynchronously
+     * when the spinner is started. A single callback queue is given to the class and then the publisher is created. This takes the place
+     * of usual ros::Publisher pub = nh.advertise<Type>(topic, queue_size) syntax.
+     * 
+     * The create function is used instead and works for both image transport and default (ros::NodeHandle) nodes, as long as the correct MsgType
+     * and handler is provided to the function. 
+     * 
+     */
     class RosAsyncPublisher {
 
 

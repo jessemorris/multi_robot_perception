@@ -65,22 +65,19 @@ namespace VDO_SLAM {
                     vdo_scene_queue_ptr.get());
 
             vdo_slam_subscriber_options.transport_hints.tcpNoDelay(true);
-
-            // Start VdoSlamScene subscriber
             slam_scene_sub = nh.subscribe(vdo_slam_subscriber_options);
-
+            //create the actual async spinner to listen to the vdoslam/output/scene topic
             static constexpr size_t kSceneSpinnerThreads = 2u;
             async_spinner_scene =
                 std::make_unique<ros::AsyncSpinner>(kSceneSpinnerThreads, vdo_scene_queue_ptr.get());
 
+            //create all publishers that will use publish_queue_ptr (rather than the global queue)
+            //they will eventually be attached to async_spinner_publish
             async_pubs.create<visualization_msgs::MarkerArray>("/vdoslam/output/3dscene",
                     slam_scene_3d_pub, nh);
 
             async_pubs.create<nav_msgs::Odometry>("/vdoslam/output/odom",
                     odom_pub, nh);
-
-            
-            // async_pubs.create<
 
             async_pubs.create<sensor_msgs::Image>("/vdoslam/output/bounding_box_image",
                 bounding_box_pub, image_transport);
@@ -89,6 +86,7 @@ namespace VDO_SLAM {
                 object_track_pub, image_transport);
 
             static constexpr size_t kPublishSpinnerThreads = 2u;
+            //create the ros spinner that is responsible for publishing all visualization messages
             async_spinner_publish =
                 std::make_unique<ros::AsyncSpinner>(kPublishSpinnerThreads, publish_queue_ptr.get());
 
@@ -213,9 +211,6 @@ namespace VDO_SLAM {
         publish_bounding_box_mat(slam_scene);
     }
 
-    // void RosVisualizer::publish_scene(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
-    //     slam_scene_pub.publish(slam_scene);
-    // }
 
     void RosVisualizer::publish_odom(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
         nav_msgs::Odometry odom;
