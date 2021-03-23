@@ -29,9 +29,9 @@ namespace VDO_SLAM {
                     message_filters::Subscriber<sensor_msgs::Image> raw_img;
                     message_filters::Subscriber<sensor_msgs::Image> depth_img;
 
-                    // message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image> sync;
+                    message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image> sync;
 
-                    message_filters::Synchronizer<MySyncPolicy> sync;
+                    // message_filters::Synchronizer<MySyncPolicy> sync;
 
                     
         };

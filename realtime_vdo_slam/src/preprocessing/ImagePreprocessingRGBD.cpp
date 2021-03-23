@@ -34,7 +34,8 @@ ImageRGBD::ImageRGBD(ros::NodeHandle& n):
     BaseProcessing(n),
     raw_img(n,input_camera_topic, 100),
     depth_img(n,input_depth_camera_topic, 100),
-    sync(MySyncPolicy(100), raw_img, depth_img)
+    sync(raw_img, depth_img, 100)
+    // sync(MySyncPolicy(100), raw_img, depth_img)
 {
     sync.registerCallback(boost::bind(&ImageRGBD::image_callback, this, _1, _2));
 }
@@ -73,7 +74,7 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
     realtime_vdo_slam::VdoInput input_msg;
 
     sensor_msgs::Image resized_rgb_msg;
-    utils::mat_to_image_msg(resized_rgb_msg, distored, sensor_msgs::image_encodings::RGB8);
+    utils::mat_to_image_msg(resized_rgb_msg, distored, sensor_msgs::image_encodings::BGR8);
 
 
     sensor_msgs::Image resized_depth_msg;
@@ -96,6 +97,8 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
         return;
     }
     else {
+        input_msg.header = original_header;
+
         cv::Mat current_image = image;
         current_time = raw_image->header.stamp;
 

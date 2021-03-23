@@ -345,7 +345,6 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
                         // when it does mbf/depth/factor. 
                         float value = (imD.at<uint16_t>(i,j)/mDepthMapFactor);
                         mDepthMap.at<float>(i,j) = value;
-                        // VDO_INFO_MSG(mDepthMap.at<float>(i,j));
                     }
 
                      // when it does mbf/depth/factor. 
@@ -529,7 +528,9 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     // ---------------------------------------------------------------------------------------------
 
     // // // ************** display label on the image ***************  // //
-    VDO_DEBUG_MSG("bFrame2Frame " << bFrame2Frame);
+    if(timestamp == 0) {
+        VDO_ERROR_MSG("Timestamp was zero");
+    }
     cout << "timestamp " << timestamp << endl;
     if(timestamp!=0 && bFrame2Frame == true)
     {
@@ -555,6 +556,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
             cv::drawKeypoints(imRGB, KeyPoints_tmp, imRGB, cv::Scalar(0,0,0), 1); // red
         }
         // static and dynamic objects
+        VDO_INFO_MSG("Static + dynamic obj: " <<  mCurrentFrame.vObjLabel.size());
         for (int i = 0; i < mCurrentFrame.vObjLabel.size(); ++i)
         {
             if(mCurrentFrame.vObjLabel[i]==-1 || mCurrentFrame.vObjLabel[i]==-2)
@@ -1839,9 +1841,9 @@ std::vector<std::vector<int> > Tracking::DynObjTracking()
 
     // Relabel the objects that associate with the objects in last frame
 
-    // initialize global object id
-    if (f_id==1)
-        max_id = 1;
+    // initialize global object id -> commented out jesse
+    // if (f_id==1)
+    //     max_id = 1;
 
     // save current label id
     std::vector<int> LabId(ObjIdNew.size());

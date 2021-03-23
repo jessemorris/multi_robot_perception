@@ -182,7 +182,12 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
 // void RosVdoSlam::vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth) {
 void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& vdo_input) {
     //the actual time the image was craeted
-    current_time = vdo_input->rgb.header.stamp;
+
+    if(vdo_input->header.stamp.is_zero()) {
+        ROS_ERROR_STREAM("VDO SLAM input time is zero");
+    }
+
+    current_time = vdo_input->header.stamp;
     ros::Duration diff = current_time - previous_time;
     //time should be in n seconds or seconds (or else?)
     double time_difference = diff.toSec();
@@ -331,7 +336,7 @@ void RosVdoSlam::vdo_worker() {
             realtime_vdo_slam::VdoSlamScenePtr summary_msg = merge_scene_semantics(ros_scene, semantic_objects);
             if(summary_msg != nullptr) {
                 sensor_msgs::Image image_msg;
-                utils::mat_to_image_msg(image_msg, original_rgb, sensor_msgs::image_encodings::RGB8, summary_msg->header);
+                utils::mat_to_image_msg(image_msg, input->raw, sensor_msgs::image_encodings::RGB8, summary_msg->header);
                 summary_msg->original_frame = image_msg;
                 scene_pub.publish(*summary_msg);
 

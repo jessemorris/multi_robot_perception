@@ -66,7 +66,7 @@ include_directories(
 )
 
 set(PUBLIC_HEADER_FILES
-   #  include/vdo_slam.hpp
+    include/vdo_slam.hpp
     include/${PROJECT_NAME}/Converter.h
     include/${PROJECT_NAME}/Frame.h
     include/${PROJECT_NAME}/Map.h

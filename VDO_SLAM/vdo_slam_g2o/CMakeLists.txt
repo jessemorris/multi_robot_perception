@@ -102,8 +102,11 @@ find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 
 
-configure_file(cmake/${PROJECT_NAME}.hpp.in ${PROJECT_NAME}_config.hpp)
-set(VDO_SLAM_G2O_CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.hpp)
+# configure_file(cmake/${PROJECT_NAME}.hpp.in ${PROJECT_NAME}_config.hpp)
+# set(VDO_SLAM_G2O_CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.hpp)
+
+configure_file(cmake/${PROJECT_NAME}.hpp.in ${CMAKE_CURRENT_LIST_DIR}/include/${PROJECT_NAME}/${PROJECT_NAME}_config.hpp)
+set(VDO_SLAM_G2O_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/include/${PROJECT_NAME}/${PROJECT_NAME}_config.hpp)
 
 # include(CMakePackageConfigHelpers)
 # configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in
@@ -182,5 +185,5 @@ install(FILES
 #Install the config file to usr include space
 install(FILES
         ${VDO_SLAM_G2O_CONFIG_FILE}
-        DESTINATION DESTINATION include/${PROJECT_NAME}
+        DESTINATION include/${PROJECT_NAME}
 )

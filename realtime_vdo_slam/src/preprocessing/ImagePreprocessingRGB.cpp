@@ -67,6 +67,7 @@ void ImageRGB::image_callback(const sensor_msgs::ImageConstPtr& msg) {
         return;
     }
     else {
+        input_msg.header.stamp = msg->header.stamp;
         cv::Mat current_image = image;
         current_time = msg->header.stamp;
 

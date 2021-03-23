@@ -27,6 +27,7 @@
 #ifndef VDO_SLAM_G2O_STUFF_MISC_H
 #define VDO_SLAM_G2O_STUFF_MISC_H
 
+
 #include "vdo_slam_g2o/vdo_slam_g2o_config.hpp"
 
 #include "vdo_slam_g2o/stuff/macros.h"
