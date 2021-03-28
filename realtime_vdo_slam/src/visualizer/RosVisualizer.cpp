@@ -163,10 +163,10 @@ namespace VDO_SLAM {
     }
 
     void RosVisualizer::odom_gt_callback(const nav_msgs::OdometryConstPtr& msg) {
-        if (is_first) {
+        if (is_first_odom) {
             odom_x_offset = msg->pose.pose.position.x;
             odom_y_offset = msg->pose.pose.position.y;
-            is_first = false;
+            is_first_odom = false;
         }
         gt_odom.pose.pose.position.x = odom_x_offset - msg->pose.pose.position.x ;
         gt_odom.pose.pose.position.y = odom_y_offset - msg->pose.pose.position.y;
@@ -269,7 +269,7 @@ namespace VDO_SLAM {
     }
 
     void RosVisualizer::update_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene) {
-
+        display_mutex.lock();
         geometry_msgs::Pose pose = scene->camera_pose;
 
         double x = pose.position.x;
@@ -288,8 +288,9 @@ namespace VDO_SLAM {
         cv::putText(display, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
 
         if (gt_odom_in_use()) {
+            // ROS_INFO_STREAM(gt_odom);
             x = gt_odom.pose.pose.position.x;
-            y = -gt_odom.pose.pose.position.y;
+            y = - gt_odom.pose.pose.position.y;
             z = gt_odom.pose.pose.position.z;
             //here we update the odom repub to the display mat
             //we use 10 for scale    
@@ -411,6 +412,9 @@ namespace VDO_SLAM {
             }
 
         }
+
+        display_mutex.unlock();
+
 
 
     }

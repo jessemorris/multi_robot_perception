@@ -193,11 +193,15 @@ namespace VDO_SLAM {
 
 
             // subcrsibes to gt odom if exists. Odom gt topic defined in vdo_slam launch file
+            //Info needed for gt odom
+            bool is_first_odom = true;
+            float odom_x_offset;
+            float odom_y_offset;
             std::string odom_gt_topic;
             ros::Subscriber odom_gt_sub;
-            bool is_first_gps = true;
             nav_msgs::Odometry gt_odom;
 
+            bool is_first_gps = true;
             std::string gps_topic;
             ros::Subscriber gps_sub;
             sensor_msgs::NavSatFix gps_msg;
@@ -215,11 +219,6 @@ namespace VDO_SLAM {
             const int x_offset = 150;
             const int y_offset = 150;
             const int scale = 6;
-
-            //Info needed for gt odom
-            bool is_first;
-            float odom_x_offset;
-            float odom_y_offset;
             
             //frames for tf tree to publish on
             std::string map_frame;

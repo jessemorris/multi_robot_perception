@@ -1,10 +1,10 @@
 <launch>
 
-    <arg name="color_topic" default="/camera/color/image_raw"/>
+    <arg name="color_topic" default="/camera/rgb/image_raw"/>
     <!-- <arg name="color_topic" default="/read/camera/rgb/raw_image"/> -->
     <!-- <arg name="color_topic" default="/gmsl/A0/image_color"/> -->
     <!-- <arg name="color_info" default="/camera/camera_info"/> -->
-     <arg name="color_info" default="/camera/color/camera_info"/>
+     <arg name="color_info" default="/camera/camera_info"/>
 
     
 
