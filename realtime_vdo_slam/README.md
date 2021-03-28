@@ -43,19 +43,23 @@ The output is the same for both nodes. All output topics are prefaced with the n
 - _/camera/depth/image_raw_ -> estimated depth map of input image (N x M x 1, MONO16)
 
 
-__ros_vdo_slam__ node
+### ros_vdo_slam
+Runs the VDO-SLAM algorithm given the correct set of inputs from the pre-processing node (or else!)
 
-_input_ : the above */image_raw topics
+_input_ : _vdoslam/input/all/_  A _realtime_vdo_slam::VdoInput_ message containing all the Images needed for the VDO-SLAM algorithm
 
-_output_: some visulisation (TODO)
+All output messages will be on the _vdoslam/output/_ namespace
+_output_: 
 
 ## Running ##
+
+See the  realtime_vdo_slam_launch.launch for all the settings needed to run this program correctly. This includes online/offline behaviour and setting the VDO-SLAM params
 
 ### From Raw data
 
 ```
 $ roslaunch python_service_starter python_service_starter.launch
-$ roslaunch realtime_vdo_slam vdo_preprocessing.launch 
+$ roslaunch realtime_vdo_slam vdo_preprocessingX.launch 
 $ roslaunch realtime_vdo_slam realtime_vdo_slam_launch.launch 
 ```
 
