@@ -53,7 +53,8 @@ bool SortPairInt(const pair<int,int> &a,
 Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) : 
     mState(NO_IMAGES_YET),
     mpSystem(pSys), 
-    mpMap(pMap)
+    mpMap(pMap),
+    max_id(1)
 {
     // mSensor = params.sensor_type;
     // VDO_SLAM::eSensor sensor;
@@ -189,7 +190,7 @@ Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) :
 }
 
 Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const eSensor sensor):
-    mState(NO_IMAGES_YET), mSensor(sensor), mpSystem(pSys), mpMap(pMap)
+    mState(NO_IMAGES_YET), mSensor(sensor), mpSystem(pSys), mpMap(pMap), max_id(1)
 {
     // Load camera parameters from settings file
     cout << "mSensor " << mSensor << endl;
@@ -742,6 +743,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
             scene_object.pose = cv::Point3f(world_x, world_y, 0);
             scene_object.velocity = cv::Point2f(vel_x, vel_y);
             scene_object.tracking_id = l;
+            VDO_INFO_MSG(l);
             scene_object.semantic_instance_index = mCurrentFrame.nSemPosition[i];
             scene_object.center_image = mCurrentFrame.vObjCentre2D[i];
 

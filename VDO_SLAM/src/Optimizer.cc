@@ -1347,7 +1347,7 @@ void Optimizer::FullBatchOptimization(Map* pMap, const cv::Mat Calib_K)
     // ---------=============!!!=- Main Loop for input data -=!!!=============----------------
     // ---------------------------------------------------------------------------------------
     int count_unique_id = 1;
-    bool ROBUST_KERNEL = true, ALTITUDE_CONSTRAINT = false, SMOOTH_CONSTRAINT = true, STATIC_ONLY = false;
+    bool ROBUST_KERNEL = true, ALTITUDE_CONSTRAINT = false, SMOOTH_CONSTRAINT = true, STATIC_ONLY = true;
     float deltaHuberCamMot = 0.01, deltaHuberObjMot = 0.01, deltaHuber3D = 0.01;
     int PreFrameID;
     for (int i = 0; i < N; ++i)
