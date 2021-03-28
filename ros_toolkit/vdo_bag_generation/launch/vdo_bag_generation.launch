@@ -2,6 +2,6 @@
   <!-- We use sim time so that time starts from 0 and not from the walltime. This means playabck should start immediately  -->
   <param name="/use_sim_time" value="True"/>
   <param name="out_file" value="$(arg out_file)"/>
-  <param name="video_stream_namespace" type="string" value="/gmsl/A0/" />
+  <param name="video_stream_namespace" type="string" value="/camera/color/" />
   <node pkg="vdo_bag_generation" type="vdo_bag_generation_node" name="vdo_bag_generation" output="screen" />
 </launch>

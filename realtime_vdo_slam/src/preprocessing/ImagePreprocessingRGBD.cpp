@@ -74,7 +74,7 @@ void ImageRGBD::image_callback(ImageConst raw_image, ImageConst depth) {
     realtime_vdo_slam::VdoInput input_msg;
 
     sensor_msgs::Image resized_rgb_msg;
-    utils::mat_to_image_msg(resized_rgb_msg, distored, sensor_msgs::image_encodings::BGR8);
+    utils::mat_to_image_msg(resized_rgb_msg, distored, sensor_msgs::image_encodings::RGB8);
 
 
     sensor_msgs::Image resized_depth_msg;

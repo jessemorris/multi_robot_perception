@@ -1,12 +1,40 @@
 ### Contains nodes to pre-prrocess image data stream and then run the vdo-algorithm on this output
 
 ## Structure
-__image_preprocessing__ node
+### image_preprocessing_rgb
 
-_input_ : single camera steam topic (defined in _realtime_vdo.yaml_)
+Takes in an RGB image and the correspondong camera intrinsics and produces the output needed for VDO-SLAM.
 
-_output_:
+#### Running
 
+```
+$ roslaunch python_service_starter python_service_starter.launch
+$ roslaunch realtime_vdo_slam vdo_preprocessing_rgb.launch 
+```
+
+_input_ : 
+- color_topic:  (defined in vdo_preprocessing_rgb.launch) -> RGB uint8 _sensor_msgs::Image_ datatype. Must contain a comleted time stamp in the header file.
+- color_info: (defined in vdo_preprocessing_rgb.launch) -> stream with filled out _sensor_msgs::CameraInfo_ datatypes
+
+### image_preprocessing_rgbd
+
+Takes in an RGB image and a depth image from a stereo camera and does the same pre-processing as without the depth image
+#### Running
+
+```
+$ roslaunch python_service_starter python_service_starter.launch
+$ roslaunch realtime_vdo_slam vdo_preprocessing_rgbd.launch 
+```
+
+_input_ : 
+- color_topic:  (defined in vdo_preprocessing_rgbd.launch) -> RGB uint8 _sensor_msgs::Image_ datatype. Must contain a comleted time stamp in the header file.
+- color_info: (defined in vdo_preprocessing_rgbd.launch) -> stream with filled out _sensor_msgs::CameraInfo_ datatypes
+- depth_topic: (defined in vdo_preprocessing_rgbd.launch) -> MONO uint8 _sensor_msgs::Image_ datatype. Must contain a comleted time stamp in the header file.
+- depth_info: (defined in vdo_preprocessing_rgbd.launch) -> stream with filled out _sensor_msgs::CameraInfo_ datatypes
+
+The output is the same for both nodes. All output topics are prefaced with the namespace _/vdoslam/input/_. 
+
+- _/all/_ -> A _realtime_vdo_slam::VdoInput_ message containing all the Images needed for the VDO-SLAM algorithm
 - _/camera/rgb/image_raw_ -> same as the image defined by the input topic (N x M x 3, RGB)
 - _/camera/mask/image_raw_ -> image mask with pixels labelled 0...N where 0 notates the background. (N x M x 1, MONO8)
 - _/camera/mask/colour_mask_ -> image mask but each mask will be coloured coded for easy visualisation (N x M x 3, RGB)

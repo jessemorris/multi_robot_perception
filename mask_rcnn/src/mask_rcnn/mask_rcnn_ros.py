@@ -46,7 +46,7 @@ sys.path.insert(0, package_path)
 #e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml
 class MaskRcnnRos(RosCppCommunicator):
 
-    def __init__(self, config_path = package_path + "/src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"):
+    def __init__(self, config_path = package_path + "/src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_101_FPN_1x_caffe2.yaml"):
         RosCppCommunicator.__init__(self)
         self.model_config_path = config_path
         cfg.merge_from_file(self.model_config_path)
