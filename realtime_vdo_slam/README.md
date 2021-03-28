@@ -56,6 +56,9 @@ _output_:
 See the  realtime_vdo_slam_launch.launch for all the settings needed to run this program correctly. This includes online/offline behaviour and setting the VDO-SLAM params
 
 ### From Raw data
+From raw data means the entire pipeline is expected to be run (ie use the pre-processing nodes to generate the correct input for this node). In this case the "online" param should be set to true in the launch file. 
+
+If the data is collected in a bagfile, use "offline=False" in the launch file. The node will expect topics without the "vdoslam/input/" namespace.
 
 ```
 $ roslaunch python_service_starter python_service_starter.launch
