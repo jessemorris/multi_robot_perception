@@ -9,14 +9,15 @@
 
 
 #include "scene_graph/SceneGraphOptimizer.hpp"
-
+#include <minisam/core/Factor.h>
+#include <minisam/core/LossFunction.h>
 
 
 
 struct SlamObjectAssociation {
     ros::Time time;
     realtime_vdo_slam::VdoSceneObject object;
-    realtime_vdo_slam::VdoSlamScene* slam_scene_ptr;
+    realtime_vdo_slam::VdoSlamScenePtr slam_scene_ptr;
 
 };
 
@@ -29,6 +30,13 @@ typedef std::map<TrackingId, SlamObjectAssociationVector> DynObjectMap;
 typedef std::vector<realtime_vdo_slam::VdoSlamScene> SlamSceneVector;
 typedef std::vector<realtime_vdo_slam::VdoSceneObject> SlamObjectsVector;
 
+
+//m and c curve parameters from the optimization
+// where m and c define the function y=exp(mx+c)
+typedef std::pair<double, double> CurveParamPair;
+
+typedef std::pair<ros::Time, realtime_vdo_slam::VdoSlamScenePtr> SlamSceneTimePair;
+
 class SceneGraph {
 
     public:
@@ -36,13 +44,22 @@ class SceneGraph {
 
         // SlamObjectsVector get_current_objects();
         void add_dynamic_object(realtime_vdo_slam::VdoSlamScene& scene);
-        void optimize_object_poses();
+
+        std::map<TrackingId, CurveParamPair> optimize_object_poses();
+
+        void show_optimized_poses(std::map<TrackingId, CurveParamPair>& optimized_poses, int random_samples = -1);
+
+        SlamSceneVector reconstruct_slam_scene(std::map<TrackingId, CurveParamPair>& optimized_poses);
 
         
 
     private:
+
         ros::Time last_message_time;
         DynObjectMap dyn_object_map;
+        std::shared_ptr<minisam::LossFunction> loss;
+
+        std::vector<realtime_vdo_slam::VdoSlamScenePtr> slam_scenes;
 
 
 };

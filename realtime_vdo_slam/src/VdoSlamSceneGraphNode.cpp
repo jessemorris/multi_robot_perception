@@ -6,7 +6,8 @@ int main(int argc, char **argv) {
 
     VDO_SLAM::SceneGraphBuilder builder;
     
-    // builder.load_data();
-    // builder.construct_graph();
+    builder.load_data();
+    builder.construct_graph();
+    while (1);
     
 }

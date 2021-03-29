@@ -1,21 +1,26 @@
 #include "scene_graph/SceneGraphOptimizer.hpp"
 
-void CurveFittingVertex::setToOriginImpl() {
-    _estimate << 0,0,0;
+
+
+ExpCurveFittingFactor::ExpCurveFittingFactor(minisam::Key key, const Eigen::Vector2d& point,
+                            const std::shared_ptr<minisam::LossFunction>& lossfunc)
+    :   minisam::Factor(1, std::vector<minisam::Key>{key}, lossfunc), p_(point) {}
+
+std::shared_ptr<minisam::Factor> ExpCurveFittingFactor::copy() const {
+    return std::shared_ptr<Factor>(new ExpCurveFittingFactor(*this));
 }
 
-void CurveFittingVertex::oplusImpl(const double* update )
-{
-    _estimate += Eigen::Vector3d(update);
+Eigen::VectorXd ExpCurveFittingFactor::error(const minisam::Variables& values) const {
+    const Eigen::Vector2d& params = values.at<Eigen::Vector2d>(keys()[0]);
+    return (Eigen::VectorXd(1) << p_(1) - std::exp(params(0) * p_(0) + params(1)))
+        .finished();
 }
 
-CurveFittingEdge::CurveFittingEdge(double x)
-    :   BaseUnaryEdge(), 
-        _x(x) {}
-
-void CurveFittingEdge::computeError()
-{
-    const CurveFittingVertex* v = static_cast<const CurveFittingVertex*> (_vertices[0]);
-    const Eigen::Vector3d abc = v->estimate();
-    _error(0,0) = _measurement - std::exp( abc(0,0)*_x*_x + abc(1,0)*_x + abc(2,0) ) ;
+std::vector<Eigen::MatrixXd> ExpCurveFittingFactor::jacobians(const minisam::Variables& values) const {
+    const Eigen::Vector2d& params = values.at<Eigen::Vector2d>(keys()[0]);
+    return std::vector<Eigen::MatrixXd>{
+        (Eigen::MatrixXd(1, 2) <<
+            -p_(0) * std::exp(params(0) * p_(0) + params(1)),
+            -std::exp(params(0) * p_(0) + params(1)))
+        .finished()};
 }

@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.10)
 project(realtime_vdo_slam)
+
+
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -32,14 +34,21 @@ find_package(catkin REQUIRED COMPONENTS
 	midas_ros
 	sensor_msgs)
 
+
+
 find_package(OpenCV)
 find_package(vdo_slam REQUIRED)
-find_package(g2o REQUIRED)
-find_package(Eigen3 3.1.0 REQUIRED)
-find_package(CSparse REQUIRED)
-find_package(Cholmod REQUIRED)
+# find_package(GTSAM REQUIRED)
+find_package(minisam REQUIRED)
+set(minisam_INCLUDE_DIR /usr/local/include/minisam)
 
 
+
+# include(VerifyGtsamConfig)
+# option(ROS_VDO_SLAM_VERIFY_GTSAM_CONFIG "Check that GTSAM was compiled with the right options" OFF)
+# if (ROS_VDO_SLAM_VERIFY_GTSAM_CONFIG)
+#     verify_gtsam_config()
+# endif()
 ## Setup include directories
 #include_directories(${catkin_INCLUDE_DIRS},
 #  include/${PROJECT_NAME}
@@ -167,19 +176,6 @@ catkin_package(
 ## Build ##
 ###########
 
-LIST(APPEND G2O_LIBS
-  cxsparse
-  cholmod
-  g2o_cli g2o_simulator
-  g2o_solver_slam2d_linear g2o_types_icp g2o_types_slam2d
-  g2o_core g2o_solver_csparse g2o_solver_structure_only
-  g2o_types_sba g2o_types_slam3d g2o_csparse_extension
-  g2o_solver_dense g2o_stuff
-  g2o_types_sclam2d g2o_parser g2o_solver_pcg
-  g2o_types_data g2o_types_sim3
-)
-
-
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
@@ -188,12 +184,8 @@ include_directories(
 	${OpenCV_INCLUDE_DIRS}
 	${vdo_slam_INCLUDE_DIRS}
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${EIGEN_INCLUDE_DIRS}
-	${CSPARSE_INCLUDE_DIR}
-	${Cholmod_INCLUDE_DIR}
-	${G2O_INCLUDE_DIR}
-	# ${PROJECT_SOURCE_DIR}/../VDO_SLAM/include/
-	# ${PROJECT_SOURCE_DIR}/../VDO_SLAM/
+	# ${GTSAM_INCLUDE_DIR}
+	${minisam_INCLUDE_DIR}
 )
 
 add_library(${PROJECT_NAME}
@@ -208,11 +200,11 @@ add_library(${PROJECT_NAME}
 	src/tracking/SemanticTracker.cpp
 	src/visualizer/RosVisualizer.cpp
 	src/visualizer/RosAsyncPublisher.cpp
-	src/scene_graph/DataProviderInterface.cpp
-	src/scene_graph/RosBagDataProvider.cpp
-	src/scene_graph/SceneGraphBuilder.cpp
-	src/scene_graph/SceneGraph.cpp
-	src/scene_graph/SceneGraphOptimizer.cpp
+	# src/scene_graph/DataProviderInterface.cpp
+	# src/scene_graph/RosBagDataProvider.cpp
+	# src/scene_graph/SceneGraphBuilder.cpp
+	#src/scene_graph/SceneGraph.cpp
+	#src/scene_graph/SceneGraphOptimizer.cpp
 	)
 
 
@@ -220,10 +212,9 @@ target_link_libraries(${PROJECT_NAME}
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
 		${vdo_slam_LIB_DIRS}
-		${G2O_LIBS}
-		${CSPARSE_INCLUDE_DIR}
-  		${Cholmod_INCLUDE_DIR}
-		  
+		# gtsam
+    	# gtsam_unstable
+		minisam
 		)
 
 
@@ -289,22 +280,27 @@ endif()
 #### Vdo Slam Scene Graph Node
 add_executable(vdo_slam_scene_graph_node
 		src/VdoSlamSceneGraphNode.cpp
+		src/scene_graph/DataProviderInterface.cpp
+		src/scene_graph/RosBagDataProvider.cpp
+		src/scene_graph/SceneGraphBuilder.cpp
+		src/scene_graph/SceneGraph.cpp
+		src/scene_graph/SceneGraphOptimizer.cpp
 		)
 
 
 
-target_link_libraries(vdo_slam_scene_graph_node
+target_link_libraries(vdo_slam_scene_graph_node PUBLIC
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
 		${PROJECT_NAME}
+		minisam
 		)
 
 if(catkin_EXPORTED_LIBRARIES)
   add_dependencies(vdo_slam_scene_graph_node
 		  ${catkin_EXPORTED_LIBRARIES}
 		  ${catkin_LIBRARIES}
-		  ${OpenCV_LIBS}
-		  ${G2O_LIBS})
+		  ${OpenCV_LIBS})
 endif()
 
 
@@ -355,6 +351,10 @@ install(TARGETS ros_vdoslam_node image_preprocessing_node_rgb
 )
 
 install(TARGETS ros_vdoslam_node image_preprocessing_node_rgbd
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS ros_vdoslam_node vdo_slam_scene_graph_node
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

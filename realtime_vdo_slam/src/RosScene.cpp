@@ -84,6 +84,8 @@ VDO_SLAM::RosSceneObject::RosSceneObject(realtime_vdo_slam::VdoSceneObjectConstP
         //TODO: some assert if label not default - shoudl set this somehwere?
         label = _msg->label;
         tracking_id = _msg->tracking_id;
+        unique_id = _msg->uid;
+
 
     }
 
@@ -104,6 +106,7 @@ realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
     //we should not label here becuase the scene object may not have the correct label
     msg->tracking_id = tracking_id;
     msg->time = time;
+    msg->uid = unique_id;
 
     return msg;
 

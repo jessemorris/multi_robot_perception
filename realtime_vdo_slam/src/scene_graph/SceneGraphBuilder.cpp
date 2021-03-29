@@ -31,6 +31,8 @@ void SceneGraphBuilder::construct_graph() {
         graph->add_dynamic_object(slam_scene);
     }
 
-    graph->optimize_object_poses();
+    auto map = graph->optimize_object_poses();
+    // graph->show_optimized_poses(map, 4);
+    graph->reconstruct_slam_scene(map);
 
 }

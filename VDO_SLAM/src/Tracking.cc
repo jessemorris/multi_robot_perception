@@ -743,7 +743,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
             scene_object.pose = cv::Point3f(world_x, world_y, 0);
             scene_object.velocity = cv::Point2f(vel_x, vel_y);
             scene_object.tracking_id = l;
-            VDO_INFO_MSG(l);
+            scene_object.unique_id = i;
             scene_object.semantic_instance_index = mCurrentFrame.nSemPosition[i];
             scene_object.center_image = mCurrentFrame.vObjCentre2D[i];
 

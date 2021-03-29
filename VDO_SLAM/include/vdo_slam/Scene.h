@@ -18,6 +18,7 @@ namespace VDO_SLAM
         int semantic_instance_index; 
         std::string label;
         int tracking_id;
+        int unique_id;
 
 
         SceneObject(const SceneObject& scene_object) :
