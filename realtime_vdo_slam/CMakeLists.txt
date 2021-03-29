@@ -34,6 +34,11 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(OpenCV)
 find_package(vdo_slam REQUIRED)
+find_package(g2o REQUIRED)
+find_package(Eigen3 3.1.0 REQUIRED)
+find_package(CSparse REQUIRED)
+find_package(Cholmod REQUIRED)
+
 
 ## Setup include directories
 #include_directories(${catkin_INCLUDE_DIRS},
@@ -162,6 +167,18 @@ catkin_package(
 ## Build ##
 ###########
 
+LIST(APPEND G2O_LIBS
+  cxsparse
+  cholmod
+  g2o_cli g2o_simulator
+  g2o_solver_slam2d_linear g2o_types_icp g2o_types_slam2d
+  g2o_core g2o_solver_csparse g2o_solver_structure_only
+  g2o_types_sba g2o_types_slam3d g2o_csparse_extension
+  g2o_solver_dense g2o_stuff
+  g2o_types_sclam2d g2o_parser g2o_solver_pcg
+  g2o_types_data g2o_types_sim3
+)
+
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
@@ -171,6 +188,10 @@ include_directories(
 	${OpenCV_INCLUDE_DIRS}
 	${vdo_slam_INCLUDE_DIRS}
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${EIGEN_INCLUDE_DIRS}
+	${CSPARSE_INCLUDE_DIR}
+	${Cholmod_INCLUDE_DIR}
+	${G2O_INCLUDE_DIR}
 	# ${PROJECT_SOURCE_DIR}/../VDO_SLAM/include/
 	# ${PROJECT_SOURCE_DIR}/../VDO_SLAM/
 )
@@ -186,13 +207,23 @@ add_library(${PROJECT_NAME}
 	src/tracking/HungarianSolver.cpp
 	src/tracking/SemanticTracker.cpp
 	src/visualizer/RosVisualizer.cpp
-	src/visualizer/RosAsyncPublisher.cpp)
+	src/visualizer/RosAsyncPublisher.cpp
+	src/scene_graph/DataProviderInterface.cpp
+	src/scene_graph/RosBagDataProvider.cpp
+	src/scene_graph/SceneGraphBuilder.cpp
+	src/scene_graph/SceneGraph.cpp
+	src/scene_graph/SceneGraphOptimizer.cpp
+	)
 
 
 target_link_libraries(${PROJECT_NAME}
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
 		${vdo_slam_LIB_DIRS}
+		${G2O_LIBS}
+		${CSPARSE_INCLUDE_DIR}
+  		${Cholmod_INCLUDE_DIR}
+		  
 		)
 
 
@@ -252,6 +283,28 @@ if(catkin_EXPORTED_LIBRARIES)
 		  ${catkin_EXPORTED_LIBRARIES}
 		  ${catkin_LIBRARIES}
 		  ${OpenCV_LIBS})
+endif()
+
+
+#### Vdo Slam Scene Graph Node
+add_executable(vdo_slam_scene_graph_node
+		src/VdoSlamSceneGraphNode.cpp
+		)
+
+
+
+target_link_libraries(vdo_slam_scene_graph_node
+		${catkin_LIBRARIES}
+		${OpenCV_LIBS}
+		${PROJECT_NAME}
+		)
+
+if(catkin_EXPORTED_LIBRARIES)
+  add_dependencies(vdo_slam_scene_graph_node
+		  ${catkin_EXPORTED_LIBRARIES}
+		  ${catkin_LIBRARIES}
+		  ${OpenCV_LIBS}
+		  ${G2O_LIBS})
 endif()
 
 

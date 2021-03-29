@@ -40,6 +40,8 @@ namespace VDO_SLAM {
      */
     cv::Mat overlay_scene_image(const cv::Mat& image, const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
+    typedef std::future<bool> RosVizualizerSpinHandler;
+
 
     class RosVisualizer {
 
@@ -48,16 +50,22 @@ namespace VDO_SLAM {
             ~RosVisualizer();
 
             /**
+             * @brief Connects the handler to a function asynchronously.
+             * 
+             * @param handler RosVizualizerSpinHandler
+             */
+            void connect_handler(RosVizualizerSpinHandler& handler);
+
+            /**
              * @brief Spins the vizualizer asynchronously at a given rate. Upon execution all vdo slam scene messages
              * in the callback queue will be displayed and published. We use asynchronous ros callback queues for each vdoscene message
              * and for all publishers. This is required to output the visualization at a high rate without taking up time for the VDO-SLAM
              * algorithm to run. Each callback queue is given its own asynch spinner. 
              * 
-             * @param rate int The rate at which the visualizer will spin. 
              * @return true 
              * @return false 
              */
-            bool spin_viz(int rate = 1);
+            bool spin_viz();
 
             /**
              * @brief Asychronously subscribes to to the /vdoslam/output/scene topic, before adding the slam scene to a
@@ -107,14 +115,6 @@ namespace VDO_SLAM {
              */
             void publish_odom(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
-            /**
-            //  * @brief Publishes a VdoSlamScene msg.
-            //  * 
-            //  * @param slam_scene const realtime_vdo_slam::VdoSlamScenePtr&
-            //  */
-
-            // void publish_scene(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
-
 
             /**
              * @brief Publishes a slam scene as a visualization marker array to be displayed in RVIZ
@@ -159,7 +159,7 @@ namespace VDO_SLAM {
             ros::NodeHandle nh;
             int spin_rate;
 
-            VDO_SLAM::RosAsyncPublisher async_pubs;
+            VDO_SLAM::RosAsyncManager async_manager;
 
 
             RosCallbackQueuePtr vdo_scene_queue_ptr;
@@ -232,7 +232,6 @@ namespace VDO_SLAM {
 
     typedef std::shared_ptr<RosVisualizer> RosVisualizerPtr;
     typedef std::unique_ptr<RosVisualizer> RosVisualizerUniquePtr;
-    typedef std::future<bool> RosVizualizerSpinHandler;
 
 
 }

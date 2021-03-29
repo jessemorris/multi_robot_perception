@@ -45,7 +45,7 @@ namespace VDO_SLAM {
 
     RosVisualizer::RosVisualizer()
         : nh("ros_visualizer"),
-          async_pubs(publish_queue_ptr),
+          async_manager(publish_queue_ptr),
           image_transport(nh),
           listener(tf_buffer) {
 
@@ -73,16 +73,16 @@ namespace VDO_SLAM {
 
             //create all publishers that will use publish_queue_ptr (rather than the global queue)
             //they will eventually be attached to async_spinner_publish
-            async_pubs.create<visualization_msgs::MarkerArray>("/vdoslam/output/3dscene",
+            async_manager.create<visualization_msgs::MarkerArray>("/vdoslam/output/3dscene",
                     slam_scene_3d_pub, nh);
 
-            async_pubs.create<nav_msgs::Odometry>("/vdoslam/output/odom",
+            async_manager.create<nav_msgs::Odometry>("/vdoslam/output/odom",
                     odom_pub, nh);
 
-            async_pubs.create<sensor_msgs::Image>("/vdoslam/output/bounding_box_image",
+            async_manager.create<sensor_msgs::Image>("/vdoslam/output/bounding_box_image",
                 bounding_box_pub, image_transport);
 
-            async_pubs.create<sensor_msgs::Image>("/vdoslam/output/object_point_image",
+            async_manager.create<sensor_msgs::Image>("/vdoslam/output/object_point_image",
                 object_track_pub, image_transport);
 
             static constexpr size_t kPublishSpinnerThreads = 2u;
@@ -143,7 +143,13 @@ namespace VDO_SLAM {
         }
     }
 
-    bool RosVisualizer::spin_viz(int rate) {
+    void RosVisualizer::connect_handler(RosVizualizerSpinHandler& handler) {
+        handler = std::async(std::launch::async,
+                   &VDO_SLAM::RosVisualizer::spin_viz,
+                   this);
+    }
+
+    bool RosVisualizer::spin_viz() {
 
         async_spinner_scene->start();
         scene_spinner_started = true;

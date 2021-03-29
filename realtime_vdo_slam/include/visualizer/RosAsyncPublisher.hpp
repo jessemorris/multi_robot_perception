@@ -43,12 +43,12 @@ namespace VDO_SLAM {
      * and handler is provided to the function. 
      * 
      */
-    class RosAsyncPublisher {
+    class RosAsyncManager {
 
 
         public:
             /**
-             * @brief Construct a new Ros Async Publisher object. This objects take a pointer to a specific callback queue and all publishers
+             * @brief Construct a new RosAsyncManager object. This objects take a pointer to a specific callback queue and all publishers
              * will add their messages to this queue (rather than the global callback queue). If this callback queue is attached to a sync spinner
              * any call to publish will result in the messages being published asynchronously.
              * 
@@ -69,8 +69,8 @@ namespace VDO_SLAM {
              * 
              * @param _callback_queue RosCallbackQueuePtr&
              */
-            RosAsyncPublisher(RosCallbackQueuePtr& _callback_queue);
-            ~RosAsyncPublisher() {};
+            RosAsyncManager(RosCallbackQueuePtr& _callback_queue);
+            ~RosAsyncManager() {};
 
             /**
              * @brief Sets up a ros::Publisher to to publish to an synchronous ros callback queue. This takes the place of
@@ -110,14 +110,16 @@ namespace VDO_SLAM {
             RosCallbackQueuePtr callback_queue_ptr;
     };
 
+
+
     template <class MsgType>
-    void RosAsyncPublisher::create(const Topic& topic, ros::Publisher& pub, ros::NodeHandle& node_handle, int queue_size) {
+    void RosAsyncManager::create(const Topic& topic, ros::Publisher& pub, ros::NodeHandle& node_handle, int queue_size) {
 
         ros::SubscriberStatusCallback connect_cb =
-                boost::bind(&RosAsyncPublisher::connect_callback, this, _1);
+                boost::bind(&RosAsyncManager::connect_callback, this, _1);
 
         ros::SubscriberStatusCallback disconnect_cb =
-                boost::bind(&RosAsyncPublisher::disconnect_callback, this, _1);
+                boost::bind(&RosAsyncManager::disconnect_callback, this, _1);
 
         ros::AdvertiseOptions publisher_options =
                 ros::AdvertiseOptions::create<MsgType>(topic, queue_size,
@@ -131,14 +133,14 @@ namespace VDO_SLAM {
     }
 
     template <class MsgType>
-    void RosAsyncPublisher::create(const Topic& topic, image_transport::Publisher& pub, 
+    void RosAsyncManager::create(const Topic& topic, image_transport::Publisher& pub, 
         image_transport::ImageTransport& node_handle, int queue_size) {
 
         image_transport::SubscriberStatusCallback connect_cb =
-                boost::bind(&RosAsyncPublisher::connect_callback_image, this, _1);
+                boost::bind(&RosAsyncManager::connect_callback_image, this, _1);
 
         image_transport::SubscriberStatusCallback disconnect_cb =
-                boost::bind(&RosAsyncPublisher::disconnect_callback_image, this, _1);
+                boost::bind(&RosAsyncManager::disconnect_callback_image, this, _1);
 
 
         pub = node_handle.advertise(topic, queue_size,
@@ -149,7 +151,7 @@ namespace VDO_SLAM {
     }
 }
 
-typedef std::shared_ptr<VDO_SLAM::RosAsyncPublisher> RosAsyncPublisherPtr;
-typedef std::unique_ptr<VDO_SLAM::RosAsyncPublisher> RosAsyncPublisherUniquePtr;
+typedef std::shared_ptr<VDO_SLAM::RosAsyncManager> RosAsyncPublisherPtr;
+typedef std::unique_ptr<VDO_SLAM::RosAsyncManager> RosAsyncPublisherUniquePtr;
 
 #endif
