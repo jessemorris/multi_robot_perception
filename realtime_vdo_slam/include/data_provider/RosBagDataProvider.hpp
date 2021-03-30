@@ -10,7 +10,11 @@
 
 namespace VDO_SLAM {
 
-
+    /**
+     * @brief Currently only a wrapper for realtime_vdo_slam::VdoSlamScene bag files (with camera info messages.)
+     * So the data is only after the result of the vdoslam algorithm
+     * 
+     */
     class RosBagDataProvider : public DataProviderInterface {
 
         public:

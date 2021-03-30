@@ -4,10 +4,13 @@
 #include <ros/ros.h>
 #include <vector>
 #include <realtime_vdo_slam/VdoSlamScene.h>
+#include <sensor_msgs/CameraInfo.h>
 
-// #include "scene_graph/SceneGraph.hpp"
+#include "scene_graph/SceneGraph.hpp"
 #include "visualizer/RosVisualizer.hpp"
 #include "data_provider/RosBagDataProvider.hpp"
+
+#include "CameraInformation.hpp"
 
 
 namespace VDO_SLAM {
@@ -18,6 +21,7 @@ namespace VDO_SLAM {
             SceneGraphBuilder();
 
             void slam_scene_callback(const realtime_vdo_slam::VdoSlamSceneConstPtr& scene);
+            void camera_info_callback(const sensor_msgs::CameraInfoConstPtr& camera_info_msg);
             void load_data();
             void construct_graph();
 
@@ -31,7 +35,9 @@ namespace VDO_SLAM {
 
 
             std::vector<realtime_vdo_slam::VdoSlamSceneConstPtr> slam_scenes;
-            //SceneGraphPtr graph;
+            SceneGraphPtr graph;
+
+            CameraInformationPtr camera_info;
 
 
     };

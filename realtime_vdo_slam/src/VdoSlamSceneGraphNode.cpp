@@ -8,6 +8,6 @@ int main(int argc, char **argv) {
     
     builder.load_data();
     builder.construct_graph();
-    while (1);
+    // ros::spin();
     
 }

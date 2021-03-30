@@ -1,7 +1,9 @@
 <launch>
 
+  <include file="$(find realtime_vdo_slam)/launch/vdo_pipeline.launch" />
+
   <!-- If True expects topics directly from the vdo_slam_preprocessing node. This results in a remapping -->
-  <arg name="online" default="false" />
+  <arg name="online" default="true" />
 
    <!-- If True VDO will load the System parameters from the calibtration file in the config folder
    If False, will use the calibration params defined here and the specified camera info topic  -->
@@ -84,28 +86,16 @@
   <arg name="min_th_fast" default="7"/>
 
 
-  <!-- Empty string ("") means no ground-truth available. Used for init if
-   requested to do ground-truth initialization. -->
-  <arg name="odometry_ground_truth_topic"       default="/odom"/>
-
-  <!-- Frame IDs -->
-  <arg name="map_frame_id"       default="vdomap"/>
-  <arg name="odom_frame_id"     default="vdoodom"/>
-  <arg name="base_link_frame_id" default="vdobase_link"/>
-
-  <!--Input gps topic name if available-->
-  <arg name="gps_topic"       default=""/>
-
 
 
   <!-- <param name="frame_id" value="vdo_camera_link" />
   <param name="global_optim_trigger" value="100" /> -->
 
-  <group ns="mask_rcnn_interface">
+  <!-- <group ns="mask_rcnn_interface">
     <param name="coco_dataset" value="ms_coco_classnames.json" />
-  </group>
+  </group> -->
 
-  <node pkg="realtime_vdo_slam" type="ros_vdoslam_node" name="ros_vdoslam" output="screen">
+  <node pkg="realtime_vdo_slam" type="ros_vdoslam_node" name="ros_vdo_slam" output="screen">
 
     <param name="online" value="$(arg online)" />
     <!--  MONOCULAR=0, STEREO=1, RGBD=2-->
@@ -143,10 +133,6 @@
     on topic defined in config file. Else, use the camera info defined here. -->
     <param name="use_camera_info_topic" value="$(arg use_camera_info_topic)" unless="$(arg use_calibration_file)"/>
 
-    <!-- Empty string ("") means no ground-truth available. Used for init if
-    requested to do ground-truth initialization. -->
-    <param name="odometry_ground_truth_topic"       value="$(arg odometry_ground_truth_topic)"/>
-    <param name="gps_topic" value="$(arg gps_topic)"/>
 
     <!-- VDO SLAM params. Used if use_calibration_file is false -->
     <param name="fx" value="$(arg fx)" unless="$(arg use_calibration_file)"/>
@@ -175,10 +161,6 @@
     <param name="ini_th_fast" value="$(arg ini_th_fast)" unless="$(arg use_calibration_file)"/>
     <param name="min_th_fast" value="$(arg min_th_fast)" unless="$(arg use_calibration_file)"/>
 
-    <!-- Frame IDs -->
-    <param name="map_frame_id"        value="$(arg map_frame_id)"/>
-    <param name="odom_frame_id"      value="$(arg odom_frame_id)"/>
-    <param name="base_link_frame_id"  value="$(arg base_link_frame_id)"/>
 
 
   </node>

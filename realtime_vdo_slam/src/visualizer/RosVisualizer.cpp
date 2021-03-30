@@ -91,14 +91,14 @@ namespace VDO_SLAM {
                 std::make_unique<ros::AsyncSpinner>(kPublishSpinnerThreads, publish_queue_ptr.get());
 
 
-            nh.getParam("/ros_vdoslam/odometry_ground_truth_topic", odom_gt_topic);
-            nh.getParam("/ros_vdoslam/gps_topic", gps_topic);
+            nh.getParam("/vdo_pipeline/visualizer/odometry_ground_truth_topic", odom_gt_topic);
+            nh.getParam("/vdo_pipeline/visualizer/gps_topic", gps_topic);
 
 
             //Getting Frame ID's
-            nh.getParam("/ros_vdoslam/map_frame_id", map_frame);
-            nh.getParam("/ros_vdoslam/odom_frame_id", odom_frame);
-            nh.getParam("/ros_vdoslam/base_link_frame_id", base_frame);
+            nh.getParam("/vdo_pipeline/map_frame_id", map_frame);
+            nh.getParam("/vdo_pipeline/odom_frame_id", odom_frame);
+            nh.getParam("/vdo_pipeline/base_link_frame_id", base_frame);
 
             if(gt_odom_in_use()) {
                 odom_gt_sub = nh.subscribe<nav_msgs::Odometry>(odom_gt_topic, 100, &RosVisualizer::odom_gt_callback, this);

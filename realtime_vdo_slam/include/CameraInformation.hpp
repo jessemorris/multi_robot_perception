@@ -51,8 +51,8 @@ namespace VDO_SLAM {
 
     };
 
-    typedef std::unique_ptr<CameraInformation> CameraInformationPtr;
-    typedef const std::unique_ptr<CameraInformation> CameraInformationConstPtr;
+    typedef std::shared_ptr<CameraInformation> CameraInformationPtr;
+    typedef std::unique_ptr<CameraInformation> CameraInformationUniquePtr;
 
 }
 

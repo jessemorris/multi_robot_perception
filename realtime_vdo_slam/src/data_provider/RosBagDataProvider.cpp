@@ -4,7 +4,6 @@
 using namespace VDO_SLAM;
 
 RosBagDataProvider::RosBagDataProvider()
-    :   DataProviderInterface()
 {
     nh.param<std::string>("bag_name", bag_file_name, "invalid");
     nh.param<std::string>("scene_topic", scene_topic, "scene");

@@ -42,7 +42,7 @@ class SceneGraph {
     public:
         SceneGraph();
 
-        void add_dynamic_object(realtime_vdo_slam::VdoSlamScene& scene);
+        void add_dynamic_object(realtime_vdo_slam::VdoSlamScenePtr& scene);
 
         std::map<TrackingId, CurveParamPair> optimize_object_poses();
 

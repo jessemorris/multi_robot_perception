@@ -146,17 +146,21 @@ generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs std_msgs sensor_msgs
 
 message(${minisam_INCLUDE_DIR})
 
-include_directories(
-    include
-    ${catkin_INCLUDE_DIRS}
+set(PROJECT_INCLUDE_DIRS
+	include
+	${catkin_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS}
 	${vdo_slam_INCLUDE_DIRS}
 	# ${CMAKE_CURRENT_SOURCE_DIR}
-	# ${GTSAM_INCLUDE_DIR}
+	# ${GTSAM_INCLUDE_DIR})
 	${minisam_INCLUDE_DIR}
 )
 
-add_library(${PROJECT_NAME} SHARED
+include_directories(
+	${PROJECT_INCLUDE_DIRS}
+)
+
+add_library(${PROJECT_NAME} STATIC
 	src/preprocessing/ImagePreprocessingBase.cpp
 	src/preprocessing/ImagePreprocessingRGB.cpp
 	src/preprocessing/ImagePreprocessingRGBD.cpp
@@ -170,13 +174,14 @@ add_library(${PROJECT_NAME} SHARED
 	src/visualizer/RosAsyncPublisher.cpp
 	src/data_provider/DataProviderInterface.cpp
 	src/data_provider/RosBagDataProvider.cpp
+	src/scene_graph/SceneGraphBuilder.cpp
+	src/scene_graph/SceneGraph.cpp
+	src/scene_graph/SceneGraphOptimizer.cpp
 	)
-
-
 
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
-  	INCLUDE_DIRS include
+  	INCLUDE_DIRS ${PROJECT_INCLUDE_DIRS}
 	CATKIN_DEPENDS
 	roscpp
 	rosbag
@@ -197,6 +202,8 @@ catkin_package(
 	mono_depth_2
 	midas_ros
 	message_runtime
+	DEPENDS
+	minisam
 )
 
 ###########
@@ -205,6 +212,10 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
+# target_link_libraries(${PROJECT_NAME}_scene_graph
+# 	${catkin_LIBRARIES}
+# 	-lminisam)
+
 
 target_link_libraries(${PROJECT_NAME}
 		${catkin_LIBRARIES}
@@ -212,7 +223,7 @@ target_link_libraries(${PROJECT_NAME}
 		${vdo_slam_LIB_DIRS}
 		# gtsam
     	# gtsam_unstable
-		
+		minisam
 		)
 
 
@@ -277,21 +288,19 @@ endif()
 
 #### Vdo Slam Scene Graph Node
 add_executable(vdo_slam_scene_graph_node
-		src/scene_graph/SceneGraphBuilder.cpp
-		src/scene_graph/SceneGraph.cpp
-		src/scene_graph/SceneGraphOptimizer.cpp
 		src/VdoSlamSceneGraphNode.cpp
 		
 		)
 
+# target_include_directories(vdo_slam_scene_graph_node PUBLIC
+# 	${PROJECT_INCLUDE_DIRS}
+# 	${minisam_INCLUDE_DIR})
 
 
-target_link_libraries(vdo_slam_scene_graph_node
-	PUBLIC
+target_link_libraries(vdo_slam_scene_graph_node 
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
 		${PROJECT_NAME}
-		-lminisam
 		)
 
 if(catkin_EXPORTED_LIBRARIES)
@@ -353,9 +362,9 @@ install(TARGETS ros_vdoslam_node image_preprocessing_node_rgbd
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(TARGETS ros_vdoslam_node vdo_slam_scene_graph_node
-   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# install(TARGETS ros_vdoslam_node vdo_slam_scene_graph_node
+#    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 install(TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

@@ -11,22 +11,21 @@
 
 SceneGraph::SceneGraph() {
     ROS_INFO_STREAM("using Cauchy loss");
-    loss = minisam::CauchyLoss::Cauchy(1.0);
+    loss = minisam::CauchyLoss::Cauchy(0.5);
 }
 
 
-void SceneGraph::add_dynamic_object(realtime_vdo_slam::VdoSlamScene& scene) {
-    realtime_vdo_slam::VdoSlamScenePtr scene_ptr = boost::make_shared<realtime_vdo_slam::VdoSlamScene>(scene);
-    slam_scenes.push_back(scene_ptr);
+void SceneGraph::add_dynamic_object(realtime_vdo_slam::VdoSlamScenePtr& scene) {
+    slam_scenes.push_back(scene);
 
-    for(realtime_vdo_slam::VdoSceneObject& object : scene.objects) {
+    for(realtime_vdo_slam::VdoSceneObject& object : scene->objects) {
         //TODO: currently not adding slam scene association to SlamObjectAssociation
         //first time we see this dynamic object
         if (dyn_object_map.find(object.tracking_id) == dyn_object_map.end() ) {
             SlamObjectAssociationVector vector;
 
             SlamObjectAssociation object_association;
-            object_association.slam_scene_ptr = scene_ptr;
+            object_association.slam_scene_ptr = scene;
             object_association.object = object;
             object_association.time = object.time;
 
@@ -37,7 +36,7 @@ void SceneGraph::add_dynamic_object(realtime_vdo_slam::VdoSlamScene& scene) {
             SlamObjectAssociation object_association;
             object_association.object = object;
             object_association.time = object.time;
-            object_association.slam_scene_ptr = scene_ptr;
+            object_association.slam_scene_ptr = scene;
             dyn_object_map[object.tracking_id].push_back(object_association);
         }
     }
@@ -54,8 +53,8 @@ std::map<TrackingId, CurveParamPair> SceneGraph::optimize_object_poses() {
 
 
         for (SlamObjectAssociation& object_association : it->second) {
-            factor_graph.add(ExpCurveFittingFactor(minisam::key('p', 0), Eigen::Vector2d(object_association.object.pose.position.x,
-                                                object_association.object.pose.position.y), loss));
+            factor_graph.add(ExpCurveFittingFactor(minisam::key('p', 0), Eigen::Vector2d(object_association.object.pose.position.y,
+                                                object_association.object.pose.position.x), loss));
 
         }
 
@@ -86,6 +85,7 @@ std::map<TrackingId, CurveParamPair> SceneGraph::optimize_object_poses() {
 }
 
 std::vector<realtime_vdo_slam::VdoSlamScenePtr>& SceneGraph::reconstruct_slam_scene(std::map<TrackingId, CurveParamPair>& optimized_poses) {
+    ROS_INFO_STREAM(slam_scenes.size());
     for(realtime_vdo_slam::VdoSlamScenePtr& scene_ptr : slam_scenes) {
 
         for(realtime_vdo_slam::VdoSceneObject& scene_object : scene_ptr->objects) {
@@ -93,8 +93,9 @@ std::vector<realtime_vdo_slam::VdoSlamScenePtr>& SceneGraph::reconstruct_slam_sc
             CurveParamPair& curve_params = optimized_poses[track_id];
             double m = curve_params.first;
             double c = curve_params.second;
-            double smooth_y = exp(m * scene_object.pose.position.x + c);
-            scene_object.pose.position.y = smooth_y;
+            double smooth_y = exp(m * scene_object.pose.position.y + c);
+            scene_object.pose.position.y = - scene_object.pose.position.x;
+            scene_object.pose.position.x = smooth_y;
         }
 
     }
@@ -150,7 +151,6 @@ void SceneGraph::show_optimized_poses(std::map<TrackingId, CurveParamPair>& opti
             cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5); // orange
 
             //construct smooth path using y=exp(mx+c)
-            ROS_INFO_STREAM(m << " " << c << " x " << x);
             double smooth_y = exp(m * x + c);
             y_display =  static_cast<int>(smooth_y*scale) + y_offset;
             cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,0,255), 5); // green

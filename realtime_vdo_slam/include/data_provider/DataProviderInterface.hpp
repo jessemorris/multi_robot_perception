@@ -32,7 +32,7 @@ namespace VDO_SLAM {
         public:
             DataProviderInterface();
 
-            virtual ~DataProviderInterface() {}
+            ~DataProviderInterface() {}
             virtual bool spin() = 0;
 
             void connect_slam_scene_callback(SlamSceneCallbackFunc&& func);

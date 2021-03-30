@@ -21,11 +21,11 @@ using namespace VDO_SLAM;
 
 RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
     handle(n) {
-        handle.getParam("/ros_vdoslam/use_viz", use_viz);
-        handle.getParam("/ros_vdoslam/viz_rate", viz_rate);
+        handle.getParam("/ros_vdo_slam/use_viz", use_viz);
+        handle.getParam("/ros_vdo_slam/viz_rate", viz_rate);
 
 
-        handle.getParam("/ros_vdoslam/optimization_trigger_frame", global_optim_trigger);
+        handle.getParam("/ros_vdo_slam/optimization_trigger_frame", global_optim_trigger);
         ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
 
         if (use_viz) {
@@ -60,17 +60,17 @@ RosVdoSlam::~RosVdoSlam() {
 std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHandle& nh) {
     //check first where to load the params from - calibration file or launch file
     bool use_calibration_file;
-    nh.getParam("/ros_vdoslam/use_calibration_file", use_calibration_file);
+    nh.getParam("/ros_vdo_slam/use_calibration_file", use_calibration_file);
 
     //load from calibration file
     if(use_calibration_file) {
         int sensor_mode;
-        nh.getParam("/ros_vdoslam/sensor_mode", sensor_mode);
+        nh.getParam("/ros_vdo_slam/sensor_mode", sensor_mode);
 
         VDO_SLAM::eSensor sensor = VDO_SLAM::param_to_sensor(sensor_mode);
 
         std::string calibration_file;
-        nh.getParam("/ros_vdoslam/calibration_file", calibration_file);
+        nh.getParam("/ros_vdo_slam/calibration_file", calibration_file);
 
         std::string path = ros::package::getPath("realtime_vdo_slam");
         std::string vdo_slam_config_path = path + "/config/" + calibration_file;
@@ -83,7 +83,7 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         VDO_SLAM::VdoParams params;
         //check if we should get instrincs from camera info topic
         bool use_camera_info_topic;
-        nh.getParam("/ros_vdoslam/use_camera_info_topic", use_camera_info_topic);
+        nh.getParam("/ros_vdo_slam/use_camera_info_topic", use_camera_info_topic);
 
         //wait for topic defined in configuration file
         if (use_camera_info_topic) {
@@ -95,7 +95,7 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
             VDO_SLAM::CameraInformation cam_info(info_ptr);
             
             bool apply_undistortion;
-            nh.getParam("/ros_vdoslam/apply_undistortion", apply_undistortion);
+            nh.getParam("/ros_vdo_slam/apply_undistortion", apply_undistortion);
 
             //if true -> we use the modified camera matrix P
             if(apply_undistortion) {
@@ -118,10 +118,10 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         //load camera params from launch file
         else {
             
-            nh.getParam("/ros_vdoslam/fx", params.fx);
-            nh.getParam("/ros_vdoslam/fy", params.fy);
-            nh.getParam("/ros_vdoslam/cx", params.cx);
-            nh.getParam("/ros_vdoslam/cy", params.cy);
+            nh.getParam("/ros_vdo_slam/fx", params.fx);
+            nh.getParam("/ros_vdo_slam/fy", params.fy);
+            nh.getParam("/ros_vdo_slam/cx", params.cx);
+            nh.getParam("/ros_vdo_slam/cy", params.cy);
             
         }
 
@@ -133,45 +133,45 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         params.p3 = 0;
 
         //load rest of params from file
-        nh.getParam("/ros_vdoslam/width", params.width);
-        nh.getParam("/ros_vdoslam/height", params.height);
+        nh.getParam("/ros_vdo_slam/width", params.width);
+        nh.getParam("/ros_vdo_slam/height", params.height);
 
-        nh.getParam("/ros_vdoslam/fps", params.fps);
-        nh.getParam("/ros_vdoslam/bf", params.bf);
+        nh.getParam("/ros_vdo_slam/fps", params.fps);
+        nh.getParam("/ros_vdo_slam/bf", params.bf);
 
-        nh.getParam("/ros_vdoslam/RGB", params.RGB);
-        nh.getParam("/ros_vdoslam/data_code", params.data_code);
+        nh.getParam("/ros_vdo_slam/RGB", params.RGB);
+        nh.getParam("/ros_vdo_slam/data_code", params.data_code);
 
         int sensor_mode;
-        nh.getParam("/ros_vdoslam/sensor_mode", sensor_mode);
+        nh.getParam("/ros_vdo_slam/sensor_mode", sensor_mode);
 
         params.sensor_type = VDO_SLAM::param_to_sensor(sensor_mode);
 
-        nh.getParam("/ros_vdoslam/depth_map_factor", params.depth_map_factor);
+        nh.getParam("/ros_vdo_slam/depth_map_factor", params.depth_map_factor);
 
-        nh.getParam("/ros_vdoslam/thdepth_bg", params.thdepth_bg);
-        nh.getParam("/ros_vdoslam/thdepth_obj", params.thdepth_obj);
+        nh.getParam("/ros_vdo_slam/thdepth_bg", params.thdepth_bg);
+        nh.getParam("/ros_vdo_slam/thdepth_obj", params.thdepth_obj);
 
-        nh.getParam("/ros_vdoslam/max_track_points_bg", params.max_track_points_bg);
-        nh.getParam("/ros_vdoslam/max_track_points_obj", params.max_track_points_obj);
+        nh.getParam("/ros_vdo_slam/max_track_points_bg", params.max_track_points_bg);
+        nh.getParam("/ros_vdo_slam/max_track_points_obj", params.max_track_points_obj);
 
-        nh.getParam("/ros_vdoslam/sf_mg_thresh", params.sf_mg_thresh);
-        nh.getParam("/ros_vdoslam/sf_ds_thresh", params.sf_ds_thresh);
+        nh.getParam("/ros_vdo_slam/sf_mg_thresh", params.sf_mg_thresh);
+        nh.getParam("/ros_vdo_slam/sf_ds_thresh", params.sf_ds_thresh);
 
-        nh.getParam("/ros_vdoslam/window_size", params.window_size);
-        nh.getParam("/ros_vdoslam/overlap_size", params.overlap_size);
+        nh.getParam("/ros_vdo_slam/window_size", params.window_size);
+        nh.getParam("/ros_vdo_slam/overlap_size", params.overlap_size);
 
-        nh.getParam("/ros_vdoslam/use_sample_feature", params.use_sample_feature);
+        nh.getParam("/ros_vdo_slam/use_sample_feature", params.use_sample_feature);
 
 
-        nh.getParam("/ros_vdoslam/n_features", params.n_features);
+        nh.getParam("/ros_vdo_slam/n_features", params.n_features);
 
-        nh.getParam("/ros_vdoslam/scale_factor", params.scale_factor);
+        nh.getParam("/ros_vdo_slam/scale_factor", params.scale_factor);
 
-        nh.getParam("/ros_vdoslam/n_levels", params.n_levels);
+        nh.getParam("/ros_vdo_slam/n_levels", params.n_levels);
 
-        nh.getParam("/ros_vdoslam/ini_th_fast", params.ini_th_fast);
-        nh.getParam("/ros_vdoslam/min_th_fast", params.min_th_fast);
+        nh.getParam("/ros_vdo_slam/ini_th_fast", params.ini_th_fast);
+        nh.getParam("/ros_vdo_slam/min_th_fast", params.min_th_fast);
 
         return std::make_shared<VDO_SLAM::System>(params);
 
