@@ -14,7 +14,7 @@ namespace VDO_SLAM {
     class RosBagDataProvider : public DataProviderInterface {
 
         public:
-            explicit RosBagDataProvider();
+            RosBagDataProvider();
 
             bool spin() override;
 

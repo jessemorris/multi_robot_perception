@@ -4,7 +4,7 @@ project(realtime_vdo_slam)
 
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++17)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -40,7 +40,7 @@ find_package(OpenCV)
 find_package(vdo_slam REQUIRED)
 # find_package(GTSAM REQUIRED)
 find_package(minisam REQUIRED)
-set(minisam_INCLUDE_DIR /usr/local/include/minisam)
+set(minisam_INCLUDE_DIR /usr/local/include/minisam/)
 
 
 
@@ -144,14 +144,42 @@ generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs std_msgs sensor_msgs
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 
+message(${minisam_INCLUDE_DIR})
+
+include_directories(
+    include
+    ${catkin_INCLUDE_DIRS}
+	${OpenCV_INCLUDE_DIRS}
+	${vdo_slam_INCLUDE_DIRS}
+	# ${CMAKE_CURRENT_SOURCE_DIR}
+	# ${GTSAM_INCLUDE_DIR}
+	${minisam_INCLUDE_DIR}
+)
+
+add_library(${PROJECT_NAME} SHARED
+	src/preprocessing/ImagePreprocessingBase.cpp
+	src/preprocessing/ImagePreprocessingRGB.cpp
+	src/preprocessing/ImagePreprocessingRGBD.cpp
+	src/RosVdoSlam.cpp
+	src/RosScene.cpp
+	src/CameraInformation.cpp
+	src/utils/RosUtils.cpp
+	src/tracking/HungarianSolver.cpp
+	src/tracking/SemanticTracker.cpp
+	src/visualizer/RosVisualizer.cpp
+	src/visualizer/RosAsyncPublisher.cpp
+	src/data_provider/DataProviderInterface.cpp
+	src/data_provider/RosBagDataProvider.cpp
+	)
+
+
 
 catkin_package(
-  LIBRARIES ${PROJECT_NAME}
+    LIBRARIES ${PROJECT_NAME}
   	INCLUDE_DIRS include
 	CATKIN_DEPENDS
 	roscpp
 	rosbag
-	rosbag_storage
 	image_transport
 	python_service_starter
 	std_msgs
@@ -169,7 +197,6 @@ catkin_package(
 	mono_depth_2
 	midas_ros
 	message_runtime
-	DEPENDS system_lib
 )
 
 ###########
@@ -178,35 +205,6 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-    include
-    ${catkin_INCLUDE_DIRS}
-	${OpenCV_INCLUDE_DIRS}
-	${vdo_slam_INCLUDE_DIRS}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	# ${GTSAM_INCLUDE_DIR}
-	${minisam_INCLUDE_DIR}
-)
-
-add_library(${PROJECT_NAME}
-	src/preprocessing/ImagePreprocessingBase.cpp
-	src/preprocessing/ImagePreprocessingRGB.cpp
-	src/preprocessing/ImagePreprocessingRGBD.cpp
-	src/RosVdoSlam.cpp
-	src/RosScene.cpp
-	src/CameraInformation.cpp
-	src/utils/RosUtils.cpp
-	src/tracking/HungarianSolver.cpp
-	src/tracking/SemanticTracker.cpp
-	src/visualizer/RosVisualizer.cpp
-	src/visualizer/RosAsyncPublisher.cpp
-	# src/scene_graph/DataProviderInterface.cpp
-	# src/scene_graph/RosBagDataProvider.cpp
-	# src/scene_graph/SceneGraphBuilder.cpp
-	#src/scene_graph/SceneGraph.cpp
-	#src/scene_graph/SceneGraphOptimizer.cpp
-	)
-
 
 target_link_libraries(${PROJECT_NAME}
 		${catkin_LIBRARIES}
@@ -214,7 +212,7 @@ target_link_libraries(${PROJECT_NAME}
 		${vdo_slam_LIB_DIRS}
 		# gtsam
     	# gtsam_unstable
-		minisam
+		
 		)
 
 
@@ -279,25 +277,26 @@ endif()
 
 #### Vdo Slam Scene Graph Node
 add_executable(vdo_slam_scene_graph_node
-		src/VdoSlamSceneGraphNode.cpp
-		src/scene_graph/DataProviderInterface.cpp
-		src/scene_graph/RosBagDataProvider.cpp
 		src/scene_graph/SceneGraphBuilder.cpp
 		src/scene_graph/SceneGraph.cpp
 		src/scene_graph/SceneGraphOptimizer.cpp
+		src/VdoSlamSceneGraphNode.cpp
+		
 		)
 
 
 
-target_link_libraries(vdo_slam_scene_graph_node PUBLIC
+target_link_libraries(vdo_slam_scene_graph_node
+	PUBLIC
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
 		${PROJECT_NAME}
-		minisam
+		-lminisam
 		)
 
 if(catkin_EXPORTED_LIBRARIES)
   add_dependencies(vdo_slam_scene_graph_node
+  		  ${PROJECT_NAME}
 		  ${catkin_EXPORTED_LIBRARIES}
 		  ${catkin_LIBRARIES}
 		  ${OpenCV_LIBS})

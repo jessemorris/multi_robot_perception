@@ -1,4 +1,4 @@
-#include "scene_graph/RosBagDataProvider.hpp"
+#include "data_provider/RosBagDataProvider.hpp"
 #include <rosbag/view.h>
 
 using namespace VDO_SLAM;
@@ -8,7 +8,7 @@ RosBagDataProvider::RosBagDataProvider()
 {
     nh.param<std::string>("bag_name", bag_file_name, "invalid");
     nh.param<std::string>("scene_topic", scene_topic, "scene");
-    nh.param<std::string>("camera_info_topic", camera_info_topic, "scene");
+    nh.param<std::string>("camera_info_topic", camera_info_topic, "camera_info");
 
     topics.push_back(scene_topic);
     topics.push_back(camera_info_topic);
@@ -23,8 +23,13 @@ RosBagDataProvider::RosBagDataProvider()
 }
 
 bool RosBagDataProvider::spin() {
-    if (!is_connected) {
-        ROS_ERROR_STREAM("Callback func has not been connected");
+    if (!slam_scene_connected) {
+        ROS_ERROR_STREAM("Slam Scene func has not been connected");
+        return false;
+    }
+
+    if (!camera_info_connected) {
+        ROS_ERROR_STREAM("Camera info func has not been connected");
         return false;
     }
 
@@ -35,7 +40,12 @@ bool RosBagDataProvider::spin() {
 
         realtime_vdo_slam::VdoSlamSceneConstPtr msg = m.instantiate<realtime_vdo_slam::VdoSlamScene>();
         if (msg != nullptr && msg_topic == scene_topic) {
-            callback(msg);
+            slam_scene_callback(msg);
+        } 
+
+        sensor_msgs::CameraInfoConstPtr cam_info_msg = m.instantiate<sensor_msgs::CameraInfo>();
+        if (cam_info_msg != nullptr && msg_topic == camera_info_topic) {
+            camera_info_callback(cam_info_msg);
         } 
 
         ros::spinOnce();

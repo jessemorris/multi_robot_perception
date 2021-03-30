@@ -46,6 +46,10 @@ namespace VDO_SLAM {
     class RosVisualizer {
 
         public:
+            /**
+             * @brief Construct a new Ros Visualizer object
+             * 
+             */
             RosVisualizer();
             ~RosVisualizer();
 
@@ -60,7 +64,7 @@ namespace VDO_SLAM {
              * @brief Spins the vizualizer asynchronously at a given rate. Upon execution all vdo slam scene messages
              * in the callback queue will be displayed and published. We use asynchronous ros callback queues for each vdoscene message
              * and for all publishers. This is required to output the visualization at a high rate without taking up time for the VDO-SLAM
-             * algorithm to run. Each callback queue is given its own asynch spinner. 
+             * algorithm to run. Each callback queue is given its own asynch spinner.
              * 
              * @return true 
              * @return false 
@@ -95,6 +99,15 @@ namespace VDO_SLAM {
              * @param msg 
              */
             void gps_callback(const sensor_msgs::NavSatFixConstPtr& msg);
+
+            /**
+             * @brief Static function to create a ros publisher that publishes to the topic that the visualizer expects data on.
+             * Publishes a realtime_vdo_slam::VdoSlamScene messahe.
+             * 
+             * @param nh 
+             * @return ros::Publisher 
+             */
+            static ros::Publisher create_viz_pub(ros::NodeHandle& nh);
 
 
         private:

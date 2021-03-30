@@ -1,11 +1,4 @@
 #include "scene_graph/SceneGraph.hpp"
-#include <g2o/core/base_vertex.h>
-#include <g2o/core/base_unary_edge.h>
-#include <g2o/core/block_solver.h>
-#include <g2o/core/optimization_algorithm_levenberg.h>
-#include <g2o/core/optimization_algorithm_gauss_newton.h>
-#include <g2o/core/optimization_algorithm_dogleg.h>
-#include <g2o/solvers/dense/linear_solver_dense.h>
 #include <Eigen/Core>
 
 
@@ -92,7 +85,7 @@ std::map<TrackingId, CurveParamPair> SceneGraph::optimize_object_poses() {
 
 }
 
-SlamSceneVector SceneGraph::reconstruct_slam_scene(std::map<TrackingId, CurveParamPair>& optimized_poses) {
+std::vector<realtime_vdo_slam::VdoSlamScenePtr>& SceneGraph::reconstruct_slam_scene(std::map<TrackingId, CurveParamPair>& optimized_poses) {
     for(realtime_vdo_slam::VdoSlamScenePtr& scene_ptr : slam_scenes) {
 
         for(realtime_vdo_slam::VdoSceneObject& scene_object : scene_ptr->objects) {
@@ -103,7 +96,9 @@ SlamSceneVector SceneGraph::reconstruct_slam_scene(std::map<TrackingId, CurvePar
             double smooth_y = exp(m * scene_object.pose.position.x + c);
             scene_object.pose.position.y = smooth_y;
         }
+
     }
+    return slam_scenes;
 
 
 

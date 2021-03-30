@@ -208,6 +208,10 @@ namespace VDO_SLAM {
         }
     }
 
+    ros::Publisher RosVisualizer::create_viz_pub(ros::NodeHandle& nh) {
+        return nh.advertise<realtime_vdo_slam::VdoSlamScene>("/vdoslam/output/scene", 10);
+    }
+
     bool RosVisualizer::update_spin(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
         publish_odom(slam_scene);
         publish_3D_viz(slam_scene);
@@ -435,8 +439,8 @@ namespace VDO_SLAM {
         utils::mat_to_image_msg(img_msg, viz, sensor_msgs::image_encodings::RGB8, scene->header);
 
         bounding_box_pub.publish(img_msg);
-        cv::imshow("BB and vel", viz);
-        cv::waitKey(1);
+        // cv::imshow("BB and vel", viz);
+        // cv::waitKey(1);
 
     }
 

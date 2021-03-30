@@ -42,14 +42,13 @@ class SceneGraph {
     public:
         SceneGraph();
 
-        // SlamObjectsVector get_current_objects();
         void add_dynamic_object(realtime_vdo_slam::VdoSlamScene& scene);
 
         std::map<TrackingId, CurveParamPair> optimize_object_poses();
 
         void show_optimized_poses(std::map<TrackingId, CurveParamPair>& optimized_poses, int random_samples = -1);
 
-        SlamSceneVector reconstruct_slam_scene(std::map<TrackingId, CurveParamPair>& optimized_poses);
+        std::vector<realtime_vdo_slam::VdoSlamScenePtr>& reconstruct_slam_scene(std::map<TrackingId, CurveParamPair>& optimized_poses);
 
         
 

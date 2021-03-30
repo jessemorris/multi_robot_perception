@@ -5,8 +5,9 @@
 #include <vector>
 #include <realtime_vdo_slam/VdoSlamScene.h>
 
-#include "scene_graph/RosBagDataProvider.hpp"
-#include "scene_graph/SceneGraph.hpp"
+// #include "scene_graph/SceneGraph.hpp"
+#include "visualizer/RosVisualizer.hpp"
+#include "data_provider/RosBagDataProvider.hpp"
 
 
 namespace VDO_SLAM {
@@ -24,9 +25,13 @@ namespace VDO_SLAM {
             ros::NodeHandle nh;
             RosBagDataProviderPtr data_provider;
 
+            ros::Publisher scene_pub;
+            RosVisualizerPtr ros_viz;
+            RosVizualizerSpinHandler ros_viz_handler;
+
 
             std::vector<realtime_vdo_slam::VdoSlamSceneConstPtr> slam_scenes;
-            SceneGraphPtr graph;
+            //SceneGraphPtr graph;
 
 
     };

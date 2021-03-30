@@ -15,6 +15,7 @@
 #include <nav_msgs/Odometry.h>
 
 #include <realtime_vdo_slam/VdoSlamScene.h>
+#include <sensor_msgs/CameraInfo.h>
 #include "CameraInformation.hpp"
 #include <future>
 #include <functional>
@@ -23,6 +24,7 @@
 namespace VDO_SLAM {
     
     typedef std::function<void(const realtime_vdo_slam::VdoSlamSceneConstPtr&)> SlamSceneCallbackFunc;
+    typedef std::function<void(const sensor_msgs::CameraInfoConstPtr&)> CameraInfoCallbackFunc;
 
     class DataProviderInterface {
 
@@ -33,11 +35,15 @@ namespace VDO_SLAM {
             virtual ~DataProviderInterface() {}
             virtual bool spin() = 0;
 
-            void connect_callback(SlamSceneCallbackFunc&& func);
+            void connect_slam_scene_callback(SlamSceneCallbackFunc&& func);
+            void connect_camera_info_callback(CameraInfoCallbackFunc&& func);
 
         protected:
-            SlamSceneCallbackFunc callback;
-            bool is_connected = false;
+            SlamSceneCallbackFunc slam_scene_callback;
+            bool slam_scene_connected = false;
+
+            CameraInfoCallbackFunc camera_info_callback;
+            bool camera_info_connected = false;
 
 
             ros::NodeHandle nh;
