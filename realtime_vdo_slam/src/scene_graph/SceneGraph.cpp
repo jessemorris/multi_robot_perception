@@ -1,5 +1,6 @@
 #include "scene_graph/SceneGraph.hpp"
 #include <Eigen/Core>
+#include <math.h>
 
 
 #include "scene_graph/SceneGraphOptimizer.hpp"
@@ -11,7 +12,7 @@
 
 SceneGraph::SceneGraph() {
     ROS_INFO_STREAM("using Cauchy loss");
-    loss = minisam::CauchyLoss::Cauchy(0.5);
+    loss = minisam::CauchyLoss::Cauchy(1.0);
 }
 
 
@@ -42,16 +43,16 @@ void SceneGraph::add_dynamic_object(realtime_vdo_slam::VdoSlamScenePtr& scene) {
     }
 }
 
-std::map<TrackingId, CurveParamPair> SceneGraph::optimize_object_poses() {
-    std::map<TrackingId, CurveParamPair> optimized_map;
+void SceneGraph::optimize_object_poses(std::map<TrackingId, CurveParamPair>& optimized_map) {
+    // std::map<TrackingId, CurveParamPair> optimized_map;
 
     //get data for each object
     DynObjectMap::iterator it;
     for (it = dyn_object_map.begin(); it != dyn_object_map.end(); it++) {
         ROS_INFO_STREAM("Collecting data for track id: " << it->first);
         minisam::FactorGraph factor_graph;
-
-
+    
+        
         for (SlamObjectAssociation& object_association : it->second) {
             factor_graph.add(ExpCurveFittingFactor(minisam::key('p', 0), Eigen::Vector2d(object_association.object.pose.position.y,
                                                 object_association.object.pose.position.x), loss));
@@ -60,27 +61,37 @@ std::map<TrackingId, CurveParamPair> SceneGraph::optimize_object_poses() {
 
         ROS_INFO_STREAM("Optimizing for " << it->second.size() << " data points");
         minisam::Variables init_values;
+
         init_values.add(minisam::key('p', 0), Eigen::Vector2d(0, 0));
         ROS_INFO_STREAM("initial curve parameters :"  << init_values.at<Eigen::Vector2d>(minisam::key('p', 0)));
 
         // optimize!
         minisam::LevenbergMarquardtOptimizerParams opt_param;
         opt_param.verbosity_level = minisam::NonlinearOptimizerVerbosityLevel::ITERATION;
+        opt_param.lambda_max = 2e10; //idk what this should be
         minisam::LevenbergMarquardtOptimizer opt(opt_param);
 
         minisam::Variables values;
-        opt.optimize(factor_graph, init_values, values);
-        ROS_INFO_STREAM("opitmized curve parameters :" << values.at<Eigen::Vector2d>(minisam::key('p', 0)));
+        auto status = opt.optimize(factor_graph, init_values, values);
+        if(status == minisam::NonlinearOptimizationStatus::SUCCESS) {
+            //for now just add if success
+            ROS_INFO_STREAM("success");
+            Eigen::Vector2d result = values.at<Eigen::Vector2d>(minisam::key('p', 0));
+            CurveParamPair pair = std::make_pair(result[0], result[1]);
 
-        CurveParamPair pair;
-        Eigen::Vector2d result = values.at<Eigen::Vector2d>(minisam::key('p', 0));
-        pair.first = result[0]; //m
-        pair.second = result[1]; //c
-        optimized_map.insert({it->first, pair});
+            // pair.first = result[0]; //m
+            // pair.second = result[1]; //c
+            optimized_map.insert(std::make_pair(it->first, pair));
+            // ROS_INFO_STREAM("opitmized curve parameters :" << values.at<Eigen::Vector2d>(minisam::key('p', 0)));
+            ROS_INFO_STREAM("opitmized curve parameters :" << optimized_map[it->first].first << " " <<optimized_map[it->first].second);
+
+        }
+        else {
+            ROS_INFO_STREAM("fail");
+        }
+
         
     }
-
-    return optimized_map;
 
 }
 
@@ -89,13 +100,18 @@ std::vector<realtime_vdo_slam::VdoSlamScenePtr>& SceneGraph::reconstruct_slam_sc
     for(realtime_vdo_slam::VdoSlamScenePtr& scene_ptr : slam_scenes) {
 
         for(realtime_vdo_slam::VdoSceneObject& scene_object : scene_ptr->objects) {
-            int track_id = scene_object.tracking_id;
-            CurveParamPair& curve_params = optimized_poses[track_id];
-            double m = curve_params.first;
-            double c = curve_params.second;
-            double smooth_y = exp(m * scene_object.pose.position.y + c);
-            scene_object.pose.position.y = - scene_object.pose.position.x;
-            scene_object.pose.position.x = smooth_y;
+
+            if(optimized_poses.find(scene_object.tracking_id) != optimized_poses.end()) {
+                int track_id = scene_object.tracking_id;
+                CurveParamPair& curve_params = optimized_poses[track_id];
+                double m = curve_params.first;
+                double c = curve_params.second;
+                // double smooth_y = exp(m * scene_object.pose.position.x + c);
+                double smooth_x = exp(m * scene_object.pose.position.y + c);
+                scene_object.pose.position.x = smooth_x;
+                // scene_object.pose.position.y = smooth_y;
+
+            }
         }
 
     }

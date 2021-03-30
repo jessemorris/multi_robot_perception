@@ -45,9 +45,10 @@ void SceneGraphBuilder::construct_graph() {
         graph->add_dynamic_object(slam_scene_ptr);
     }
 
-    auto map = graph->optimize_object_poses();
+    std::map<TrackingId, CurveParamPair> optimized_map;
+    graph->optimize_object_poses(optimized_map);
     // graph->show_optimized_poses(map, 4);
-    std::vector<realtime_vdo_slam::VdoSlamScenePtr> new_slam_scene = graph->reconstruct_slam_scene(map);
+    std::vector<realtime_vdo_slam::VdoSlamScenePtr> new_slam_scene = graph->reconstruct_slam_scene(optimized_map);
     for(auto& slam_scene : new_slam_scene) {
         scene_pub.publish(slam_scene);
         ros::spinOnce();
