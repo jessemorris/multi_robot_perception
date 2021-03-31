@@ -104,10 +104,9 @@ BaseProcessing::BaseProcessing(ros::NodeHandle& n) :
 BaseProcessing::~BaseProcessing() {}
 
 
-//TODO: use camerainformation class
-
-
 void BaseProcessing::undistortImage(cv::Mat& input, cv::Mat& undistorted) {
     camera_info->apply_undistortion(input, undistorted);
 }
+
+
 
