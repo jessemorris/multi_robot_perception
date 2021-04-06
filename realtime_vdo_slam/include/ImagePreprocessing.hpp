@@ -49,11 +49,22 @@
 #include <mutex>
 #include <thread>
 
+#define PROCESSING_INTERFACES_HPP mono_depth_2::MonoDepthInterfacePtr& mono_ptr, \
+            mask_rcnn::MaskRcnnInterfacePtr& mask_ptr, \
+            flow_net::FlowNetInterfacePtr& flow_ptr
+
+#define PROCESSING_INTERFACES mono_depth_2::MonoDepthInterfacePtr& mono_ptr, \
+    mask_rcnn::MaskRcnnInterfacePtr& mask_ptr, \
+    flow_net::FlowNetInterfacePtr& flow_ptr
+
+#define INIT_INTERFACES mono_ptr, mask_ptr, flow_ptr
+
 
 namespace VDO_SLAM {
     
 
     namespace preprocessing {
+
 
         typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image> RgbDepthSynch;
         typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> RgbDepthSegSynch;
@@ -73,8 +84,6 @@ namespace VDO_SLAM {
         class BaseProcessing {
 
         public:
-            BaseProcessing(ros::NodeHandle& n);
-            ~BaseProcessing();
             /**
              * @brief Undistorts the input image if undistort_image param is set to True. 
              * 
@@ -86,19 +95,21 @@ namespace VDO_SLAM {
              */
             void undistortImage(cv::Mat& input, cv::Mat& undistorted);
 
-            void image_callback(ImageConstPtr raw_image, ImageConstPtr depth);
 
-            static InputType get_input_type();
+            static InputType get_input_type(ros::NodeHandle& n);
+            virtual void start_services() {}
+
 
             
 
         protected:
+            BaseProcessing(ros::NodeHandle& n, PROCESSING_INTERFACES_HPP);
+            ~BaseProcessing();
+
             inline bool using_rgb_topic();
             inline bool using_depth_topic();
             inline bool using_seg_topic();
             inline bool using_flow_topic();
-
-
 
             std::string rgb_topic;
             std::string camera_info_topic;
@@ -114,15 +125,14 @@ namespace VDO_SLAM {
 
 
             ros::NodeHandle handler;
-            flow_net::FlowNetInterface sceneflow;
-            mask_rcnn::MaskRcnnInterface mask_rcnn_interface;
-            // mask_rcnn::SemanticTracker tracker;
-            mono_depth_2::MonoDepthInterface mono_depth;
-            midas_ros::MidasDepthInterface midas_depth;
+            flow_net::FlowNetInterfacePtr sceneflow;
+            mask_rcnn::MaskRcnnInterfacePtr mask_rcnn_interface;
+            mono_depth_2::MonoDepthInterfacePtr mono_depth;
+            midas_ros::MidasDepthInterfacePtr midas_depth;
 
-            bool run_scene_flow;
-            bool run_mask_rcnn;
-            bool run_mono_depth;
+            bool run_scene_flow = false; 
+            bool run_mask_rcnn = false; 
+            bool run_mono_depth = false;
 
             bool scene_flow_success;
             bool mask_rcnn_success;
@@ -165,6 +175,9 @@ namespace VDO_SLAM {
             ros::Time previous_time;
             ros::Time current_time;
 
+        private:
+            void init_interfaces();
+
 
 
         };
@@ -172,9 +185,10 @@ namespace VDO_SLAM {
         class ImageRgb : public BaseProcessing {
 
             public:
-                ImageRGB(ros::NodeHandle& nh_);
+                ImageRgb(ros::NodeHandle& nh_, PROCESSING_INTERFACES_HPP);
 
                 void image_callback(ImageConstPtr& rgb);
+                void start_services() override;
 
             protected:
                 message_filters::Subscriber<sensor_msgs::Image> rgb_subscriber_synch;
@@ -185,9 +199,10 @@ namespace VDO_SLAM {
         class ImageRgbDepth : public ImageRgb {
 
             public:
-                ImageRgbDepth(ros::NodeHandle& nh_);
+                ImageRgbDepth(ros::NodeHandle& nh_, PROCESSING_INTERFACES_HPP);
 
                 void image_callback(ImageConstPtr& rgb, ImageConstPtr& depth);
+                void start_services() override;
 
             protected:
                 message_filters::Subscriber<sensor_msgs::Image> depth_subscriber_synch;
@@ -199,9 +214,10 @@ namespace VDO_SLAM {
         class ImageRgbDepthSeg : public ImageRgbDepth {
 
             public:
-                ImageRgbDepthSeg(ros::NodeHandle& nh_);
+                ImageRgbDepthSeg(ros::NodeHandle& nh_, PROCESSING_INTERFACES_HPP);
 
                 void image_callback(ImageConstPtr& rgb, ImageConstPtr& depth, ImageConstPtr& seg);
+                void start_services() override;
 
             protected:
                 message_filters::Subscriber<sensor_msgs::Image> seg_subscriber_synch;
@@ -214,9 +230,10 @@ namespace VDO_SLAM {
         class ImageAll : public ImageRgbDepthSeg {
 
             public:
-                ImageAll(ros::NodeHandle& nh_);
+                ImageAll(ros::NodeHandle& nh_, PROCESSING_INTERFACES_HPP);
 
                 void image_callback(ImageConstPtr& rgb, ImageConstPtr& depth, ImageConstPtr& seg, ImageConstPtr& flow);
+                void start_services() override;
 
             protected:
                 message_filters::Subscriber<sensor_msgs::Image> flow_subscriber_synch;
@@ -224,6 +241,20 @@ namespace VDO_SLAM {
                 AllSynch all_synch;
 
         };
+        typedef std::shared_ptr<BaseProcessing> BaseProcessingPtr;
+        typedef std::unique_ptr<BaseProcessing> BaseProcessingUniquePtr;
+
+        typedef std::shared_ptr<ImageRgb> ImageRgbPtr;
+        typedef std::unique_ptr<ImageRgb> ImageRgbUniquePtr;
+
+        typedef std::shared_ptr<ImageRgbDepth> ImageRgbDepthPtr;
+        typedef std::unique_ptr<ImageRgbDepth> ImageRgbDepthUniquePtr;
+
+        typedef std::shared_ptr<ImageRgbDepthSeg> ImageRgbDepthSegPtr;
+        typedef std::unique_ptr<ImageRgbDepthSeg> ImageRgbDepthSegUniquePtr;
+
+        typedef std::shared_ptr<ImageAll> ImageAllPtr;
+        typedef std::unique_ptr<ImageAll> ImageAllUniquePtr;
 
     };
 

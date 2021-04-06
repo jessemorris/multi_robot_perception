@@ -161,9 +161,10 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME} STATIC
-	src/preprocessing/ImagePreprocessingBase.cpp
-	src/preprocessing/ImagePreprocessingRGB.cpp
-	src/preprocessing/ImagePreprocessingRGBD.cpp
+	# src/preprocessing/ImagePreprocessingBase.cpp
+	# src/preprocessing/ImagePreprocessingRGB.cpp
+	# src/preprocessing/ImagePreprocessingRGBD.cpp
+	src/preprocessing/ImagePreprocessing.cpp
 	src/RosVdoSlam.cpp
 	src/RosScene.cpp
 	src/CameraInformation.cpp
@@ -244,46 +245,64 @@ if(catkin_EXPORTED_LIBRARIES)
 endif()
 
 
-
-add_executable(image_preprocessing_node_rgb
-		src/ImagePreprocessingNodeRGB.cpp
+add_executable(image_preprocessing_node
+		src/ImagePreprocessingNode.cpp
 		)
 
 
 
-target_link_libraries(image_preprocessing_node_rgb
+target_link_libraries(image_preprocessing_node
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
 		${PROJECT_NAME}
 		)
 
 if(catkin_EXPORTED_LIBRARIES)
-  add_dependencies(image_preprocessing_node_rgb
+  add_dependencies(image_preprocessing_node
 		  ${catkin_EXPORTED_LIBRARIES}
 		  ${catkin_LIBRARIES}
 		  ${OpenCV_LIBS})
 endif()
 
-
-#### RGBD node
-add_executable(image_preprocessing_node_rgbd
-		src/ImagePreprocessingNodeRGBD.cpp
-		)
+# add_executable(image_preprocessing_node_rgb
+# 		src/ImagePreprocessingNodeRGB.cpp
+# 		)
 
 
 
-target_link_libraries(image_preprocessing_node_rgbd
-		${catkin_LIBRARIES}
-		${OpenCV_LIBS}
-		${PROJECT_NAME}
-		)
+# target_link_libraries(image_preprocessing_node_rgb
+# 		${catkin_LIBRARIES}
+# 		${OpenCV_LIBS}
+# 		${PROJECT_NAME}
+# 		)
 
-if(catkin_EXPORTED_LIBRARIES)
-  add_dependencies(image_preprocessing_node_rgbd
-		  ${catkin_EXPORTED_LIBRARIES}
-		  ${catkin_LIBRARIES}
-		  ${OpenCV_LIBS})
-endif()
+# if(catkin_EXPORTED_LIBRARIES)
+#   add_dependencies(image_preprocessing_node_rgb
+# 		  ${catkin_EXPORTED_LIBRARIES}
+# 		  ${catkin_LIBRARIES}
+# 		  ${OpenCV_LIBS})
+# endif()
+
+
+# #### RGBD node
+# add_executable(image_preprocessing_node_rgbd
+# 		src/ImagePreprocessingNodeRGBD.cpp
+# 		)
+
+
+
+# target_link_libraries(image_preprocessing_node_rgbd
+# 		${catkin_LIBRARIES}
+# 		${OpenCV_LIBS}
+# 		${PROJECT_NAME}
+# 		)
+
+# if(catkin_EXPORTED_LIBRARIES)
+#   add_dependencies(image_preprocessing_node_rgbd
+# 		  ${catkin_EXPORTED_LIBRARIES}
+# 		  ${catkin_LIBRARIES}
+# 		  ${OpenCV_LIBS})
+# endif()
 
 
 #### Vdo Slam Scene Graph Node
@@ -354,11 +373,11 @@ endif()
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS ros_vdoslam_node image_preprocessing_node_rgb
-   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# install(TARGETS ros_vdoslam_node image_preprocessing_node_rgb
+#    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
-install(TARGETS ros_vdoslam_node image_preprocessing_node_rgbd
+install(TARGETS ros_vdoslam_node image_preprocessing_node
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

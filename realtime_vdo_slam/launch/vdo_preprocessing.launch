@@ -1,0 +1,31 @@
+<launch>
+
+    <arg name="rgb_topic" default="/tesse/left_cam/rgb/image_raw"/>
+    <!-- <arg name="color_topic" default="/read/camera/rgb/raw_image"/> -->
+    <!-- <arg name="color_topic" default="/gmsl/A0/image_color"/> -->
+    <!-- <arg name="color_info" default="/camera/camera_info"/> -->
+    <arg name="rgb_info" default="/camera/camera_info"/>
+
+    <arg name="depth_topic" default="/tesse/depth_cam/mono/image_raw"/>
+    <arg name="seg_topic" default="/tesse/seg_cam/rgb/image_raw"/>
+    <arg name="flow_topic" default=""/>
+
+
+
+    
+
+	<arg name="config_file" default="realtime_vdo.yaml"/>
+    <rosparam command="load" file="$(find realtime_vdo_slam)/config/$(arg config_file)"/>
+
+    <node pkg="realtime_vdo_slam" type="image_preprocessing_node" name="vdo_preprocessing" output="screen">
+        <param name="camera_mode" value="0"/>
+
+        <param name="rgb_topic" value="$(arg rgb_topic)"/>
+        <param name="rgb_info" value="$(arg rgb_info)"/>
+
+        <param name="depth_topic" value="$(arg depth_topic)"/>
+        <param name="seg_topic" value="$(arg seg_topic)"/>
+        <param name="flow_topic" value="$(arg flow_topic)"/>
+    </node>
+
+</launch>

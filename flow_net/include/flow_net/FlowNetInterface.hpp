@@ -67,6 +67,8 @@ namespace flow_net {
 
     };
 
+    typedef std::shared_ptr<FlowNetInterface> FlowNetInterfacePtr;
+
 }; //namespace flow_net
 
 

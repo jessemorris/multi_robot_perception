@@ -1,20 +1,46 @@
 #include "CameraInformation.hpp"
 #include <sensor_msgs/CameraInfo.h>
+#include "utils/RosUtils.hpp"
+#include <cv_bridge/cv_bridge.h>
+
 
 #include <ros/ros.h>
 #include <opencv2/opencv.hpp>
 
-cv_bridge::CvImagePtr VDO_SLAM::convert_img_msg(const sensor_msgs::ImageConstPtr& msg, const std::string& encoding) {
-    sensor_msgs::Image img;
-    img.header = msg->header;
-    img.height = msg->height;
-    img.width = msg->width;
-    img.is_bigendian = msg->is_bigendian;
-    img.step = msg->step;
-    img.data = msg->data;
-    img.encoding = encoding;
+namespace enc = sensor_msgs::image_encodings;
 
-    return cv_bridge::toCvCopy(img, encoding);
+
+int image_encoding_to_opencv(const std::string& encoding) {
+    if (encoding == enc::RGB8) {
+        return CV_8UC3;
+    }
+    else if (encoding == enc::MONO8) {
+        return CV_8UC1;
+    }
+    else if (encoding == enc::MONO16) {
+        return CV_16UC1;
+    }
+    else if(encoding == enc::TYPE_32FC1) {
+        return CV_32FC1;
+    }
+    else {
+        ROS_ERROR_STREAM("have not coded conversion for " << encoding << " yet");
+        return 0;
+    }
+    
+}
+
+cv_bridge::CvImagePtr VDO_SLAM::convert_img_msg(const sensor_msgs::ImageConstPtr& msg, const std::string& encoding) {
+    cv::Mat mat;
+    sensor_msgs::Image image_msg = *msg;
+    VDO_SLAM::utils::image_msg_to_mat(mat, image_msg, msg->encoding);
+    int cv_encoding = image_encoding_to_opencv(encoding);
+    mat.convertTo(mat, cv_encoding);
+
+    VDO_SLAM::utils::mat_to_image_msg(image_msg, mat, encoding);
+
+
+    return cv_bridge::toCvCopy(image_msg, encoding);
 }
 
 VDO_SLAM::CameraInformation::CameraInformation(sensor_msgs::CameraInfoConstPtr& info_msg_ptr) {

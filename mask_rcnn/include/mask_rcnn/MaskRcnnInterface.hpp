@@ -141,6 +141,8 @@ namespace mask_rcnn {
 
     };
 
+    typedef std::shared_ptr<MaskRcnnInterface> MaskRcnnInterfacePtr;
+
 }; //namespace mask_rcnn
 
 

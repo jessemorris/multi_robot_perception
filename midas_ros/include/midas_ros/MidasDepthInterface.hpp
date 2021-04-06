@@ -65,6 +65,8 @@ namespace midas_ros {
 
     };
 
+    typedef std::shared_ptr<MidasDepthInterface> MidasDepthInterfacePtr;
+
 }; //namespace midas_ros
 
 
