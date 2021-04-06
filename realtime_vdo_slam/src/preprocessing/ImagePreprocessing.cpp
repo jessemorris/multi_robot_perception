@@ -284,10 +284,17 @@ void ImageRgbDepth::image_callback(ImageConstPtr& rgb, ImageConstPtr& depth) {
     cv::resize(cv_ptr_rgb->image, image_resize_rgb, cv::Size(640, 480));
     rgb_repub.publish(cv_ptr_rgb->toImageMsg());
 
+    //use any of the attached functions to preprocess the images
+    cv::Mat processed_depth;
+    mono_depth->preprocessor(cv_ptr_depth->image, processed_depth);
+
 
     cv::Mat image_resize_depth;
-    cv::resize(cv_ptr_depth->image, image_resize_depth, cv::Size(640, 480));
-    monodepth_raw.publish(cv_ptr_depth->toImageMsg());
+    cv::resize(processed_depth, image_resize_depth, cv::Size(640, 480));
+
+    sensor_msgs::Image processed_depth_msg;
+    utils::mat_to_image_msg(processed_depth_msg, image_resize_depth,sensor_msgs::image_encodings::MONO16);
+    monodepth_raw.publish(processed_depth_msg);
 
 
 
@@ -313,11 +320,8 @@ void ImageRgbDepth::image_callback(ImageConstPtr& rgb, ImageConstPtr& depth) {
     utils::mat_to_image_msg(resized_rgb_msg, distored, sensor_msgs::image_encodings::RGB8);
 
 
-    sensor_msgs::Image resized_depth_msg;
-    utils::mat_to_image_msg(resized_depth_msg, image_resize_depth, sensor_msgs::image_encodings::MONO16);
-
     input_msg.rgb = resized_rgb_msg;
-    input_msg.depth = resized_depth_msg;
+    input_msg.depth = processed_depth_msg;
 
     cv::Mat tracked_mask;
     cv::Mat tracked_viz;

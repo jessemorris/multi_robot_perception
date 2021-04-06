@@ -224,7 +224,6 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
 realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_scene_semantics(RosSceneUniquePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
     std::vector<cv::Point2f> points;
     std::vector<vision_msgs::BoundingBox2D> bb;
-    ROS_INFO_STREAM("sem length " << semantic_objects.size());
     std::vector<VDO_SLAM::SceneObject> scene_objects = scene->get_scene_objects();
     for(VDO_SLAM::SceneObject& object : scene_objects) {
         cv::Point2f point;

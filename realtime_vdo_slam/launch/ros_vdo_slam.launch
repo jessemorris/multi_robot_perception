@@ -55,7 +55,7 @@
   <arg name="RGB" default="1"/>
   <arg name="data_code" default="2"/>
 
-  <arg name="depth_map_factor" default="10"/>
+  <arg name="depth_map_factor" default="2"/>
   <!-- <arg name="depth_map_factor" default="800.0"/> -->
    <!--Should habve a decimal, ie 10.0 not 10 becuase otherwise the param
   server rounds it to 0-->
@@ -66,11 +66,11 @@
   <arg name="max_track_points_bg" default="1700"/>
   <arg name="max_track_points_obj" default="800"/>
 
-  <!-- <arg name="sf_mg_thresh" default="0.12"/>
-  <arg name="sf_ds_thresh" default="0.3"/> -->
+  <arg name="sf_mg_thresh" default="0.05"/>
+  <arg name="sf_ds_thresh" default="0.99"/>
 
-  <arg name="sf_mg_thresh" default="0.12"/>
-  <arg name="sf_ds_thresh" default="0.5"/>
+  <!-- <arg name="sf_mg_thresh" default="0.12"/>
+  <arg name="sf_ds_thresh" default="0.5"/> -->
 
 
 
