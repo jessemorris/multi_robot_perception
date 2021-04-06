@@ -161,9 +161,6 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME} STATIC
-	# src/preprocessing/ImagePreprocessingBase.cpp
-	# src/preprocessing/ImagePreprocessingRGB.cpp
-	# src/preprocessing/ImagePreprocessingRGBD.cpp
 	src/preprocessing/ImagePreprocessing.cpp
 	src/RosVdoSlam.cpp
 	src/RosScene.cpp
@@ -263,46 +260,6 @@ if(catkin_EXPORTED_LIBRARIES)
 		  ${catkin_LIBRARIES}
 		  ${OpenCV_LIBS})
 endif()
-
-# add_executable(image_preprocessing_node_rgb
-# 		src/ImagePreprocessingNodeRGB.cpp
-# 		)
-
-
-
-# target_link_libraries(image_preprocessing_node_rgb
-# 		${catkin_LIBRARIES}
-# 		${OpenCV_LIBS}
-# 		${PROJECT_NAME}
-# 		)
-
-# if(catkin_EXPORTED_LIBRARIES)
-#   add_dependencies(image_preprocessing_node_rgb
-# 		  ${catkin_EXPORTED_LIBRARIES}
-# 		  ${catkin_LIBRARIES}
-# 		  ${OpenCV_LIBS})
-# endif()
-
-
-# #### RGBD node
-# add_executable(image_preprocessing_node_rgbd
-# 		src/ImagePreprocessingNodeRGBD.cpp
-# 		)
-
-
-
-# target_link_libraries(image_preprocessing_node_rgbd
-# 		${catkin_LIBRARIES}
-# 		${OpenCV_LIBS}
-# 		${PROJECT_NAME}
-# 		)
-
-# if(catkin_EXPORTED_LIBRARIES)
-#   add_dependencies(image_preprocessing_node_rgbd
-# 		  ${catkin_EXPORTED_LIBRARIES}
-# 		  ${catkin_LIBRARIES}
-# 		  ${OpenCV_LIBS})
-# endif()
 
 
 #### Vdo Slam Scene Graph Node

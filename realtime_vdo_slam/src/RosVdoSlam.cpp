@@ -31,9 +31,6 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         if (use_viz) {
             ros_viz = std::make_shared<VDO_SLAM::RosVisualizer>();
             ros_viz->connect_handler(ros_viz_handler);
-            // ros_viz_handler = std::async(std::launch::async,
-            //        &VDO_SLAM::RosVisualizer::spin_viz,
-            //        ros_viz.get(), viz_rate);
         }
         //TODO: should get proper previous time
         previous_time = ros::Time::now();
@@ -340,8 +337,6 @@ void RosVdoSlam::vdo_worker() {
                 utils::mat_to_image_msg(image_msg, input->raw, sensor_msgs::image_encodings::RGB8, summary_msg->header);
                 summary_msg->original_frame = image_msg;
                 scene_pub.publish(*summary_msg);
-
-                
 
             }
         }

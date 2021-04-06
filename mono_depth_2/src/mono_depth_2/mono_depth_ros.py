@@ -46,9 +46,11 @@ rospack = rospkg.RosPack()
 
 package_path = rospack.get_path("mono_depth_2")
 sys.path.insert(0, package_path)
+#mono_resnet50_640x192
+#mono_640x192
 
 class MonoDepth2Ros(RosCppCommunicator):
-    def __init__(self, model_path= package_path + "/src/mono_depth_2/models/", model_name = "mono_640x192"):
+    def __init__(self, model_path= package_path + "/src/mono_depth_2/models/", model_name = "mono+stereo_640x192"):
         RosCppCommunicator.__init__(self)
         self.model_name = model_name
 
@@ -142,7 +144,7 @@ class MonoDepth2Ros(RosCppCommunicator):
         disp = outputs[("disp", 0)]
         _, disp = self.disp_to_depth(disp, 0.01, 100)
         disp_resized = torch.nn.functional.interpolate(
-            disp, (original_height, original_width), mode="bilinear", align_corners=False)
+            disp, (original_height, original_width), mode="bilinear", align_corners=True)
 
         disp_resized = disp_resized
         #output is a np.float64. We must cast down to a np.float8 so that ROS encodings can handles this
@@ -188,20 +190,73 @@ class MonoDepth2Ros(RosCppCommunicator):
         return (mapper.to_rgba(depth_image)[:, :, :3] * 255).astype(np.uint8)
 
 
-def main():
-    
-    monodepth = MonoDepth2Ros()
+class MonoDepthTopic():
 
-    cam = cv2.VideoCapture(0)
-    while True:
-        start_time = time.time()
-        ret_val, img = cam.read()
-        composite = monodepth.analyse_depth(img)
-        print("Time: {:.2f} s / img".format(time.time() - start_time))
-        cv2.imshow("COCO detections", composite)
-        if cv2.waitKey(1) == 27:
-            break  # esc to quit
+    def __init__(self, mono_depth, topic):
+        self.mono_depth = mono_depth
+        self.image = None
+        self.sub = rospy.Subscriber(topic, Image, self.image_callback, queue_size=30)
+
+    def image_callback(self, data):
+        input_image = ros_numpy.numpify(data)
+        composite = self.mono_depth.analyse_depth(input_image)
+        cv2.imshow("Depth", composite)
+        cv2.waitKey(1)
+
+        cv2.imshow("Input image", input_image)
+        cv2.waitKey(1)
+
+
+def shutdown_hook():
     cv2.destroyAllWindows()
+
+
+#TODO: options for type of output
+if __name__ == "__main__":
+    rospy.init_node("mono_depth2_ros_node")
+    rospy.on_shutdown(shutdown_hook)
+    import argparse
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--topic', default="0")
+    args = parser.parse_args()
+    
+    topic = args.topic
+
+    input_device = "camera"
+    mono_depth = MonoDepth2Ros()
+
+
+    if topic == "0":
+        rospy.loginfo("Using video camera as input")
+
+
+        cam = cv2.VideoCapture(0)
+        while not rospy.is_shutdown():
+            start_time = time.time()
+            ret_val, img = cam.read()
+
+            composite = mono_depth.analyse_depth(img)
+
+            # test_image = maskrcnn.display_predictions(img)
+            cv2.imshow("Depth", composite)
+            cv2.waitKey(1)
+
+            cv2.imshow("Input image", img)
+            cv2.waitKey(1)
+
+
+
+
+        
+
+    else:
+        input_device = "ros_topic"
+        rospy.loginfo("Attempting to subscribe to rostopic {}".format(topic))
+        topic_mask_rcnn = MonoDepthTopic(mono_depth, topic)
+        rospy.spin()
+
+    
 
 
 if __name__ == "__main__":

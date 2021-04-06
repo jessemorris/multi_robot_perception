@@ -1,4 +1,4 @@
-#include "ImagePreprocessing.hpp"
+#include "preprocessing/ImagePreprocessing.hpp"
 #include "utils/RosUtils.hpp"
 #include <ros/package.h>
 #include <ros/ros.h>

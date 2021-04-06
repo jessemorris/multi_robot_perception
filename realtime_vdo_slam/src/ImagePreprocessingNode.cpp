@@ -1,4 +1,4 @@
-#include "ImagePreprocessing.hpp"
+#include "preprocessing/ImagePreprocessing.hpp"
 #include <ros/ros.h>
 #include <opencv2/opencv.hpp>
 
@@ -22,7 +22,6 @@ int main(int argc, char **argv) {
     preprocessing::BaseProcessingPtr processing_ptr;
 
     preprocessing::InputType type = preprocessing::BaseProcessing::get_input_type(n);
-    ROS_INFO_STREAM(type);
 
     if (type == preprocessing::InputType::RGB) {
         processing_ptr = std::make_shared<preprocessing::ImageRgb>(n, mono_depth_ptr, mask_rcnn_ptr, sceneflow_ptr);
