@@ -14,6 +14,8 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 
 from imageio import imread, imwrite
+from memory_profiler import profile
+
 
 
 
@@ -89,6 +91,7 @@ class FlowNetRos(RosCppCommunicator):
     #output of the nerual network as a tensor 2 x N x M tensor
     #flo files are (R x C x 2) so we need to convert to this form
     @torch.no_grad()
+    # @profile(precision=4)
     def analyse_flow(self, previous_image, current_image):
 
         #convert to tensor array
@@ -100,9 +103,6 @@ class FlowNetRos(RosCppCommunicator):
 
         intWidth = tenFirst.shape[2]
         intHeight = tenFirst.shape[1]
-
-        # assert(intWidth == 1024) # remember that there is no guarantee for correctness, comment this line out if you acknowledge this and want to continue
-        # assert(intHeight == 436) # remember that there is no guarantee for correctness, comment this line out if you acknowledge this and want to continue
 
         tenPreprocessedFirst = tenFirst.cuda().view(1, 3, intHeight, intWidth)
         tenPreprocessedSecond = tenSecond.cuda().view(1, 3, intHeight, intWidth)
@@ -145,21 +145,6 @@ class FlowNetRos(RosCppCommunicator):
         Returns:
             [type]: [description]
         """        
-        # h, w, _ = flow_map_np.shape
-        # flow_map_np[:,(flow_map_np[0] == 0) & (flow_map_np[1] == 0)] = float('nan')
-
-        # rgb_map = np.ones((h,w, 3)).astype(np.float32)
-    
-        # # normalized_flow_map = flow_map_np / (np.abs(flow_map_np).max())
-        # # rgb_map[0] += normalized_flow_map[0]
-        # # rgb_map[1] -= 0.5*(normalized_flow_map[0] + normalized_flow_map[1])
-        # # rgb_map[2] += normalized_flow_map[1]
-
-        # normalized_flow_map = flow_map_np / (np.abs(flow_map_np).max())
-        # rgb_map[0] += normalized_flow_map[0]
-        # rgb_map[1] -= 0.5*(normalized_flow_map[0] + normalized_flow_map[1])
-        # rgb_map[2] += normalized_flow_map[1]
-        # return rgb_map.clip(0,1)
         hsv = np.zeros((flow_map_np.shape[0], flow_map_np.shape[1], 3), dtype=np.uint8)
         flow_magnitude, flow_angle = cv2.cartToPolar(flow_map_np[..., 0].astype(np.float32), flow_map_np[..., 1].astype(np.float32))
 
@@ -180,32 +165,88 @@ class FlowNetRos(RosCppCommunicator):
 
         return img
 
+class FlowNetTopic():
 
-# def main():
+    def __init__(self, flow_net, topic):
+        self.flow_net = flow_net
+        self.image = None
+        self.previous_image = None
+        self.is_first = True
+        self.sub = rospy.Subscriber(topic, Image, self.image_callback, queue_size=30)
+
+    def image_callback(self, data):
+        input_image = ros_numpy.numpify(data)
+        if self.is_first:
+            self.previous_image = input_image
+            self.is_first = False
+            return
+        
+        flow_mat = self.flow_net.analyse_flow(self.previous_image,input_image)
+        coloured_mat = self.flow_net.flow2rgb(flow_mat)
+        cv2.imshow("Flow", coloured_mat)
+        cv2.waitKey(1)
+
+        cv2.imshow("Input image", input_image)
+        cv2.waitKey(1)
+
+        self.previous_image = input_image
+
+
+def shutdown_hook():
+    cv2.destroyAllWindows()
+
+
+#TODO: options for type of output
+def main():
+    rospy.init_node("flow_net_ros_node")
+    rospy.on_shutdown(shutdown_hook)
+    import argparse
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--topic', default="0")
+    args = parser.parse_args()
     
-#     flownet = FlowNetRos()
-#     is_first = True
-#     cam = cv2.VideoCapture(0)
-#     previous_image = None
-#     while True:
+    topic = args.topic
 
-#         start_time = time.time()
-#         ret_val, img = cam.read()
-#         if is_first:
-#             previous_image = img
-#             is_first = False
-#             continue
-#         composite = flownet.analyse_flow(previous_image, img)
-#         rgb_flow = flownet.flow2rgb(composite)
-#         print("Time: {:.2f} s / img".format(time.time() - start_time))
-#         cv2.imshow("RGB Flow", rgb_flow)
-#         if cv2.waitKey(1) == 27:
-#             break  # esc to quit
-
-#         previous_image = img
-#     cv2.destroyAllWindows()
+    input_device = "camera"
+    flow_net = FlowNetRos()
 
 
-# if __name__ == "__main__":
-#     main()
+    if topic == "0":
+        rospy.loginfo("Using video camera as input")
+        is_first = True
+        previous_image = None
+
+
+        cam = cv2.VideoCapture(0)
+        while not rospy.is_shutdown():
+            start_time = time.time()
+            ret_val, img = cam.read()
+            if is_first:
+                previous_image = img
+                is_first = False 
+                continue
+
+            flow_mat = flow_net.analyse_flow(previous_image, img)
+            coloured_img = flow_net.flow2rgb(flow_mat)
+
+            cv2.imshow("Flow", coloured_img)
+            cv2.waitKey(1)
+
+            cv2.imshow("Input image", img)
+            cv2.waitKey(1)
+            previous_image = img
+
+        
+
+    else:
+        input_device = "ros_topic"
+        rospy.loginfo("Attempting to subscribe to rostopic {}".format(topic))
+        topic_mask_rcnn = FlowNetTopic(flow_net, topic)
+        rospy.spin()
+
+    
+
+if __name__ == "__main__":
+    main()
 

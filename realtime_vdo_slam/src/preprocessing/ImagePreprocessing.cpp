@@ -33,6 +33,8 @@ BaseProcessing::BaseProcessing(ros::NodeHandle& n, PROCESSING_INTERFACES) :
     handler.getParam("/vdo_preprocessing/seg_topic", seg_topic);
     handler.getParam("/vdo_preprocessing/flow_topic", flow_topic);
     handler.getParam("/vdo_preprocessing/rgb_info", rgb_info);
+    handler.getParam("/apply_undistortion", undistord_images);
+
 
     input_type = BaseProcessing::get_input_type(handler);
 
@@ -45,7 +47,6 @@ BaseProcessing::BaseProcessing(ros::NodeHandle& n, PROCESSING_INTERFACES) :
     mask_rcnn_interface = mask_ptr;
     mono_depth = mono_ptr;
     // midas_depth(n),
-    init_interfaces();
 
     rgb_repub = image_transport.advertise("/vdoslam/input/camera/rgb/image_raw", 10);
 
@@ -62,11 +63,6 @@ BaseProcessing::BaseProcessing(ros::NodeHandle& n, PROCESSING_INTERFACES) :
 
 }
 
-void BaseProcessing::init_interfaces() {
-    if(!sceneflow) sceneflow = std::make_shared<flow_net::FlowNetInterface>(handler);
-    if(!mask_rcnn_interface) mask_rcnn_interface = std::make_shared<mask_rcnn::MaskRcnnInterface>(handler);
-    if(!mono_depth) mono_depth = std::make_shared<mono_depth_2::MonoDepthInterface>(handler);
-}
 
 BaseProcessing::~BaseProcessing() {}
 
@@ -114,15 +110,18 @@ inline bool BaseProcessing::using_flow_topic() {return !flow_topic.empty();}
 
 
 ImageRgb::ImageRgb(ros::NodeHandle& nh_, PROCESSING_INTERFACES)
-    :   BaseProcessing(nh_, INIT_INTERFACES),
-        rgb_subscriber_synch(handler, rgb_topic, 1000)
+    :   BaseProcessing(nh_, INIT_INTERFACES)
 {
     if (input_type == InputType::RGB) {
         ROS_INFO_STREAM("Starting RGB preprocesser");
-        rgb_subscriber = image_transport.subscribe(rgb_topic, 1000,  &ImageRgb::image_callback, this);
+        rgb_subscriber = image_transport.subscribe(rgb_topic, 100,  &ImageRgb::image_callback, this);
         run_scene_flow = true;
         run_mono_depth = true;
         run_mask_rcnn = true;
+
+    }
+    else {
+        rgb_subscriber_synch = std::make_shared<message_filters::Subscriber<sensor_msgs::Image>>(handler, rgb_topic, 100);
 
     }
     
@@ -141,18 +140,27 @@ void ImageRgb::start_services() {
 
 void ImageRgb::image_callback(ImageConstPtr& rgb) {
 
-    cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(*rgb, sensor_msgs::image_encodings::RGB8);
-    cv::Mat distored = cv_ptr->image;
+    cv_bridge::CvImagePtr cv_ptr_rgb = cv_bridge::toCvCopy(*rgb, sensor_msgs::image_encodings::RGB8);
+
+    cv::Mat image_resize_rgb;
+    cv::resize(cv_ptr_rgb->image, image_resize_rgb, cv::Size(640, 480));
+
+    rgb_repub.publish(cv_ptr_rgb->toImageMsg());
+
+
+
+    cv::Mat distorted = image_resize_rgb;
     cv::Mat undistorted;
-    // distored.copyTo(undistorted);
+
     cv::Mat image;
     if (undistord_images) {
-        undistortImage(distored, undistorted);
+        undistortImage(distorted, undistorted);
         image = undistorted;
     }
     else {
-        image = distored;
+        image = distorted;
     }
+
 
     std_msgs::Header original_header = rgb->header;
 
@@ -164,6 +172,8 @@ void ImageRgb::image_callback(ImageConstPtr& rgb) {
     cv::Mat tracked_viz;
 
     realtime_vdo_slam::VdoInput input_msg;
+    input_msg.rgb = *rgb;
+
 
     
 
@@ -178,6 +188,7 @@ void ImageRgb::image_callback(ImageConstPtr& rgb) {
         input_msg.header.stamp = rgb->header.stamp;
         cv::Mat current_image = image;
         current_time = rgb->header.stamp;
+
 
         // //TODO: what should this be
         // original_header.frame_id = "base_link";
@@ -235,10 +246,6 @@ void ImageRgb::image_callback(ImageConstPtr& rgb) {
             }
         }
 
-        sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
-        rgb_repub.publish(img_msg);
-        input_msg.rgb = *img_msg;
-
         if(scene_flow_success && mask_rcnn_success && scene_flow_success) {
             input_msg.header = original_header;
             vdo_input_pub.publish(input_msg);
@@ -252,19 +259,19 @@ void ImageRgb::image_callback(ImageConstPtr& rgb) {
 
 
 ImageRgbDepth::ImageRgbDepth(ros::NodeHandle& nh_, PROCESSING_INTERFACES)
-    :   ImageRgb(nh_, INIT_INTERFACES),
-        depth_subscriber_synch(handler, depth_topic, 1000),
-        rgb_depth_synch(rgb_subscriber_synch, depth_subscriber_synch, 1000)
+    :   ImageRgb(nh_, INIT_INTERFACES)
 {
-    
+    depth_subscriber_synch = std::make_shared<MessageFilterSubscriber>(handler, depth_topic, 100);
 
     if (input_type == InputType::RGB_DEPTH) {
         ROS_INFO_STREAM("Starting RGB-Depth preprocesser");
-        rgb_depth_synch.registerCallback(boost::bind(&ImageRgbDepth::image_callback,this, _1, _2));
+        rgb_depth_synch = std::make_shared<RgbDepthSynch>(*rgb_subscriber_synch, *depth_subscriber_synch, 100);
+        rgb_depth_synch->registerCallback(boost::bind(&ImageRgbDepth::image_callback,this, _1, _2));
         run_scene_flow = true;
         run_mask_rcnn = true;
 
     }
+
 
 
 }
@@ -376,10 +383,6 @@ void ImageRgbDepth::image_callback(ImageConstPtr& rgb, ImageConstPtr& depth) {
         }
 
 
-        // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
-        // rgb_repub.publish(img_msg);
-
-
         if(scene_flow_success && mask_rcnn_success) {
             vdo_input_pub.publish(input_msg);
         }
@@ -390,17 +393,16 @@ void ImageRgbDepth::image_callback(ImageConstPtr& rgb, ImageConstPtr& depth) {
 }
 
 ImageRgbDepthSeg::ImageRgbDepthSeg(ros::NodeHandle& nh_, PROCESSING_INTERFACES)
-    :   ImageRgbDepth(nh_, INIT_INTERFACES),
-        seg_subscriber_synch(handler, seg_topic, 1000),
-        rgb_depth_seg_synch(rgb_subscriber_synch, 
-                            depth_subscriber_synch,
-                            seg_subscriber_synch, 1000)
+    :   ImageRgbDepth(nh_, INIT_INTERFACES)
 {
-    
+    seg_subscriber_synch = std::make_shared<MessageFilterSubscriber>(handler, seg_topic, 100);
 
     if (input_type == InputType::RGB_DEPTH_SEG) {
         ROS_INFO_STREAM("Starting RGB-Depth-Seg preprocesser");
-        rgb_depth_seg_synch.registerCallback(boost::bind(&ImageRgbDepthSeg::image_callback, this, _1, _2, _3));
+        rgb_depth_seg_synch = std::make_shared<RgbDepthSegSynch>(*rgb_subscriber_synch, 
+                            *depth_subscriber_synch,
+                            *seg_subscriber_synch, 100);
+        rgb_depth_seg_synch->registerCallback(boost::bind(&ImageRgbDepthSeg::image_callback, this, _1, _2, _3));
         run_scene_flow = true;
     }
 }
@@ -526,17 +528,17 @@ void ImageRgbDepthSeg::image_callback(ImageConstPtr& rgb, ImageConstPtr& depth, 
 
 
 ImageAll::ImageAll(ros::NodeHandle& nh_, PROCESSING_INTERFACES)
-    :   ImageRgbDepthSeg(nh_, INIT_INTERFACES),
-        flow_subscriber_synch(handler, flow_topic, 1000),
-        all_synch(rgb_subscriber_synch, 
-                            depth_subscriber_synch,
-                            seg_subscriber_synch, 
-                            flow_subscriber_synch, 1000)
+    :   ImageRgbDepthSeg(nh_, INIT_INTERFACES)
 {
     ROS_INFO_STREAM("Starting all preprocesser");
+    flow_subscriber_synch = std::make_shared<MessageFilterSubscriber>(handler, flow_topic, 100);
+    all_synch = std::make_shared<AllSynch>(*rgb_subscriber_synch, 
+                            *depth_subscriber_synch,
+                            *seg_subscriber_synch, 
+                            *flow_subscriber_synch, 100);
 
 
-    all_synch.registerCallback(boost::bind(&ImageAll::image_callback, this, _1, _2, _3, _4));
+    all_synch->registerCallback(boost::bind(&ImageAll::image_callback, this, _1, _2, _3, _4));
 }
 
 void ImageAll::start_services() {}

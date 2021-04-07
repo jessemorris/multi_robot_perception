@@ -65,10 +65,18 @@ namespace VDO_SLAM {
 
     namespace preprocessing {
 
+        typedef message_filters::Subscriber<sensor_msgs::Image> MessageFilterSubscriber;
+        typedef std::shared_ptr<MessageFilterSubscriber> MessageFilterSubscriberPtr;
 
         typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image> RgbDepthSynch;
+        typedef std::shared_ptr<RgbDepthSynch> RgbDepthSynchPtr;
+
         typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> RgbDepthSegSynch;
+        typedef std::shared_ptr<RgbDepthSegSynch> RgbDepthSegSynchPtr;
+
         typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> AllSynch;
+        typedef std::shared_ptr<AllSynch> AllSynchPtr;
+
         typedef const sensor_msgs::ImageConstPtr ImageConstPtr;
 
         enum InputType {
@@ -175,10 +183,6 @@ namespace VDO_SLAM {
             ros::Time previous_time;
             ros::Time current_time;
 
-        private:
-            void init_interfaces();
-
-
 
         };
 
@@ -191,7 +195,7 @@ namespace VDO_SLAM {
                 void start_services() override;
 
             protected:
-                message_filters::Subscriber<sensor_msgs::Image> rgb_subscriber_synch;
+                MessageFilterSubscriberPtr rgb_subscriber_synch;
 
 
         };
@@ -205,9 +209,9 @@ namespace VDO_SLAM {
                 void start_services() override;
 
             protected:
-                message_filters::Subscriber<sensor_msgs::Image> depth_subscriber_synch;
+                MessageFilterSubscriberPtr depth_subscriber_synch;
             private:
-                RgbDepthSynch rgb_depth_synch;
+                RgbDepthSynchPtr rgb_depth_synch;
 
         };
 
@@ -220,9 +224,9 @@ namespace VDO_SLAM {
                 void start_services() override;
 
             protected:
-                message_filters::Subscriber<sensor_msgs::Image> seg_subscriber_synch;
+                MessageFilterSubscriberPtr seg_subscriber_synch;
             private:
-                RgbDepthSegSynch rgb_depth_seg_synch;
+                RgbDepthSegSynchPtr rgb_depth_seg_synch;
 
 
         };
@@ -236,9 +240,9 @@ namespace VDO_SLAM {
                 void start_services() override;
 
             protected:
-                message_filters::Subscriber<sensor_msgs::Image> flow_subscriber_synch;
+                MessageFilterSubscriberPtr flow_subscriber_synch;
             private:
-                AllSynch all_synch;
+                AllSynchPtr all_synch;
 
         };
         typedef std::shared_ptr<BaseProcessing> BaseProcessingPtr;

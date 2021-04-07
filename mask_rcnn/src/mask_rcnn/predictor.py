@@ -264,6 +264,7 @@ class COCODemo(object):
 
 
     @torch.no_grad()
+    @profile(precision=4)
     def compute_prediction(self, original_image):
         """
         Arguments:

@@ -19,7 +19,7 @@ import matplotlib.cm as cm
 import torch
 from torchvision import transforms, datasets
 import torch.backends.cudnn as cudnn
-# from memory_profiler import profile
+from memory_profiler import profile
 
 
 from mono_depth_2.networks import DepthDecoder
@@ -37,6 +37,7 @@ import time
 import rospkg
 import rospy
 import ros_numpy
+import gc
 
 import cv2
 
@@ -50,7 +51,7 @@ sys.path.insert(0, package_path)
 #mono_640x192
 
 class MonoDepth2Ros(RosCppCommunicator):
-    def __init__(self, model_path= package_path + "/src/mono_depth_2/models/", model_name = "mono+stereo_640x192"):
+    def __init__(self, model_path= package_path + "/src/mono_depth_2/models/", model_name = "mono_640x192"):
         RosCppCommunicator.__init__(self)
         self.model_name = model_name
 
@@ -96,7 +97,6 @@ class MonoDepth2Ros(RosCppCommunicator):
         self.log_to_ros("monodepth2/analyse_image call ready")
 
     @torch.no_grad()
-    # @profile(precision=4)
     def mono_depth_service_callback(self, req):
         response = MonoDepthResponse()
         try:
@@ -144,7 +144,7 @@ class MonoDepth2Ros(RosCppCommunicator):
         disp = outputs[("disp", 0)]
         _, disp = self.disp_to_depth(disp, 0.01, 100)
         disp_resized = torch.nn.functional.interpolate(
-            disp, (original_height, original_width), mode="bilinear", align_corners=True)
+            disp, (original_height, original_width), mode="bilinear", align_corners=False)
 
         disp_resized = disp_resized
         #output is a np.float64. We must cast down to a np.float8 so that ROS encodings can handles this
@@ -161,6 +161,9 @@ class MonoDepth2Ros(RosCppCommunicator):
         del depth_image_float
         del image_predicted
         del disp
+
+        gc.collect()
+
 
         return depth_image
 
@@ -212,7 +215,7 @@ def shutdown_hook():
 
 
 #TODO: options for type of output
-if __name__ == "__main__":
+def main():
     rospy.init_node("mono_depth2_ros_node")
     rospy.on_shutdown(shutdown_hook)
     import argparse

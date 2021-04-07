@@ -26,6 +26,7 @@ from rostk_pyutils.ros_cpp_communicator import RosCppCommunicator
 from sensor_msgs.msg import Image
 from vision_msgs.msg import BoundingBox2D
 from geometry_msgs.msg import Pose2D
+import gc
 
 import struct
 import rospy
@@ -75,7 +76,6 @@ class MaskRcnnRos(RosCppCommunicator):
         self.mask_rcnn_label_list_service = rospy.Service("maskrcnn/request_label_list", MaskRcnnLabelList, self.label_list_request_callback)
         self.log_to_ros("Service call ready")
 
-
     @torch.no_grad()
     def mask_rcnn_service_callback(self, req):
         response = MaskRcnnVdoSlamResponse()
@@ -97,6 +97,11 @@ class MaskRcnnRos(RosCppCommunicator):
 
 
             del response_image
+            del semantic_objects
+            del display_image
+
+            gc.collect()
+
             return response
 
 
@@ -123,6 +128,7 @@ class MaskRcnnRos(RosCppCommunicator):
         return self.coco_demo.run_on_opencv_image(image)
 
     @torch.no_grad()
+    # @profile(precision=4)
     def analyse_image(self, image):
         """[Analyses an image using mask rcnn. Creates a semantic instance labelled greyscale image
         and a list of mask_rcnn.SemanticObjects which represent each detected object in the frame]
@@ -286,7 +292,7 @@ class MaskRcnnTopic():
         input_image = ros_numpy.numpify(data)
         response_image, semantic_objects = self.mask_rcnn.analyse_image(input_image)
         display_image = self.mask_rcnn.generate_coloured_mask(response_image)
-        bounding_box_image = self.mask_rcnn.generated_bounding_boxes(input_image, semantic_objects)
+        # bounding_box_image = self.mask_rcnn.generated_bounding_boxes(input_image, semantic_objects)
         cv2.imshow("detections", display_image)
         cv2.waitKey(1)
 

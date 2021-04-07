@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 
     
     mono_depth_2::MonoDepthInterfacePtr mono_depth_ptr = std::make_shared<mono_depth_2::MonoDepthInterface>(n);
-    // mono_depth_ptr->attach_preprocessor(boost::bind(&uhumans_depth_preprocessor, _1, _2));
+    mono_depth_ptr->attach_preprocessor(boost::bind(&uhumans_depth_preprocessor, _1, _2));
 
     mask_rcnn::MaskRcnnInterfacePtr mask_rcnn_ptr = std::make_shared<mask_rcnn::MaskRcnnInterface>(n);
     flow_net::FlowNetInterfacePtr sceneflow_ptr = std::make_shared<flow_net::FlowNetInterface>(n);

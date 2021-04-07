@@ -55,7 +55,7 @@
   <arg name="RGB" default="1"/>
   <arg name="data_code" default="2"/>
 
-  <arg name="depth_map_factor" default="2"/>
+  <arg name="depth_map_factor" default="1000"/>
   <!-- <arg name="depth_map_factor" default="800.0"/> -->
    <!--Should habve a decimal, ie 10.0 not 10 becuase otherwise the param
   server rounds it to 0-->
@@ -114,7 +114,7 @@
     <remap from="/vdoslam/input/all" to="/camera/all" unless="$(arg online)"/>
 
 
-    <remap to="/tesse/left_cam/camera_info" from="/camera/camera_info" if="$(arg online)"/>
+    <remap to="/camera/color/camera_info" from="/camera/camera_info" if="$(arg online)"/>
 
     <param name="use_calibration_file" value="$(arg use_calibration_file)"/>
 

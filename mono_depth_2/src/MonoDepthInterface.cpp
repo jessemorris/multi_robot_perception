@@ -48,9 +48,8 @@ bool MonoDepthInterface::analyse(const cv::Mat& current_image, cv::Mat& dst) {
         return false;
     }
 
-    cv::Mat processed_image;
 
-    sensor_msgs::ImagePtr current_image_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", processed_image).toImageMsg();
+    sensor_msgs::ImagePtr current_image_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", current_image).toImageMsg();
 
     mono_depth_2::MonoDepth srv;
     srv.request.current_image = *current_image_msg;

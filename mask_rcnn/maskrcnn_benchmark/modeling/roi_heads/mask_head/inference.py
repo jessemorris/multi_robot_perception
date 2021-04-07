@@ -3,6 +3,8 @@ import numpy as np
 import torch
 from torch import nn
 from maskrcnn_benchmark.layers.misc import interpolate
+from memory_profiler import profile
+
 
 from maskrcnn_benchmark.structures.bounding_box import BoxList
 
@@ -158,6 +160,7 @@ def paste_mask_in_image(mask, box, im_h, im_w, thresh=0.5, padding=1):
     ]
 
     del mask
+    del box
     return im_mask
     # return None
 
@@ -171,7 +174,9 @@ class Masker(object):
         self.threshold = threshold
         self.padding = padding
 
+    @profile(precision=4)
     def forward_single_image(self, masks, boxes):
+        print(type(boxes))
         boxes = boxes.convert("xyxy")
         im_w, im_h = boxes.size
         res = [
@@ -182,12 +187,16 @@ class Masker(object):
         if len(res) > 0:
             #size was torch.Size([19, 1, 480, 640])
             # result = torch.stack(res, dim=0)[:, None]
-            # print(result.size())
             result = np.stack(res, axis=0)[:, None]
+
+            #we implement our own np.stack becuase memory leak!?
+            # result = res
         else:
             result = []
 
-        del res
+        for r in res:
+            del r
+        
         return result
 
     def __call__(self, masks, boxes):
@@ -205,6 +214,7 @@ class Masker(object):
             result = self.forward_single_image(mask, box)
             if result is not None:
                 results.append(result)
+                del result
         return results
 
 
