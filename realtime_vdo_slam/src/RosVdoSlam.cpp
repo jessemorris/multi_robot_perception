@@ -43,9 +43,6 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
 
         vdo_worker_thread = std::thread(&RosVdoSlam::vdo_worker, this);
 
-
-
-
     }
 
 RosVdoSlam::~RosVdoSlam() {
@@ -320,6 +317,7 @@ void RosVdoSlam::vdo_worker() {
                 input->object_pose_gt,
                 input->time_diff,
                 image_trajectory,global_optim_trigger);
+            // ROS_INFO_STREAM("made scene");
 
 
             std::vector<mask_rcnn::SemanticObject> semantic_objects = input->semantic_objects;

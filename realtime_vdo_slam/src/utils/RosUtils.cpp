@@ -161,5 +161,94 @@ namespace VDO_SLAM {
             else LetterDesignator = 'Z';
             return LetterDesignator;
         }
-    }
+        namespace geometry_converter {
+
+          
+            Eigen::Quaterniond quat_from_orientation(const geometry_msgs::Quaternion& quat) {
+                return Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
+            }
+        
+            Eigen::Vector3d vector_from_translation(const geometry_msgs::Point& point) {
+                return Eigen::Vector3d(point.x, point.y, point.z);
+            }
+            Eigen::Vector3d vector_from_translation(const geometry_msgs::Vector3& point) {
+                return Eigen::Vector3d(point.x, point.y, point.z);
+            }
+
+
+            geometry_msgs::Quaternion orienation_from_quat(const Eigen::Quaterniond& orientation) {
+                geometry_msgs::Quaternion quat;
+                quat.x = orientation.x();
+                quat.y = orientation.y();
+                quat.z = orientation.z();
+                quat.w = orientation.z();
+                return quat;
+            }
+   
+            geometry_msgs::Point translation_from_vector(const Eigen::Vector3d& vector) {
+                geometry_msgs::Point point;
+                point.x = vector.x();
+                point.y = vector.y();
+                point.z = vector.z();
+                return point;
+            }
+
+
+        }
+
+
+        namespace g2o_converter {
+            
+            g2o::SE3Quat from_pose_msg(const geometry_msgs::Pose& pose_msg) {
+                Eigen::Quaterniond quat = geometry_converter::quat_from_orientation(pose_msg.orientation);
+                Eigen::Vector3d vector = geometry_converter::vector_from_translation(pose_msg.position);
+                Eigen::Matrix<double,3,3> rotation_m =  quat.toRotationMatrix();
+                return g2o::SE3Quat(rotation_m,vector);
+
+            }
+
+            geometry_msgs::Pose to_pose_msg(const g2o::SE3Quat& pose) {
+                geometry_msgs::Quaternion orientation = geometry_converter::orienation_from_quat(pose.rotation());
+                geometry_msgs::Point point = geometry_converter::translation_from_vector(pose.translation());
+
+                geometry_msgs::Pose pose_msg;
+                pose_msg.orientation = orientation;
+                pose_msg.position = point;
+
+                return pose_msg;
+
+            }
+
+            g2o::SE3Quat from_twist_msg(const geometry_msgs::Twist& twist_msg) {
+                Eigen::Quaterniond quat(1, 0, 0, 0);
+                //we only get the linear component from VDO
+                Eigen::Vector3d vector = geometry_converter::vector_from_translation(twist_msg.linear);
+                Eigen::Matrix<double,3,3> rotation_m =  quat.toRotationMatrix();
+                return g2o::SE3Quat(rotation_m,vector);
+            }
+
+
+            geometry_msgs::Twist to_twist_msg(const g2o::SE3Quat& twist) {
+                geometry_msgs::Vector3 angular;
+                angular.x = 0;
+                angular.y = 0;
+                angular.z = 0;
+                geometry_msgs::Point point = geometry_converter::translation_from_vector(twist.translation());
+                geometry_msgs::Vector3 linear;
+                linear.x = point.x;
+                linear.y = point.y;
+                linear.z = point.z;
+
+                geometry_msgs::Twist twist_msg;
+                twist_msg.linear = linear;
+                twist_msg.angular = angular;
+
+                return twist_msg;
+
+            }
+
+       
+        } //namespace g2o_converter
+
+    } //namespace utils
 }

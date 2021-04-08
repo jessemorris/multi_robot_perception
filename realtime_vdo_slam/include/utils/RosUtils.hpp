@@ -10,12 +10,19 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/Vector3.h>
 #include <tf/transform_listener.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/Image.h>
 
 #include <opencv2/opencv.hpp>
+
+#include <vdo_slam_g2o/types/types_seven_dof_expmap.h>
+#include <vdo_slam/Types.h>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Core>
+
 
 namespace VDO_SLAM {
 
@@ -103,6 +110,65 @@ namespace VDO_SLAM {
         void LLtoUTM(const double Lat, const double Long,
                            double &UTMNorthing, double &UTMEasting,
                            std::string &UTMZone);
+
+        namespace geometry_converter {
+
+            /**
+             * @brief Converts a Quaternion msg into a Eigen Quaternion. Useful for converting between
+             * ROS pose objects and g2o classes which use Eigen as their base.
+             * 
+             * @param const geometry_msgs::Quaternion& quat 
+             * @return Eigen::Quaterniond 
+             */
+            Eigen::Quaterniond quat_from_orientation(const geometry_msgs::Quaternion& quat);
+            /**
+             * @brief Converts a Point msg into a Eigen Vector3d. Useful for converting between
+             * ROS pose objects and g2o classes which use Eigen as their base.
+             * 
+             * @param const const geometry_msgs::Point& point 
+             * @return Eigen::Vector3
+             */
+            Eigen::Vector3d vector_from_translation(const geometry_msgs::Point& point);
+            /**
+             * @brief Overload for twist msg (which uses geometry msgs Vector 3 and not point)
+             * 
+             * @param point geometry_msgs::Vector3&
+             * @return Eigen::Vector3d 
+             */
+            Eigen::Vector3d vector_from_translation(const geometry_msgs::Vector3& point);
+
+            /**
+             * @brief Converts an Eigen Quaternion into a quaternion ROS msg. Useful for converting back to
+             * a g2o object from a pose object.
+             * 
+             * @param orientation const Eigen::Quaterniond
+             * @return geometry_msgs::Quaternion 
+             */
+            geometry_msgs::Quaternion orienation_from_quat(const Eigen::Quaterniond& orientation);
+   
+            /**
+             * @brief Converts an Eigen Vector3d into a point ROS msg. Useful for converting back to
+             * a g2o object from a pose object.
+             * 
+             * @param vector const Eigen::Vector3d
+             * @return geometry_msgs::Point 
+             */
+            geometry_msgs::Point translation_from_vector(const Eigen::Vector3d& vector);
+
+        }
+
+        namespace g2o_converter {
+
+            g2o::SE3Quat from_pose_msg(const geometry_msgs::Pose& pose_msg);
+            geometry_msgs::Pose to_pose_msg(const g2o::SE3Quat& pose);
+
+
+            //for twist message we only care about linear component becuase thats all we get from
+            //VDO slam so only translation will be filled out
+            g2o::SE3Quat from_twist_msg(const geometry_msgs::Twist& twist_msg);
+            geometry_msgs::Twist to_twist_msg(const g2o::SE3Quat& twist);
+
+        }
     }
 
 }

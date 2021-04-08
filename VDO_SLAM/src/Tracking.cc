@@ -532,7 +532,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     if(timestamp == 0) {
         VDO_ERROR_MSG("Timestamp was zero");
     }
-    cout << "timestamp " << timestamp << endl;
+    VDO_INFO_MSG("timestamp " << timestamp);
     if(timestamp!=0 && bFrame2Frame == true)
     {
         VDO_DEBUG_MSG(" TemperalMatch_subset size " << TemperalMatch_subset.size());
@@ -710,17 +710,26 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
         sprintf(text, "x = %02fm y = %02fm z = %02fm", CamPos.at<float>(0,3), CamPos.at<float>(2,3), CamPos.at<float>(1,3));
 
         //we take the final column becuase I assume matrix is in R | t form
-        scene->update_camera_pos(CamPos);
+        //I think z is (1,3) and y is (2, 3) -> maybe becuase of transform from camera frame to image plane
+        float temp_y = CamPos.at<float>(2,3);
+        float temp_z = CamPos.at<float>(1,3);
+        //make into normal homogenous matrix form
+        CamPos.at<float>(1,3) = temp_y;
+        CamPos.at<float>(2,3) = temp_z;
+        scene->pose_from_cvmat(CamPos);
 
         if (!mVelocity.empty()) {
             cv::Mat CameraMotion = Converter::toInvMatrix(mVelocity);
-            scene->update_camera_vel(CameraMotion);
+            scene->twist_from_cvmat(CameraMotion);
+        }
+        else {
+            cv::Mat identity = homogenous_identity();
+            scene->twist_from_cvmat(identity);
         }
 
 
         cv::putText(imTraj, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
         cv::putText(imTraj, "Object Trajectories (COLORED CIRCLES)", cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
-        // cout << "v obj center " << mCurrentFrame.vObjCentre3D.size() << endl;
         for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
         {
             if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0) {
@@ -739,9 +748,21 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
             // int l = mCurrentFrame.nSemPosition[i];
             int l = mCurrentFrame.nModLabel[i];
 
+            cv::Mat pose_hom = homogenous_identity();
+            pose_hom.at<double>(0, 3) = world_x;
+            pose_hom.at<double>(1, 3) = world_y;
+
+            cv::Mat twist_hom = homogenous_identity();
+            twist_hom.at<double>(0, 3) = mCurrentFrame.vSpeed[i].x/36;
+            twist_hom.at<double>(1, 3) = mCurrentFrame.vSpeed[i].y/36;
+
             SceneObject scene_object;
-            scene_object.pose = cv::Point3f(world_x, world_y, 0);
-            scene_object.velocity = cv::Point2f(vel_x, vel_y);
+
+            scene_object.pose_from_cvmat(pose_hom);
+            scene_object.twist_from_cvmat(twist_hom);
+
+            // scene_object.pose = cv::Point3f(world_x, world_y, 0);
+            // scene_object.velocity = cv::Point2f(vel_x, vel_y);
             scene_object.tracking_id = l;
             scene_object.unique_id = i;
             scene_object.semantic_instance_index = mCurrentFrame.nSemPosition[i];
@@ -898,6 +919,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     mFlowMapLast = mFlowMap; // new added Nov 21 2019
 
     // return mCurrentFrame.mTcw.clone();
+    VDO_DEBUG_MSG("done track");
     return scene;
 }
 

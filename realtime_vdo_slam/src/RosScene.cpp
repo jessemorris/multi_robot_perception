@@ -14,7 +14,8 @@
 
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <opencv2/core.hpp>
-;
+
+#include "utils/RosUtils.hpp"
 
 
 /**
@@ -71,13 +72,15 @@ cv::Scalar seg_index_to_colour(int index) {
 VDO_SLAM::RosSceneObject::RosSceneObject(realtime_vdo_slam::VdoSceneObjectConstPtr& _msg) : 
     time(_msg->time) {
 
-        //TODO: currently ignoring rotation
-        pose.x = _msg->pose.position.x;
-        pose.y = _msg->pose.position.y;
-        pose.z = _msg->pose.position.z;
+        // //TODO: currently ignoring rotation
+        // pose.x = _msg->pose.position.x;
+        // pose.y = _msg->pose.position.y;
+        // pose.z = _msg->pose.position.z;
+        *pose = utils::g2o_converter::from_pose_msg(_msg->pose);
+        *twist = utils::g2o_converter::from_twist_msg(_msg->twist);
 
-        velocity.x = _msg->twist.linear.x;
-        velocity.y = _msg->twist.linear.y;
+        // velocity.x = _msg->twist.linear.x;
+        // velocity.y = _msg->twist.linear.y;
 
         semantic_instance_index = _msg->semantic_label;
         //this one should have lavel
@@ -95,18 +98,23 @@ VDO_SLAM::RosSceneObject::RosSceneObject(SceneObject& _object, ros::Time& _time)
 
 realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
     realtime_vdo_slam::VdoSceneObjectPtr msg(new realtime_vdo_slam::VdoSceneObject);
-    msg->pose.position.x = pose.x;
-    msg->pose.position.y = pose.y;
-    msg->pose.position.z = pose.z;
+    // msg->pose.position.x = pose.x;
+    // msg->pose.position.y = pose.y;
+    // msg->pose.position.z = pose.z;
+    ROS_INFO_STREAM("making ros slam scene");
+    msg->pose = utils::g2o_converter::to_pose_msg(*pose);
+    msg->twist = utils::g2o_converter::to_twist_msg(*twist);
 
-    msg->twist.linear.x = velocity.x;
-    msg->twist.linear.y = velocity.y;
+    // msg->twist.linear.x = velocity.x;
+    // msg->twist.linear.y = velocity.y;
     msg->semantic_label = semantic_instance_index;
 
     //we should not label here becuase the scene object may not have the correct label
     msg->tracking_id = tracking_id;
     msg->time = time;
     msg->uid = unique_id;
+    ROS_INFO_STREAM("done making ros slam scene");
+
 
     return msg;
 
@@ -122,30 +130,13 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
             scene_objects[i] = ros_scene_object;
         }
 
-        tf2::Quaternion quat;
-        tf2::Matrix3x3 rotation_matrix_pos(camera_pos_rotation.at<float>(0, 0), camera_pos_rotation.at<float>(0, 1), camera_pos_rotation.at<float>(0, 2),
-                                           camera_pos_rotation.at<float>(1, 0), camera_pos_rotation.at<float>(1, 1), camera_pos_rotation.at<float>(1, 2),
-                                           camera_pos_rotation.at<float>(2, 0), camera_pos_rotation.at<float>(2, 1), camera_pos_rotation.at<float>(2, 2));
-                
-
-        rotation_matrix_pos.getRotation(quat);
-        
         //Note: we dont add transform frame and child frame here
         odom.header.stamp = time;
-        odom.pose.pose.position.x = camera_pos_translation.x;
-        odom.pose.pose.position.y = camera_pos_translation.y;
-        odom.pose.pose.position.z = camera_pos_translation.z;
-
-        odom.pose.pose.orientation.x = quat.x();
-        odom.pose.pose.orientation.y = quat.y();
-        odom.pose.pose.orientation.z = quat.z();
-        odom.pose.pose.orientation.w = quat.w();
-
-        odom.twist.twist.linear.x = camera_vel_translation.x;
-        odom.twist.twist.linear.y = camera_vel_translation.y;
-        odom.twist.twist.linear.z = camera_vel_translation.z;
-
-        //TODO: angular velocity
+        //we ignore covariance on odom here for now
+        odom.pose.pose = utils::g2o_converter::to_pose_msg(*pose);
+        //this only sets the linear velocity of the twist object as we only get
+        //linear from VDO
+        odom.twist.twist = utils::g2o_converter::to_twist_msg(*twist);
 
 }
 
