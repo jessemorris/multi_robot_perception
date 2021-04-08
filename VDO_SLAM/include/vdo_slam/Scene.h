@@ -48,7 +48,6 @@ namespace VDO_SLAM
             SceneObject* get_scene_objects_ptr();
 
             const int scene_objects_size();
-            const int get_global_fid() const;
             const int get_id() const;
             const double get_timestamp() const;
 
@@ -63,10 +62,10 @@ namespace VDO_SLAM
             // g2o::SE3Quat twist;
 
         private:
-            int global_fid;
             int id;
             double timestamp;
     };
+
     
 } // namespace VDO_SLAM
 

@@ -63,6 +63,9 @@ public:
     std::vector<cv::Mat> vmCameraPose_GT;  // ground truth result
     // rigid motion of camera and dynamic points. (k-1)*m
     std::vector<std::vector<cv::Mat> > vmRigidCentre;  // ground truth object center
+    std::vector<std::vector<cv::Mat> > vmRigidImageCentre; //object center in image plane (cv::Mat will
+    //be a 2x1 matrix representing coordinates in the u x v plane)
+
     std::vector<std::vector<cv::Mat> > vmRigidMotion;
     std::vector<std::vector<cv::Mat> > vmObjPosePre; // for new metric 26 Feb 2020
     std::vector<std::vector<cv::Mat> > vmRigidMotion_RF;  // refine result

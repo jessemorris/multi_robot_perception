@@ -29,7 +29,7 @@ namespace VDO_SLAM {
 
         //Initialize the Tracking thread
         //(it will live in the main thread of execution, the one that called this constructor)
-        mpTracker = new Tracking(this, mpMap, params);
+        mpTracker = new Tracking(mpMap, params);
     }
 
 
@@ -57,14 +57,14 @@ namespace VDO_SLAM {
 
         //Initialize the Tracking thread
         //(it will live in the main thread of execution, the one that called this constructor)
-        mpTracker = new Tracking(this, mpMap, strSettingsFile, mSensor);
+        mpTracker = new Tracking(mpMap, strSettingsFile, mSensor);
 
     }
 
 
 
 
-    std::unique_ptr<Scene> System::TrackRGBD(const cv::Mat &im, cv::Mat &depthmap, const cv::Mat &flowmap, const cv::Mat &masksem,
+    std::pair<SceneType, std::unique_ptr<Scene>> System::TrackRGBD(const cv::Mat &im, cv::Mat &depthmap, const cv::Mat &flowmap, const cv::Mat &masksem,
                             const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt,
                             const double &timestamp, cv::Mat &imTraj, const int &nImage)
     {
@@ -75,6 +75,53 @@ namespace VDO_SLAM {
         // }
 
         return mpTracker->GrabImageRGBD(im,depthmap,flowmap,masksem,mTcw_gt,vObjPose_gt,timestamp,imTraj,nImage);
+    }
+
+    std::vector<Scene> System::construct_scenes(int back_frame_id) {
+            //number of frames
+        const int N = mpMap->vpFeatSta.size();
+
+        if (N < 2) {
+            return std::vector<Scene>();
+
+        }
+
+        if(back_frame_id == -1) {
+            back_frame_id = N;
+            VDO_INFO_MSG(back_frame_id);
+        }
+        else if(back_frame_id > N) {
+            VDO_WARN_MSG("Back frame ID " << back_frame_id << " greater than size of map " << N);
+            back_frame_id = N;
+        }
+
+        VDO_INFO_MSG("Constructing scenes using last " << back_frame_id << "/" << N);
+        
+        //loop for each scene, reconstructing each scene and objects
+        for(int i = 0; i < N; i++) {
+            //3D object centers
+            //2D image frame centers (TODO: add into map)
+            //tracking label (nModelLabels)
+            //semantic label (nSematic Position)
+
+            //loop through object motions vmRigidMotion to get nModLabel and nSemPosition
+            //loop through vmRigidCentre to get vObjectCentre3D (and eventually 2D)
+            //asset same length?
+            int rigid_motion_size = mpMap->vmRigidMotion[i].size();
+            int rigid_center_size = mpMap->vmRigidCentre[i].size();
+
+            if (rigid_motion_size < 1 || rigid_center_size < 1 || rigid_motion_size != rigid_center_size) {
+                continue;
+            }
+            VDO_INFO_MSG(rigid_center_size  << " " << rigid_motion_size);
+            //first matrix in each array should be the pose (motion and position) of the camera
+            //this is odd but is the way the original algorithm was written (see tracking.cc)
+            VDO_INFO_MSG("timing size " << mpMap->vfAll_time.size());
+            // for (int j = 0; j < rigid_motion_size; j++) {
+
+            // }
+        }
+        return std::vector<Scene>();
 
     }
 

@@ -50,9 +50,8 @@ bool SortPairInt(const pair<int,int> &a,
 }
 
 
-Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) : 
+Tracking::Tracking(Map* pMap, const VdoParams& params) : 
     mState(NO_IMAGES_YET),
-    mpSystem(pSys), 
     mpMap(pMap),
     max_id(1)
 {
@@ -189,8 +188,8 @@ Tracking::Tracking(System* pSys, Map* pMap, const VdoParams& params) :
 
 }
 
-Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const eSensor sensor):
-    mState(NO_IMAGES_YET), mSensor(sensor), mpSystem(pSys), mpMap(pMap), max_id(1)
+Tracking::Tracking(Map *pMap, const string &strSettingPath, const eSensor sensor):
+    mState(NO_IMAGES_YET), mSensor(sensor), mpMap(pMap), max_id(1)
 {
     // Load camera parameters from settings file
     cout << "mSensor " << mSensor << endl;
@@ -305,7 +304,7 @@ Tracking::Tracking(System *pSys, Map *pMap, const string &strSettingPath, const 
         cout << "- used detected feature for background scene..." << endl;
 }
 
-std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow,
+std::pair<SceneType, std::unique_ptr<Scene>> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow,
                                 const cv::Mat &maskSEM, const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt,
                                 const double &timestamp, cv::Mat &imTraj, const int &nImage)
 {
@@ -319,6 +318,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     // Initialize Global ID
     if (mState==NO_IMAGES_YET) {
         f_id = 0;
+        global_f_id = 0;
     }
 
     mImGray = imRGB;
@@ -412,7 +412,7 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     mCurrentFrame = Frame(mImGray,imDepth,imFlow,maskSEM,timestamp,mpORBextractorLeft,mK,mDistCoef,mbf,mThDepth,mThDepthObj,nUseSampleFea);
 
 
-    std::unique_ptr<Scene> scene = std::unique_ptr<Scene>(new Scene(f_id, timestamp));
+    std::unique_ptr<Scene> scene = std::unique_ptr<Scene>(new Scene(global_f_id, timestamp));
 
     // ---------------------------------------------------------------------------------------
     // +++++++++++++++++++++++++ For sampled features ++++++++++++++++++++++++++++++++++++++++
@@ -518,11 +518,13 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
 
     // *** main ***
     // VDO_DEBUG_MSG("Start Tracking ......");
-    Track();
+    SceneType scene_type = Track();
     // VDO_DEBUG_MSG("End Tracking ......");
 
     // Update Global ID
     f_id = f_id + 1;
+    global_f_id++;
+
 
     // ---------------------------------------------------------------------------------------------
     // ++++++++++++++++++++++++++++++++ Display Information ++++++++++++++++++++++++++++++++++++++++
@@ -919,12 +921,11 @@ std::unique_ptr<Scene> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &im
     mFlowMapLast = mFlowMap; // new added Nov 21 2019
 
     // return mCurrentFrame.mTcw.clone();
-    VDO_DEBUG_MSG("done track");
-    return scene;
+    return std::make_pair(scene_type, std::move(scene));
 }
 
 
-void Tracking::Track()
+SceneType Tracking::Track()
 {
     if(mState==NO_IMAGES_YET)
         mState = NOT_INITIALIZED;
@@ -942,7 +943,7 @@ void Tracking::Track()
             Initialization();
 
         if(mState!=OK)
-            return;
+            return SceneType::ERROR;
     }
     else
     {
@@ -960,7 +961,7 @@ void Tracking::Track()
 
         if (TemperalMatch.size() < 2) {
             VDO_DEBUG_MSG("Temperal Match size is < 2");
-            return;
+            return SceneType::ERROR;
         }
 
         // cout << "Temperal Match size is " << TemperalMatch.size() << endl;
@@ -1148,9 +1149,11 @@ void Tracking::Track()
                 ObjCentre2D_pre = ObjCentre2D_pre + x2D_p;
 
             }
+            //take average
             ObjCentre3D_pre = ObjCentre3D_pre/ObjIdNew[i].size();
             mCurrentFrame.vObjCentre3D[i] = ObjCentre3D_pre;
 
+            //take average
             ObjCentre2D_pre = ObjCentre2D_pre/ObjIdNew[i].size();
             mCurrentFrame.vObjCentre2D[i] = ObjCentre2D_pre;
 
@@ -1359,7 +1362,8 @@ void Tracking::Track()
         // cout << "mpMap vmCameraPose_GT size " << mpMap->vmCameraPose_GT.size() << endl;
 
         //Jesse -> this may be why when global batch is not running it doenst update the masks as well
-        if (f_id==StopFrame || bLocalBatch)
+        // if (f_id==StopFrame || bLocalBatch)
+        if (f_id==StopFrame)
         {
             // (3) save static feature tracklets
             mpMap->TrackletSta = GetStaticTrack();
@@ -1446,18 +1450,24 @@ void Tracking::Track()
 
         // (10) Computed Camera and Object Speeds
         std::vector<cv::Mat> Centre_Tmp;
+        std::vector<cv::Mat> CentreImage_Tmp;
         // (10.1) Save Camera Speed
-        cv::Mat CameraCentre = (cv::Mat_<float>(3,1) << 0.f, 0.f, 0.f);
-        Centre_Tmp.push_back(CameraCentre);
+        //jesse -> why do you add an extra blank camera center here?
+        // cv::Mat CameraCentre = (cv::Mat_<float>(3,1) << 0.f, 0.f, 0.f);
+        cv::Mat CameraCentreImage = (cv::Mat_<float>(2,1) << 0.f, 0.f);
+        // Centre_Tmp.push_back(CameraCentre);
+        Centre_Tmp.push_back(CameraPoseTmp);
         // (10.2) Save Object Motions
         for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
         {
             if (!mCurrentFrame.bObjStat[i])
                 continue;
             Centre_Tmp.push_back(mCurrentFrame.vObjCentre3D[i]);
+            CentreImage_Tmp.push_back(mCurrentFrame.vObjCentre2D[i]);
         }
         // (10.3) Save to The Map
         mpMap->vmRigidCentre.push_back(Centre_Tmp);
+        mpMap->vmRigidImageCentre.push_back(CentreImage_Tmp);
 
         // cout << "Save Graph Structure, Done!" << endl;
     }
@@ -1491,19 +1501,10 @@ void Tracking::Track()
     // cout << "Fid: " << f_id << endl;
     // cout << "StopFrame: " << StopFrame << endl;
     bGlobalBatch = true;
+    SceneType scene_type = SceneType::SINGLE;
     if (f_id==StopFrame) // bFrame2Frame f_id>=2
     {
-        // cout << "Fid is stop frame: " << f_id << endl;
-        // Metric Error BEFORE Optimization
-        //comment these becuase we have no ground truth
-        // GetMetricError(mpMap->vmCameraPose,mpMap->vmRigidMotion, mpMap->vmObjPosePre,
-        //                mpMap->vmCameraPose_GT,mpMap->vmRigidMotion_GT, mpMap->vbObjStat);
-
-
-        // GetVelocityError(mpMap->vmRigidMotion, mpMap->vp3DPointDyn, mpMap->vnFeatLabel,
-        //                  mpMap->vnRMLabel, mpMap->vfAllSpeed_GT, mpMap->vnAssoDyn, mpMap->vbObjStat);
-        if (bGlobalBatch && mTestData==KITTI)
-        {
+    
             // Get Full Batch Optimization
             // Optimizer::FullBatchOptimization(mpMap,mK);
             clock_t s_5, e_5;
@@ -1523,16 +1524,11 @@ void Tracking::Track()
             //                  mpMap->vnRMLabel, mpMap->vfAllSpeed_GT, mpMap->vnAssoDyn, mpMap->vbObjStat);
             f_id = 0; //14.1.2020 Jesse add -> need to reset fid so we optimize again for streaming
             // mState = NO_IMAGES_YET;
-        }
-        else {
-            mState = OK;
-        }
+
+            scene_type == SceneType::OPTIMIZED;
 
     }
-    else {
-        mState = OK;
-
-    }
+    return scene_type;
 
 }
 

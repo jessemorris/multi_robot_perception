@@ -65,11 +65,6 @@ VDO_SLAM::SceneObject* VDO_SLAM::Scene::get_scene_objects_ptr() {
     return scene_objects.data();
 }
  
-
-const int VDO_SLAM::Scene::get_global_fid() const {
-    return global_fid;
-}
-
 const int VDO_SLAM::Scene::get_id() const {
     return id;
 }

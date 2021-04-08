@@ -7,6 +7,9 @@
 
 
 
+
+
+
 namespace VDO_SLAM {
 
      // Input sensor
@@ -15,6 +18,12 @@ namespace VDO_SLAM {
         STEREO=1, //confusing between stereo and RGBD, for now use RGBD?
         RGBD=2,
         INVALID=3
+    };
+
+    enum SceneType {
+        SINGLE = 0,
+        OPTIMIZED = 1,
+        ERROR = 2
     };
 
     /**

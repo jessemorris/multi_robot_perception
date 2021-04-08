@@ -16,13 +16,13 @@
 // eigen
 #include <eigen3/Eigen/Core>
 
-#include "Map.h"
-#include "Frame.h"
-#include "ORBextractor.h"
-#include "System.h"
-#include "Scene.h"
-#include "Converter.h"
-#include "Types.h"
+#include "vdo_slam/Map.h"
+#include "vdo_slam/Frame.h"
+#include "vdo_slam/ORBextractor.h"
+#include "vdo_slam/System.h"
+#include "vdo_slam/Scene.h"
+#include "vdo_slam/Types.h"
+#include "vdo_slam/Params.h"
 
 #include <memory>
 #include <mutex>
@@ -31,9 +31,7 @@ namespace VDO_SLAM {
 
 using namespace std;
 
- class Map;
- class System;
- struct VdoParams;
+//  struct VdoParams;
 
 class Tracking
 {
@@ -63,11 +61,11 @@ class Tracking
     };
 
     public:
-        Tracking(System* pSys, Map* pMap, const VdoParams& params);
-        Tracking(System* pSys, Map* pMap, const string &strSettingPath, const eSensor sensor);
+        Tracking(Map* pMap, const VdoParams& params);
+        Tracking(Map* pMap, const string &strSettingPath, const eSensor sensor);
 
         // Preprocess the input and call Track(). Extract features and performs stereo matching.
-        std::unique_ptr<Scene> GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow, const cv::Mat &maskSEM,
+        std::pair<SceneType, std::unique_ptr<Scene>> GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow, const cv::Mat &maskSEM,
                             const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt, const double &timestamp,
                             cv::Mat &imTraj, const int &nImage);
 
@@ -175,6 +173,9 @@ class Tracking
         // save current frame ID
         int f_id;
 
+        int global_f_id; //increments every frame regardless -> should be the total 
+        //number of frames analysed
+
         // save the global Tracking ID
         int max_id;
 
@@ -207,16 +208,14 @@ class Tracking
     protected:
 
         // Main tracking function. It is independent of the input sensor.
-        void Track();
+
+        SceneType Track();
 
         // Map initialization
         void Initialization();
 
         //ORB
         ORBextractor* mpORBextractorLeft, *mpORBextractorRight;
-
-        // System
-        System* mpSystem;
 
         //Map
         Map* mpMap;

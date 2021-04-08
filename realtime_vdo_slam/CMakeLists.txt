@@ -93,6 +93,7 @@ set(minisam_INCLUDE_DIR /usr/local/include/minisam/)
 add_message_files(
    FILES
    VdoSlamScene.msg
+   VdoSlamScenes.msg
    VdoSceneObject.msg
    VdoInput.msg
 )

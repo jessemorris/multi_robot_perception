@@ -231,7 +231,7 @@ realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_scene_semantics(RosSceneUni
         bb.push_back(object.bounding_box);
     }
 
-    realtime_vdo_slam::VdoSlamScenePtr vdo_slam_scene(new realtime_vdo_slam::VdoSlamScene);
+    realtime_vdo_slam::VdoSlamScenePtr vdo_slam_scene = boost::make_shared<realtime_vdo_slam::VdoSlamScene>();
     //make pose out of camera pose
     vdo_slam_scene->camera_pose = scene->odom_msg().pose.pose;
     vdo_slam_scene->camera_twist = scene->odom_msg().twist.twist;
@@ -300,8 +300,6 @@ void RosVdoSlam::vdo_worker() {
     VdoSlamInputPtr input;
     while (ros::ok() && !vdo_input_queue.isShutdown()) {
 
-
-        //cam add semaphore here so we waste less CPU time but it seems fine for now
         if (!vdo_input_queue.empty()) {
 
             vdo_input_queue.pop(input);
@@ -310,31 +308,37 @@ void RosVdoSlam::vdo_worker() {
             cv::Mat original_rgb;
             input->raw.copyTo(original_rgb);
 
-            std::unique_ptr<VDO_SLAM::Scene> unique_scene =  slam_system->TrackRGBD(input->raw,input->depth,
+            std::pair<SceneType, std::unique_ptr<Scene>> track_result = slam_system->TrackRGBD(input->raw,input->depth,
                 input->flow,
                 input->mask,
                 input->ground_truth,
                 input->object_pose_gt,
                 input->time_diff,
                 image_trajectory,global_optim_trigger);
+
+            // std::unique_ptr<VDO_SLAM::Scene> unique_scene =  
             // ROS_INFO_STREAM("made scene");
 
+            SceneType scene_type = track_result.first;
+            scene = std::move(track_result.second);
 
             std::vector<mask_rcnn::SemanticObject> semantic_objects = input->semantic_objects;
-
-            scene = std::move(unique_scene);
 
             std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(
                     new VDO_SLAM::RosScene(*scene, input->image_time));
 
             ros_scene = std::move(unique_ros_scene);
+            slam_system->construct_scenes();
             
             realtime_vdo_slam::VdoSlamScenePtr summary_msg = merge_scene_semantics(ros_scene, semantic_objects);
             if(summary_msg != nullptr) {
                 sensor_msgs::Image image_msg;
                 utils::mat_to_image_msg(image_msg, input->raw, sensor_msgs::image_encodings::RGB8, summary_msg->header);
                 summary_msg->original_frame = image_msg;
-                scene_pub.publish(*summary_msg);
+
+                //we send a std::shared ptr as the visualizer is in the same node so we maximise sending speed
+                //see ros interprocess comms: http://wiki.ros.org/roscpp/Overview/Publishers%20and%20Subscribers#Intraprocess_Publishing
+                scene_pub.publish(summary_msg);
 
             }
         }
