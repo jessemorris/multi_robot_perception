@@ -77,7 +77,8 @@ set(PUBLIC_HEADER_FILES
     include/${PROJECT_NAME}/Tracking.h
     include/${PROJECT_NAME}/Params.h
     include/${PROJECT_NAME}/Macros.h
-    include/${PROJECT_NAME}/Types.h
+    include/${PROJECT_NAME}/utils/Types.h
+    include/${PROJECT_NAME}/utils/VdoUtils.h
 
     include/${PROJECT_NAME}/cvplot/color.h
     include/${PROJECT_NAME}/cvplot/cvplot.h
@@ -100,6 +101,8 @@ configure_package_config_file(
 
 
 add_library(${PROJECT_NAME} SHARED
+   src/utils/Types.cc
+   src/utils/VdoUtils.cc
    src/System.cc
    src/Tracking.cc
    src/ORBextractor.cc
@@ -108,7 +111,6 @@ add_library(${PROJECT_NAME} SHARED
    src/Optimizer.cc
    src/Frame.cc
    src/Scene.cc
-   src/Types.cc
 
    src/cvplot/color.cc
    src/cvplot/figure.cc
@@ -160,6 +162,10 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/${PROJECT_NAME}/
         PATTERN "*.h"
         PATTERN "*.hpp")
 
+install(FILES ${CMAKE_CURRENT_LIST_DIR}/include/${PROJECT_NAME}.hpp 
+      DESTINATION include/${PACKAGE_NAME})
+
+
 # Install export library to generate cmake
 install(EXPORT ${PROJECT_NAME}-export
    #NAMESPACE ${PACKAGE_NAME}::
@@ -183,10 +189,10 @@ install(FILES
 
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example)
 
-add_executable(vdo_slam_example
-  example/vdo_slam.cc
-)
-target_link_libraries(vdo_slam_example ${PROJECT_NAME}
-${vdo_slam_g2o_LIB_DIRS})
+# add_executable(vdo_slam_example
+#   example/vdo_slam.cc
+# )
+# target_link_libraries(vdo_slam_example ${PROJECT_NAME}
+# ${vdo_slam_g2o_LIB_DIRS})
 
 

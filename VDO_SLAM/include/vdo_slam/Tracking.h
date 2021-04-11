@@ -21,7 +21,7 @@
 #include "vdo_slam/ORBextractor.h"
 #include "vdo_slam/System.h"
 #include "vdo_slam/Scene.h"
-#include "vdo_slam/Types.h"
+#include "vdo_slam/utils/Types.h"
 #include "vdo_slam/Params.h"
 
 #include <memory>

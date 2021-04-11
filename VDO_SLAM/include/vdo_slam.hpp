@@ -12,14 +12,15 @@
 #include "vdo_slam/Scene.h"
 #include "vdo_slam/Params.h"
 #include "vdo_slam/Macros.h"
-#include "vdo_slam/Types.h"
+#include "vdo_slam/utils/Types.h"
+#include "vdo_slam/utils/VdoUtils.h"
 
-#include "vdo_slam/color.h"
-#include "vdo_slam/cvplot.h"
-#include "vdo_slam/figure.h"
-#include "vdo_slam/internal.h"
-#include "vdo_slam/highgui.h"
-#include "vdo_slam/window.h"
+#include "vdo_slam/cvplot/color.h"
+#include "vdo_slam/cvplot/cvplot.h"
+#include "vdo_slam/cvplot/figure.h"
+#include "vdo_slam/cvplot/internal.h"
+#include "vdo_slam/cvplot/highgui.h"
+#include "vdo_slam/cvplot/window.h"
 
 
 #endif

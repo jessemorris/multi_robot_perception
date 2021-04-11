@@ -17,9 +17,10 @@
 
 #include "vdo_slam/Scene.h"
 #include "vdo_slam/Params.h"
-#include "vdo_slam/Types.h"
 #include "vdo_slam/Map.h"
 #include "vdo_slam/Tracking.h"
+#include "vdo_slam/utils/Types.h"
+
 
 
 using namespace std;

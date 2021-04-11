@@ -36,8 +36,14 @@
 
 #include "vdo_slam/Tracking.h"
 #include "vdo_slam/System.h"
-#include "vdo_slam/vdo_slam.hpp"
 #include "vdo_slam/Macros.h"
+#include "vdo_slam/Converter.h"
+
+#include "vdo_slam/utils/VdoUtils.h"
+#include "vdo_slam/utils/Types.h"
+
+#include "vdo_slam.hpp" //only need for cvplot module so weill eventually move
+
 
 using namespace std;
 using namespace VDO_SLAM;
@@ -55,25 +61,25 @@ Tracking::Tracking(Map* pMap, const VdoParams& params) :
     mpMap(pMap),
     max_id(1)
 {
-    // mSensor = params.sensor_type;
+    mSensor = params.sensor_type;
     // VDO_SLAM::eSensor sensor;
     VDO_DEBUG_MSG(params.sensor_type);
-    if (params.sensor_type == 0) {
-        mSensor = VDO_SLAM::eSensor::MONOCULAR;
-        cout << "- sensor: MONOCULAR " << endl;
-    }
-    else if (params.sensor_type == 1) {
-        mSensor = VDO_SLAM::eSensor::STEREO;
-        cout << "- sensor: STEREO " << endl;
-    }
-    else if (params.sensor_type == 2) {
-        mSensor = VDO_SLAM::eSensor::RGBD;
-        cout << "- sensor: RGBD " << endl;
-    }
-    else {
-        VDO_ERROR_MSG("param.sens_type is invalid: " << params.sensor_type);
-        //TODO: exit?
-    }
+    // if (params.sensor_type == 0) {
+    //     mSensor = VDO_SLAM::eSensor::MONOCULAR;
+    //     cout << "- sensor: MONOCULAR " << endl;
+    // }
+    // else if (params.sensor_type == 1) {
+    //     mSensor = VDO_SLAM::eSensor::STEREO;
+    //     cout << "- sensor: STEREO " << endl;
+    // }
+    // else if (params.sensor_type == 2) {
+    //     mSensor = VDO_SLAM::eSensor::RGBD;
+    //     cout << "- sensor: RGBD " << endl;
+    // }
+    // else {
+    //     VDO_ERROR_MSG("param.sens_type is invalid: " << params.sensor_type);
+    //     //TODO: exit?
+    // }
 
 
     float fx = params.fx;
@@ -713,20 +719,22 @@ std::pair<SceneType, std::unique_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
 
         //we take the final column becuase I assume matrix is in R | t form
         //I think z is (1,3) and y is (2, 3) -> maybe becuase of transform from camera frame to image plane
-        float temp_y = CamPos.at<float>(2,3);
-        float temp_z = CamPos.at<float>(1,3);
-        //make into normal homogenous matrix form
-        CamPos.at<float>(1,3) = temp_y;
-        CamPos.at<float>(2,3) = temp_z;
-        scene->pose_from_cvmat(CamPos);
+        // float temp_y = CamPos.at<float>(2,3);
+        // float temp_z = CamPos.at<float>(1,3);
+        // //make into normal homogenous matrix form
+        // CamPos.at<float>(1,3) = temp_y;
+        // CamPos.at<float>(2,3) = temp_z;
+        utils::image_to_global_coordinates(CamPos, CamPos);
+        scene->pose_from_homogenous_mat(CamPos);
 
         if (!mVelocity.empty()) {
             cv::Mat CameraMotion = Converter::toInvMatrix(mVelocity);
-            scene->twist_from_cvmat(CameraMotion);
+            utils::image_to_global_coordinates(CameraMotion, CameraMotion);
+            scene->twist_from_homogenous_mat(CameraMotion);
         }
         else {
-            cv::Mat identity = homogenous_identity();
-            scene->twist_from_cvmat(identity);
+            cv::Mat identity = utils::homogenous_identity();
+            scene->twist_from_homogenous_mat(identity);
         }
 
 
@@ -737,6 +745,7 @@ std::pair<SceneType, std::unique_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
             if (mCurrentFrame.vObjCentre3D[i].at<float>(0,0)==0 && mCurrentFrame.vObjCentre3D[i].at<float>(0,2)==0) {
                 continue;
             }
+
 
             //flipped x and y to test viz
             int x = int(mCurrentFrame.vObjCentre3D[i].at<float>(0,0)*scale) + sta_x;
@@ -750,18 +759,18 @@ std::pair<SceneType, std::unique_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
             // int l = mCurrentFrame.nSemPosition[i];
             int l = mCurrentFrame.nModLabel[i];
 
-            cv::Mat pose_hom = homogenous_identity();
+            cv::Mat pose_hom = utils::homogenous_identity();
             pose_hom.at<double>(0, 3) = world_x;
             pose_hom.at<double>(1, 3) = world_y;
 
-            cv::Mat twist_hom = homogenous_identity();
+            cv::Mat twist_hom = utils::homogenous_identity();
             twist_hom.at<double>(0, 3) = mCurrentFrame.vSpeed[i].x/36;
             twist_hom.at<double>(1, 3) = mCurrentFrame.vSpeed[i].y/36;
 
             SceneObject scene_object;
 
-            scene_object.pose_from_cvmat(pose_hom);
-            scene_object.twist_from_cvmat(twist_hom);
+            scene_object.pose_from_homogenous_mat(pose_hom);
+            scene_object.twist_from_homogenous_mat(twist_hom);
 
             // scene_object.pose = cv::Point3f(world_x, world_y, 0);
             // scene_object.velocity = cv::Point2f(vel_x, vel_y);
@@ -919,6 +928,8 @@ std::pair<SceneType, std::unique_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
     TemperalMatch.clear();
     mSegMapLast = mSegMap;   // new added Nov 21 2019
     mFlowMapLast = mFlowMap; // new added Nov 21 2019
+
+
 
     // return mCurrentFrame.mTcw.clone();
     return std::make_pair(scene_type, std::move(scene));
@@ -1250,6 +1261,8 @@ SceneType Tracking::Track()
             // // ***** calculate the estimated object speed *****
             cv::Mat sp_est_v;
             sp_est_v = mCurrentFrame.vObjMod[i].rowRange(0,3).col(3) - (cv::Mat::eye(3,3,CV_32F)-mCurrentFrame.vObjMod[i].rowRange(0,3).colRange(0,3))*ObjCentre3D_pre;
+            //sp_est_v is a 3x1 vector
+            VDO_INFO_MSG(sp_est_v);
             float sp_est_norm = std::sqrt( sp_est_v.at<float>(0)*sp_est_v.at<float>(0) + sp_est_v.at<float>(1)*sp_est_v.at<float>(1) + sp_est_v.at<float>(2)*sp_est_v.at<float>(2) )*36;
 
             // cout << "estimated and ground truth object speed: " << sp_est_norm << "km/h " << sp_gt_norm << "km/h " << endl;
@@ -1318,6 +1331,8 @@ SceneType Tracking::Track()
 
         // Save timing analysis to the map
         mpMap->vfAll_time.push_back(all_timing);
+        mpMap->frame_times.push_back(mCurrentFrame.mTimeStamp);
+
 
         cout << "Assign To Lastframe ......" << endl;
 
@@ -1384,6 +1399,7 @@ SceneType Tracking::Track()
         std::vector<bool> Obj_Stat_Tmp;
         // (6.1) Save Camera Motion and Label
         cv::Mat CameraMotionTmp = Converter::toInvMatrix(mVelocity);
+        mpMap->vmCameraMotion.push_back(CameraMotionTmp);
         Mot_Tmp.push_back(CameraMotionTmp);
         ObjPose_Tmp.push_back(CameraMotionTmp); //-> jesse comments this -> just looks like it shouldn't be here...?
         Mot_Lab_Tmp.push_back(0);
@@ -1401,7 +1417,7 @@ SceneType Tracking::Track()
             Sem_Lab_Tmp.push_back(mCurrentFrame.nSemPosition[i]);
         }
         // (6.3) Save to The Map
-        mpMap->vmRigidMotion.push_back(Mot_Tmp);
+        mpMap->vmRigidMotion.push_back(Mot_Tmp); //THIS ONE IS OBJECT MOTION (4x4 matrix) -> 
         mpMap->vmObjPosePre.push_back(ObjPose_Tmp);
         mpMap->vmRigidMotion_RF.push_back(Mot_Tmp);
         mpMap->vnRMLabel.push_back(Mot_Lab_Tmp);
@@ -1457,6 +1473,7 @@ SceneType Tracking::Track()
         cv::Mat CameraCentreImage = (cv::Mat_<float>(2,1) << 0.f, 0.f);
         // Centre_Tmp.push_back(CameraCentre);
         Centre_Tmp.push_back(CameraPoseTmp);
+        CentreImage_Tmp.push_back(CameraCentreImage);
         // (10.2) Save Object Motions
         for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
         {
@@ -1477,7 +1494,7 @@ SceneType Tracking::Track()
     // =================================================================================================
 
     //jesse -> this was false before?
-    bLocalBatch = false;
+    bLocalBatch = true;
     if ( (f_id-nOVERLAP_SIZE+1)%(nWINDOW_SIZE-nOVERLAP_SIZE)==0 && f_id>=nWINDOW_SIZE-1 && bLocalBatch)
     {
         cout << "-------------------------------------------" << endl;
@@ -1502,33 +1519,41 @@ SceneType Tracking::Track()
     // cout << "StopFrame: " << StopFrame << endl;
     bGlobalBatch = true;
     SceneType scene_type = SceneType::SINGLE;
+    VDO_DEBUG_MSG(f_id);
     if (f_id==StopFrame) // bFrame2Frame f_id>=2
     {
     
-            // Get Full Batch Optimization
-            // Optimizer::FullBatchOptimization(mpMap,mK);
-            clock_t s_5, e_5;
-            double loc_ba_time;
-            s_5 = clock();
-            // Get Partial Batch Optimization
-            Optimizer::PartialBatchOptimization(mpMap,mK,f_id);
-            e_5 = clock();
-            loc_ba_time = (double)(e_5-s_5)/CLOCKS_PER_SEC*1000;
-            mpMap->fLBA_time.push_back(loc_ba_time);
+        // Get Full Batch Optimization
+        // Optimizer::FullBatchOptimization(mpMap,mK);
+        clock_t s_5, e_5;
+        double loc_ba_time;
+        s_5 = clock();
+        // Get Partial Batch Optimization
+        // Optimizer::PartialBatchOptimization(mpMap,mK,f_id);
+        Optimizer::FullBatchOptimization(mpMap,mK);
 
-            // Metric Error AFTER Optimization
-            // GetMetricError(mpMap->vmCameraPose_RF,mpMap->vmRigidMotion_RF, mpMap->vmObjPosePre,
-            //                mpMap->vmCameraPose_GT,mpMap->vmRigidMotion_GT, mpMap->vbObjStat);
-            
-            // GetVelocityError(mpMap->vmRigidMotion_RF, mpMap->vp3DPointDyn, mpMap->vnFeatLabel,
-            //                  mpMap->vnRMLabel, mpMap->vfAllSpeed_GT, mpMap->vnAssoDyn, mpMap->vbObjStat);
-            f_id = 0; //14.1.2020 Jesse add -> need to reset fid so we optimize again for streaming
-            // mState = NO_IMAGES_YET;
+        VDO_INFO_MSG("Finished full batch batch");
+        e_5 = clock();
+        loc_ba_time = (double)(e_5-s_5)/CLOCKS_PER_SEC*1000;
+        mpMap->fLBA_time.push_back(loc_ba_time);
 
-            scene_type == SceneType::OPTIMIZED;
+        // Metric Error AFTER Optimization
+        // GetMetricError(mpMap->vmCameraPose_RF,mpMap->vmRigidMotion_RF, mpMap->vmObjPosePre,
+        //                mpMap->vmCameraPose_GT,mpMap->vmRigidMotion_GT, mpMap->vbObjStat);
+        
+        // GetVelocityError(mpMap->vmRigidMotion_RF, mpMap->vp3DPointDyn, mpMap->vnFeatLabel,
+        //                  mpMap->vnRMLabel, mpMap->vfAllSpeed_GT, mpMap->vnAssoDyn, mpMap->vbObjStat);
+        f_id = 0; //14.1.2020 Jesse add -> need to reset fid so we optimize again for streaming
+        // mState = NO_IMAGES_YET;
+
+        return SceneType::OPTIMIZED;
+        // VDO_INFO_MSG(scene_type);
 
     }
-    return scene_type;
+    else {
+        return SceneType::SINGLE;
+    }
+    // return scene_type;
 
 }
 
@@ -1567,6 +1592,7 @@ void Tracking::Initialization()
     mpMap->vp3DPointDyn.push_back(mCurrentFrame.mvObj3DPoint);  // modified Dec 17 2019
     // (3) save camera pose
     mpMap->vmCameraPose.push_back(cv::Mat::eye(4,4,CV_32F));
+    mpMap->vmCameraMotion.push_back(cv::Mat::eye(4,4,CV_32F));
     mpMap->vmCameraPose_RF.push_back(cv::Mat::eye(4,4,CV_32F));
     mpMap->vmCameraPose_GT.push_back(cv::Mat::eye(4,4,CV_32F));
 

@@ -14,7 +14,8 @@
 #include <realtime_vdo_slam/VdoInput.h>
 #include "CameraInformation.hpp"
 #include <vdo_slam/System.h>
-#include <vdo_slam/Types.h>
+#include <vdo_slam/utils/Types.h>
+#include <vdo_slam/utils/VdoUtils.h>
 
 using namespace VDO_SLAM;
 using namespace VDO_SLAM::preprocessing;

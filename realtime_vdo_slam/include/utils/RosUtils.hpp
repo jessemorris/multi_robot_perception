@@ -19,7 +19,7 @@
 #include <opencv2/opencv.hpp>
 
 #include <vdo_slam_g2o/types/types_seven_dof_expmap.h>
-#include <vdo_slam/Types.h>
+#include <vdo_slam/utils/Types.h>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Core>
 

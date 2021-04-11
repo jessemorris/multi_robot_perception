@@ -5,12 +5,12 @@
 #include "utils/RosUtils.hpp"
 #include "visualizer/RosVisualizer.hpp"
 #include <realtime_vdo_slam/VdoInput.h>
-#include <vdo_slam/Types.h>
+#include <vdo_slam/utils/Types.h>
+#include <vdo_slam/utils/VdoUtils.h>
 
 #include <ros/package.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <nav_msgs/Odometry.h>
-#include <vdo_slam/vdo_slam.hpp>
 #include <tf2/transform_datatypes.h>
 #include <tf2/convert.h>
 #include <memory>
@@ -61,7 +61,7 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         int sensor_mode;
         nh.getParam("/ros_vdo_slam/sensor_mode", sensor_mode);
 
-        VDO_SLAM::eSensor sensor = VDO_SLAM::param_to_sensor(sensor_mode);
+        VDO_SLAM::eSensor sensor = utils::param_to_sensor(sensor_mode);
 
         std::string calibration_file;
         nh.getParam("/ros_vdo_slam/calibration_file", calibration_file);
@@ -139,7 +139,7 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         int sensor_mode;
         nh.getParam("/ros_vdo_slam/sensor_mode", sensor_mode);
 
-        params.sensor_type = VDO_SLAM::param_to_sensor(sensor_mode);
+        params.sensor_type = utils::param_to_sensor(sensor_mode);
 
         nh.getParam("/ros_vdo_slam/depth_map_factor", params.depth_map_factor);
 
@@ -321,6 +321,7 @@ void RosVdoSlam::vdo_worker() {
 
             SceneType scene_type = track_result.first;
             scene = std::move(track_result.second);
+            ROS_INFO_STREAM(scene_type);
 
             std::vector<mask_rcnn::SemanticObject> semantic_objects = input->semantic_objects;
 
@@ -328,7 +329,11 @@ void RosVdoSlam::vdo_worker() {
                     new VDO_SLAM::RosScene(*scene, input->image_time));
 
             ros_scene = std::move(unique_ros_scene);
-            slam_system->construct_scenes();
+
+            if (scene_type == SceneType::OPTIMIZED) {
+                ROS_INFO_STREAM("Reconstructing scene!!!!");
+                slam_system->construct_scenes();
+            }
             
             realtime_vdo_slam::VdoSlamScenePtr summary_msg = merge_scene_semantics(ros_scene, semantic_objects);
             if(summary_msg != nullptr) {

@@ -12,7 +12,8 @@
 #include "vdo_slam/System.h"
 #include "vdo_slam/Tracking.h"
 #include "vdo_slam/Macros.h"
-#include "vdo_slam/Types.h"
+#include "vdo_slam/utils/Types.h"
+#include "vdo_slam/utils/VdoUtils.h"
 
 #include <thread>
 #include <iomanip>
@@ -96,11 +97,27 @@ namespace VDO_SLAM {
         }
 
         VDO_INFO_MSG("Constructing scenes using last " << back_frame_id << "/" << N);
+        // VDO_DEBUG_MSG(mpMap->frame_times.size());
+        // VDO_DEBUG_MSG(mpMap->vmCameraPose.size());
+        // VDO_DEBUG_MSG(mpMap->vmCameraMotion.size());
         
         //loop for each scene, reconstructing each scene and objects
+        std::vector<Scene> scenes;
         for(int i = 0; i < N; i++) {
+            double timestamp = mpMap->frame_times[i];
+            Scene scene(i, timestamp);
+
+            cv::Mat camera_pose = mpMap->vmCameraPose[i];
+            utils::image_to_global_coordinates(camera_pose, camera_pose);
+            cv::Mat camera_motion = mpMap->vmCameraMotion[i];
+            utils::image_to_global_coordinates(camera_motion, camera_motion);
+
+
+            scene.pose_from_homogenous_mat(camera_pose);
+            scene.twist_from_homogenous_mat(camera_motion);
+
             //3D object centers
-            //2D image frame centers (TODO: add into map)
+            //2D image frame centers
             //tracking label (nModelLabels)
             //semantic label (nSematic Position)
 
@@ -117,11 +134,31 @@ namespace VDO_SLAM {
             //first matrix in each array should be the pose (motion and position) of the camera
             //this is odd but is the way the original algorithm was written (see tracking.cc)
             VDO_INFO_MSG("timing size " << mpMap->vfAll_time.size());
-            // for (int j = 0; j < rigid_motion_size; j++) {
+            //start at 1 because 0 is camera pose
+            for (int j = 1; j < rigid_motion_size; j++) {
+                SceneObject object;
+                cv::Mat object_center = mpMap->vmRigidCentre[i][j]; //should be 3x1 matrix
+                cv::Mat image_center = mpMap->vmRigidImageCentre[i][j]; //should be 2x1 matrix
+                int tracking_label = mpMap->vnRMLabel[i][j];
+                int semantic_label = mpMap->vnSMLabel[i][j];
 
-            // }
+                //TODO::object motion mpMap->vmRigidMotion
+                utils::image_to_global_coordinates(object_center, object_center);
+
+                object.pose_from_vector(object_center);
+                object.center_image = image_center;
+                object.tracking_id = tracking_label;
+                object.semantic_instance_index = semantic_label;
+                object.unique_id = j-1;
+
+                scene.add_scene_object(object);
+
+
+            }
+            scenes.push_back(scene);
         }
-        return std::vector<Scene>();
+
+        return scenes;
 
     }
 

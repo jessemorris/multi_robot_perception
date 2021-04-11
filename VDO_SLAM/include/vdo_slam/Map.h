@@ -17,6 +17,8 @@
 namespace VDO_SLAM
 {
 
+    typedef double TIME_STAMP;
+
 class Map
 {
 public:
@@ -59,6 +61,7 @@ public:
 
     // absolute camera pose of each frame, starting from 1st frame. (k*1)
     std::vector<cv::Mat> vmCameraPose;
+    std::vector<cv::Mat> vmCameraMotion;
     std::vector<cv::Mat> vmCameraPose_RF;  // refine result
     std::vector<cv::Mat> vmCameraPose_GT;  // ground truth result
     // rigid motion of camera and dynamic points. (k-1)*m
@@ -83,6 +86,9 @@ public:
     std::vector<int> nObjTraCount;
     std::vector<int> nObjTraCountGT;
     std::vector<int> nObjTraSemLab;
+
+    std::vector<TIME_STAMP> frame_times; //vector of timestamps. This should be the
+    //timme used to create each Frame originally
 
     // time analysis
     std::vector<float> fLBA_time;

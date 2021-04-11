@@ -4,8 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <vdo_slam_g2o/types/types_seven_dof_expmap.h>
 #include <memory>
-
-
+#include <iostream>
 
 
 
@@ -26,26 +25,6 @@ namespace VDO_SLAM {
         ERROR = 2
     };
 
-    /**
-     * @brief Converts an integer to its associated eSensor type
-     * 
-     * MONOCULAR = 0
-     * STEREO = 1
-     * RGBD = 2
-     * INVALID = 3 (this will be returned if sensor is not 0, 1 or 2.)
-     * 
-     * @param sensor 
-     * @return eSensor 
-     */
-    eSensor param_to_sensor(const int sensor);
-
-    /**
-     * @brief Constructs a 4x4 matrix in the homogenous form (R|t) where R
-     * is the identity matrix and t is a 0 column vector
-     * 
-     * @return cv::Mat 
-     */
-    cv::Mat homogenous_identity();
 
       /**
      * @brief Defines a base class that contains information to
@@ -94,17 +73,37 @@ namespace VDO_SLAM {
          * 
          * @param const cv::Mat&  pose 
          */
-        void pose_from_cvmat(const cv::Mat& pose);
+        void pose_from_homogenous_mat(const cv::Mat& pose);
+
+        /**
+         * @brief Sets the pose object from a cv::Mat in column vector form [x,y,z] when no rotation is available.
+         * We construct a homogenous matrix with rotation = identity matrix.
+         * 
+         * @param const cv::Mat&  pose 
+         */
+        void pose_from_vector(const cv::Mat& vector);
         /**
          * @brief Sets the twist object from a cv::Mat. The matrix should be in homogenous 
          * ([R | t]) form.
          * 
          * @param const cv::Mat& twist 
          */
-        void twist_from_cvmat(const cv::Mat& twist);
+        void twist_from_homogenous_mat(const cv::Mat& twist);
+
+        /**
+         * @brief Sets the twist object from a cv::Mat in column vector form [x,y,z] when no rotation is available.
+         * We construct a homogenous matrix with rotation = identity matrix
+         * 
+         * @param const cv::Mat&  pose 
+         */
+        void twist_from_vector(const cv::Mat& vector);
 
     };
+
+    // std::ostream& operator<<(std::ostream& os, const SceneType& scene);
+
 };
+
 
 
 #endif

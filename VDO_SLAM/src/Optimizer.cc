@@ -27,7 +27,7 @@
 #include <vdo_slam_g2o/core/sparse_optimizer_terminate_action.h>
 #include <vdo_slam_g2o/solvers/linear_solver_csparse.h>
 
-#include<Eigen/StdVector>
+#include <Eigen/StdVector>
 
 #include "vdo_slam/Converter.h"
 

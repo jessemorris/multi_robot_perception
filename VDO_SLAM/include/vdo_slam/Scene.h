@@ -12,7 +12,7 @@
 #include <eigen3/Eigen/Dense>
 #include  <vdo_slam_g2o/types/types_seven_dof_expmap.h>
 
-#include "vdo_slam/Types.h"
+#include "vdo_slam/utils/Types.h"
 
 namespace VDO_SLAM
 {
@@ -28,6 +28,7 @@ namespace VDO_SLAM
         std::string label;
         int tracking_id; 
         int unique_id;
+        double timestamp = -1;
 
         //hack to make class polymorphic
         virtual void vf() {}

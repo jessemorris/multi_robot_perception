@@ -101,7 +101,7 @@ realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
     // msg->pose.position.x = pose.x;
     // msg->pose.position.y = pose.y;
     // msg->pose.position.z = pose.z;
-    ROS_INFO_STREAM("making ros slam scene");
+    // ROS_INFO_STREAM("making ros slam scene");
     msg->pose = utils::g2o_converter::to_pose_msg(*pose);
     msg->twist = utils::g2o_converter::to_twist_msg(*twist);
 
@@ -113,7 +113,7 @@ realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
     msg->tracking_id = tracking_id;
     msg->time = time;
     msg->uid = unique_id;
-    ROS_INFO_STREAM("done making ros slam scene");
+    // ROS_INFO_STREAM("done making ros slam scene");
 
 
     return msg;

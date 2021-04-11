@@ -1,7 +1,9 @@
 #include "vdo_slam/Scene.h"
-#include "vdo_slam/Types.h"
 #include "vdo_slam/Converter.h"
 #include "vdo_slam/Macros.h"
+#include "vdo_slam/utils/VdoUtils.h"
+#include "vdo_slam/utils/Types.h"
+
 
 
 
@@ -24,9 +26,9 @@ VDO_SLAM::Scene::Scene()
     // camera_pos_rotation = (cv::Mat_<float>(3,3) << 1, 0, 0,
     //                                                 0, 1, 0,
     //                                                 0, 0, 1);
-    cv::Mat identity = VDO_SLAM::homogenous_identity();
-    pose_from_cvmat(identity);
-    twist_from_cvmat(identity);
+    cv::Mat identity = VDO_SLAM::utils::homogenous_identity();
+    pose_from_homogenous_mat(identity);
+    twist_from_homogenous_mat(identity);
 
 }
 
@@ -42,14 +44,15 @@ VDO_SLAM::Scene::Scene(int _id, double _timestamp):
         // camera_pos_rotation = (cv::Mat_<float>(3,3) << 1, 0, 0,
         //                                                0, 1, 0,
         //                                                0, 0, 1);
-        cv::Mat identity = VDO_SLAM::homogenous_identity();
-        pose_from_cvmat(identity);
-        twist_from_cvmat(identity);
+        cv::Mat identity = VDO_SLAM::utils::homogenous_identity();
+        pose_from_homogenous_mat(identity);
+        twist_from_homogenous_mat(identity);
     }
 
 
 //I think I do want to copy here
 void VDO_SLAM::Scene::add_scene_object(VDO_SLAM::SceneObject _object) {
+    _object.timestamp = timestamp;
     scene_objects.push_back(_object);
 }
 
