@@ -347,6 +347,7 @@ void RosVdoSlam::vdo_worker() {
                 sensor_msgs::Image image_msg;
                 utils::mat_to_image_msg(image_msg, input->raw, sensor_msgs::image_encodings::RGB8, summary_msg->header);
                 summary_msg->original_frame = image_msg;
+                scene_vector.push_back(summary_msg);
 
                 //we send a std::shared ptr as the visualizer is in the same node so we maximise sending speed
                 //see ros interprocess comms: http://wiki.ros.org/roscpp/Overview/Publishers%20and%20Subscribers#Intraprocess_Publishing

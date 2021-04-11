@@ -3,6 +3,7 @@
 #include "vdo_slam/Macros.h"
 #include "vdo_slam/utils/VdoUtils.h"
 #include "vdo_slam/utils/Types.h"
+#include "vdo_slam/Map.h"
 
 
 using namespace VDO_SLAM;
@@ -55,6 +56,13 @@ VDO_SLAM::Scene::Scene(int frame_id_, double _timestamp):
 void VDO_SLAM::Scene::add_scene_object(SceneObjectPtr& _object) {
     _object->timestamp = timestamp;
     scene_objects.push_back(_object);
+}
+
+void Scene::update_pose_from_refined(const Map& map) {
+    cv::Mat camera_pose = map.vmCameraPose_RF[frame_id];
+    utils::image_to_global_coordinates(camera_pose, camera_pose);
+
+    pose_from_vector(camera_pose);
 }
 
 std::vector<std::shared_ptr<SceneObject>>& VDO_SLAM::Scene::get_scene_objects() {

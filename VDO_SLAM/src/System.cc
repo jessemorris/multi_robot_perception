@@ -97,7 +97,10 @@ namespace VDO_SLAM {
         }
 
         VDO_INFO_MSG("Constructing scenes using last " << back_frame_id << "/" << N);
-        // VDO_DEBUG_MSG(mpMap->frame_times.size());
+        VDO_INFO_MSG(mpMap->frame_times.size());
+        VDO_INFO_MSG(mpMap->vmCameraPose.size());
+        VDO_INFO_MSG(mpMap->vmCameraPose_RF.size());
+        VDO_INFO_MSG(mpMap->vmRigidMotion_RF.size());
         // VDO_DEBUG_MSG(mpMap->vmCameraPose.size());
         // VDO_DEBUG_MSG(mpMap->vmCameraMotion.size());
         
@@ -115,6 +118,8 @@ namespace VDO_SLAM {
 
             scene->pose_from_homogenous_mat(camera_pose);
             scene->twist_from_homogenous_mat(camera_motion);
+
+            VDO_INFO_MSG(mpMap->vmRigidMotion_RF[i].size());
 
             //3D object centers
             //2D image frame centers
@@ -153,8 +158,8 @@ namespace VDO_SLAM {
                 object->semantic_instance_index = semantic_label;
                 object->unique_id = j-1;
 
-                VDO_INFO_MSG(object_center);
-                VDO_INFO_MSG(*object);
+                // VDO_INFO_MSG(object_center);
+                // VDO_INFO_MSG(*object);
 
                 scene->add_scene_object(object);
 

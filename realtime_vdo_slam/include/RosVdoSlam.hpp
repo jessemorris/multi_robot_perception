@@ -133,6 +133,9 @@ class RosVdoSlam {
 
         std::unique_ptr<VDO_SLAM::RosScene> ros_scene;
 
+        //this will grow unfiltered with time - could have a cap on size?
+        std::vector<realtime_vdo_slam::VdoSlamScenePtr> scene_vector;
+
         cv::Mat image_trajectory;
         std::shared_ptr<VDO_SLAM::System> slam_system;
 

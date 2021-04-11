@@ -13,6 +13,7 @@
 #include  <vdo_slam_g2o/types/types_seven_dof_expmap.h>
 
 #include "vdo_slam/utils/Types.h"
+#include "vdo_slam/Map.h"
 
 namespace VDO_SLAM
 {
@@ -52,6 +53,8 @@ namespace VDO_SLAM
             int scene_objects_size();
             int get_id();
             double get_timestamp();
+
+            void update_pose_from_refined(const Map& map);
 
         protected:
             std::vector<std::shared_ptr<SceneObject>> scene_objects;

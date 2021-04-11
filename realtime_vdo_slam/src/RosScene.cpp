@@ -204,7 +204,7 @@ realtime_vdo_slam::VdoSlamScenePtr VDO_SLAM::RosScene::to_msg() {
     msg->id = frame_id;
     for (SceneObjectPtr& object : scene_objects) {
         RosSceneObjectPtr ros_object = std::dynamic_pointer_cast<RosSceneObject>(object);
-        ROS_INFO_STREAM(*ros_object);
+        // ROS_INFO_STREAM(*ros_object);
         realtime_vdo_slam::VdoSceneObject object_msg = *ros_object->to_msg();
         msg->objects.push_back(object_msg);
 
@@ -229,7 +229,7 @@ realtime_vdo_slam::VdoSlamMapPtr RosScene::make_map(std::vector<VdoSlamScenePtr>
             //and associate with the frames later -> assuming all the frames are correct
             //when we reconstruct them from the map!
             RosScene unique_ros_scene(*scene, ros::Time::now());
-            ROS_INFO_STREAM(unique_ros_scene);
+            // ROS_INFO_STREAM(unique_ros_scene);
             slam_map->scenes.push_back(*unique_ros_scene.to_msg());
         }
         return slam_map;

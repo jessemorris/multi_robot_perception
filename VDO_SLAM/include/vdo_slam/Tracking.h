@@ -220,6 +220,8 @@ class Tracking
         //Map
         Map* mpMap;
 
+        std::unique_ptr<Scene> scene;
+
 
         //Calibration matrix
         cv::Mat mK;

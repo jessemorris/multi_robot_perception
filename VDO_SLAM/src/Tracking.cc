@@ -418,7 +418,7 @@ std::pair<SceneType, std::unique_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
     mCurrentFrame = Frame(mImGray,imDepth,imFlow,maskSEM,timestamp,mpORBextractorLeft,mK,mDistCoef,mbf,mThDepth,mThDepthObj,nUseSampleFea);
 
 
-    std::unique_ptr<Scene> scene = std::unique_ptr<Scene>(new Scene(global_f_id, timestamp));
+    scene = std::unique_ptr<Scene>(new Scene(global_f_id, timestamp));
 
     // ---------------------------------------------------------------------------------------
     // +++++++++++++++++++++++++ For sampled features ++++++++++++++++++++++++++++++++++++++++
@@ -759,25 +759,25 @@ std::pair<SceneType, std::unique_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
             // int l = mCurrentFrame.nSemPosition[i];
             int l = mCurrentFrame.nModLabel[i];
 
-            cv::Mat pose_hom = utils::homogenous_identity();
-            pose_hom.at<double>(0, 3) = world_x;
-            pose_hom.at<double>(1, 3) = world_y;
+            // cv::Mat pose_hom = utils::homogenous_identity();
+            // pose_hom.at<double>(0, 3) = world_x;
+            // pose_hom.at<double>(1, 3) = world_y;
 
-            cv::Mat twist_hom = utils::homogenous_identity();
-            twist_hom.at<double>(0, 3) = mCurrentFrame.vSpeed[i].x/36;
-            twist_hom.at<double>(1, 3) = mCurrentFrame.vSpeed[i].y/36;
+            // cv::Mat twist_hom = utils::homogenous_identity();
+            // twist_hom.at<double>(0, 3) = mCurrentFrame.vSpeed[i].x/36;
+            // twist_hom.at<double>(1, 3) = mCurrentFrame.vSpeed[i].y/36;
 
-            SceneObjectPtr scene_object = std::make_shared<SceneObject>();
+            // SceneObjectPtr scene_object = std::make_shared<SceneObject>();
 
-            scene_object->pose_from_homogenous_mat(pose_hom);
-            scene_object->twist_from_homogenous_mat(twist_hom);
+            // scene_object->pose_from_homogenous_mat(pose_hom);
+            // scene_object->twist_from_homogenous_mat(twist_hom);
 
-            // scene_object.pose = cv::Point3f(world_x, world_y, 0);
-            // scene_object.velocity = cv::Point2f(vel_x, vel_y);
-            scene_object->tracking_id = l;
-            scene_object->unique_id = i;
-            scene_object->semantic_instance_index = mCurrentFrame.nSemPosition[i];
-            scene_object->center_image = mCurrentFrame.vObjCentre2D[i];
+            // // scene_object.pose = cv::Point3f(world_x, world_y, 0);
+            // // scene_object.velocity = cv::Point2f(vel_x, vel_y);
+            // scene_object->tracking_id = l;
+            // scene_object->unique_id = i;
+            // scene_object->semantic_instance_index = mCurrentFrame.nSemPosition[i];
+            // scene_object->center_image = mCurrentFrame.vObjCentre2D[i];
 
             int track =l;
 
@@ -786,7 +786,7 @@ std::pair<SceneType, std::unique_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
                 track = track % 25;
             }
 
-            scene->add_scene_object(scene_object);
+            // scene->add_scene_object(scene_object);
             switch (track)
             {
                 case 1:
@@ -1391,12 +1391,34 @@ SceneType Tracking::Track()
 
         // (5) camera pose
         cv::Mat CameraPoseTmp = Converter::toInvMatrix(mCurrentFrame.mTcw);
+        cv::Mat camera_pose;
+        utils::image_to_global_coordinates(CameraPoseTmp, camera_pose);
+        scene->pose_from_homogenous_mat(camera_pose);
+
+        if (!mVelocity.empty()) {
+            cv::Mat CameraMotion = Converter::toInvMatrix(mVelocity);
+            utils::image_to_global_coordinates(CameraMotion, CameraMotion);
+            scene->twist_from_homogenous_mat(CameraMotion);
+        }
+        else {
+            cv::Mat identity = utils::homogenous_identity();
+            scene->twist_from_homogenous_mat(identity);
+        }
+
+
         mpMap->vmCameraPose.push_back(CameraPoseTmp);
         mpMap->vmCameraPose_RF.push_back(CameraPoseTmp);
         // (6) Rigid motions and label, including camera (label=0) and objects (label>0)
         std::vector<cv::Mat> Mot_Tmp, ObjPose_Tmp;
         std::vector<int> Mot_Lab_Tmp, Sem_Lab_Tmp;
         std::vector<bool> Obj_Stat_Tmp;
+        std::vector<cv::Mat> Centre_Tmp;
+        std::vector<cv::Mat> CentreImage_Tmp;
+
+
+        cv::Mat CameraCentreImage = (cv::Mat_<float>(2,1) << 0.f, 0.f);
+        Centre_Tmp.push_back(CameraPoseTmp);
+        CentreImage_Tmp.push_back(CameraCentreImage);
         // (6.1) Save Camera Motion and Label
         cv::Mat CameraMotionTmp = Converter::toInvMatrix(mVelocity);
         mpMap->vmCameraMotion.push_back(CameraMotionTmp);
@@ -1415,7 +1437,35 @@ SceneType Tracking::Track()
             ObjPose_Tmp.push_back(mCurrentFrame.vObjPosePre[i]);
             Mot_Lab_Tmp.push_back(mCurrentFrame.nModLabel[i]);
             Sem_Lab_Tmp.push_back(mCurrentFrame.nSemPosition[i]);
+            Centre_Tmp.push_back(mCurrentFrame.vObjCentre3D[i]);
+            CentreImage_Tmp.push_back(mCurrentFrame.vObjCentre2D[i]);
+
+            // cv::Mat pose_hom = utils::homogenous_identity();
+            // pose_hom.at<double>(0, 3) = world_x;
+            // pose_hom.at<double>(1, 3) = world_y;
+
+            // cv::Mat twist_hom = utils::homogenous_identity();
+            // twist_hom.at<double>(0, 3) = mCurrentFrame.vSpeed[i].x/36;
+            // twist_hom.at<double>(1, 3) = mCurrentFrame.vSpeed[i].y/36;
+
+            SceneObjectPtr scene_object = std::make_shared<SceneObject>();
+
+            scene_object->pose_from_vector(mCurrentFrame.vObjCentre3D[i]);
+            scene_object->twist_from_homogenous_mat(mCurrentFrame.vObjMod[i]);
+
+            // scene_object.pose = cv::Point3f(world_x, world_y, 0);
+            // scene_object.velocity = cv::Point2f(vel_x, vel_y);
+            scene_object->tracking_id = mCurrentFrame.nModLabel[i];
+            scene_object->unique_id = i;
+            scene_object->semantic_instance_index = mCurrentFrame.nSemPosition[i];
+            scene_object->center_image = mCurrentFrame.vObjCentre2D[i];
+
+            scene->add_scene_object(scene_object);
+
         }
+
+        VDO_INFO_MSG(Mot_Tmp.size());
+        VDO_INFO_MSG(Centre_Tmp.size());
         // (6.3) Save to The Map
         mpMap->vmRigidMotion.push_back(Mot_Tmp); //THIS ONE IS OBJECT MOTION (4x4 matrix) -> 
         mpMap->vmObjPosePre.push_back(ObjPose_Tmp);
@@ -1423,26 +1473,6 @@ SceneType Tracking::Track()
         mpMap->vnRMLabel.push_back(Mot_Lab_Tmp);
         mpMap->vnSMLabel.push_back(Sem_Lab_Tmp);
         mpMap->vbObjStat.push_back(Obj_Stat_Tmp);
-
-        // (10) Computed Camera and Object Speeds
-        std::vector<cv::Mat> Centre_Tmp;
-        std::vector<cv::Mat> CentreImage_Tmp;
-        // (10.1) Save Camera Speed
-        //jesse -> why do you add an extra blank camera center here?
-        // cv::Mat CameraCentre = (cv::Mat_<float>(3,1) << 0.f, 0.f, 0.f);
-        cv::Mat CameraCentreImage = (cv::Mat_<float>(2,1) << 0.f, 0.f);
-        // Centre_Tmp.push_back(CameraCentre);
-        Centre_Tmp.push_back(CameraPoseTmp);
-        CentreImage_Tmp.push_back(CameraCentreImage);
-        // (10.2) Save Object Motions
-        for (int i = 0; i < mCurrentFrame.vObjCentre3D.size(); ++i)
-        {
-            if (!mCurrentFrame.bObjStat[i])
-                continue;
-            Centre_Tmp.push_back(mCurrentFrame.vObjCentre3D[i]);
-            CentreImage_Tmp.push_back(mCurrentFrame.vObjCentre2D[i]);
-        }
-        // (10.3) Save to The Map
         mpMap->vmRigidCentre.push_back(Centre_Tmp);
         mpMap->vmRigidImageCentre.push_back(CentreImage_Tmp);
 
@@ -1478,7 +1508,6 @@ SceneType Tracking::Track()
     // cout << "Fid: " << f_id << endl;
     // cout << "StopFrame: " << StopFrame << endl;
     bGlobalBatch = true;
-    SceneType scene_type = SceneType::SINGLE;
     VDO_DEBUG_MSG(f_id);
     if (f_id==StopFrame) // bFrame2Frame f_id>=2
     {
