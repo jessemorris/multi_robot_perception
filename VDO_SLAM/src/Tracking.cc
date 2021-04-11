@@ -767,17 +767,17 @@ std::pair<SceneType, std::unique_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
             twist_hom.at<double>(0, 3) = mCurrentFrame.vSpeed[i].x/36;
             twist_hom.at<double>(1, 3) = mCurrentFrame.vSpeed[i].y/36;
 
-            SceneObject scene_object;
+            SceneObjectPtr scene_object = std::make_shared<SceneObject>();
 
-            scene_object.pose_from_homogenous_mat(pose_hom);
-            scene_object.twist_from_homogenous_mat(twist_hom);
+            scene_object->pose_from_homogenous_mat(pose_hom);
+            scene_object->twist_from_homogenous_mat(twist_hom);
 
             // scene_object.pose = cv::Point3f(world_x, world_y, 0);
             // scene_object.velocity = cv::Point2f(vel_x, vel_y);
-            scene_object.tracking_id = l;
-            scene_object.unique_id = i;
-            scene_object.semantic_instance_index = mCurrentFrame.nSemPosition[i];
-            scene_object.center_image = mCurrentFrame.vObjCentre2D[i];
+            scene_object->tracking_id = l;
+            scene_object->unique_id = i;
+            scene_object->semantic_instance_index = mCurrentFrame.nSemPosition[i];
+            scene_object->center_image = mCurrentFrame.vObjCentre2D[i];
 
             int track =l;
 
@@ -1423,46 +1423,6 @@ SceneType Tracking::Track()
         mpMap->vnRMLabel.push_back(Mot_Lab_Tmp);
         mpMap->vnSMLabel.push_back(Sem_Lab_Tmp);
         mpMap->vbObjStat.push_back(Obj_Stat_Tmp);
-
-        // (6.4) Count the tracking times of each unique object
-        // if (max_id>1)
-        //     mpMap->vnObjTraTime = GetObjTrackTime(mpMap->vnRMLabel,mpMap->vnSMLabel, mpMap->vnSMLabelGT); // jesse comments about due to includion of GT (thinking this might break everything)
-
-        // ---------------------------- Ground Truth --------------------------------
-
-        // (7) Ground Truth Camera Pose
-        // cv::Mat CameraPoseTmpGT = Converter::toInvMatrix(mCurrentFrame.mTcw_gt);
-        // mpMap->vmCameraPose_GT.push_back(CameraPoseTmpGT);
-
-        //jesse -> we dont need ground truths
-        // (8) Ground Truth Rigid Motions
-        // std::vector<cv::Mat> Mot_Tmp_gt;
-        // // (8.1) Save Camera Motion
-        // cv::Mat CameraMotionTmp_gt = mLastFrame.mTcw_gt*Converter::toInvMatrix(mCurrentFrame.mTcw_gt);
-        // Mot_Tmp_gt.push_back(CameraMotionTmp_gt);
-        // // (8.2) Save Object Motions
-        // for (int i = 0; i < mCurrentFrame.vObjMod_gt.size(); ++i)
-        // {
-        //     if (!mCurrentFrame.bObjStat[i])
-        //         continue;
-        //     Mot_Tmp_gt.push_back(mCurrentFrame.vObjMod_gt[i]);
-        // }
-        // // (8.3) Save to The Map
-        // mpMap->vmRigidMotion_GT.push_back(Mot_Tmp_gt);
-
-        // // (9) Ground Truth Camera and Object Speeds
-        // std::vector<float> Speed_Tmp_gt;
-        // // (9.1) Save Camera Speed
-        // Speed_Tmp_gt.push_back(1.0);
-        // // (9.2) Save Object Motions
-        // for (int i = 0; i < mCurrentFrame.vObjSpeed_gt.size(); ++i)
-        // {
-        //     if (!mCurrentFrame.bObjStat[i])
-        //         continue;
-        //     Speed_Tmp_gt.push_back(mCurrentFrame.vObjSpeed_gt[i]);
-        // }
-        // // (9.3) Save to The Map
-        // mpMap->vfAllSpeed_GT.push_back(Speed_Tmp_gt);
 
         // (10) Computed Camera and Object Speeds
         std::vector<cv::Mat> Centre_Tmp;

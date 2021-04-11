@@ -79,6 +79,7 @@
         "stack": "cpp",
         "lu": "cpp",
         "geometry": "cpp",
-        "sparse": "cpp"
+        "sparse": "cpp",
+        "*.tpp": "cpp"
     }
 }

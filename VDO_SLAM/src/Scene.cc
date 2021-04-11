@@ -5,11 +5,12 @@
 #include "vdo_slam/utils/Types.h"
 
 
+using namespace VDO_SLAM;
 
 
 
 std::ostream &VDO_SLAM::operator << (std::ostream& output, const VDO_SLAM::SceneObject& object) {
-    output << "SceneObject [pose:\n: " << object.pose;
+    output << "SceneObject [pose:\n: " << *object.pose;
     output << "\n Velocity:\n: " << object.twist;
     output << "\nLabel: " << object.label<< " Semantic Instance: " << object.semantic_instance_index << " tracking ID " << object.tracking_id << " ]";
 
@@ -32,8 +33,8 @@ VDO_SLAM::Scene::Scene()
 
 }
 
-VDO_SLAM::Scene::Scene(int _id, double _timestamp):
-    id(_id),
+VDO_SLAM::Scene::Scene(int frame_id_, double _timestamp):
+    frame_id(frame_id_),
     timestamp(_timestamp) {
         //init camera pose
         // camera_pos_translation.x = 0.0;
@@ -51,27 +52,27 @@ VDO_SLAM::Scene::Scene(int _id, double _timestamp):
 
 
 //I think I do want to copy here
-void VDO_SLAM::Scene::add_scene_object(VDO_SLAM::SceneObject _object) {
-    _object.timestamp = timestamp;
+void VDO_SLAM::Scene::add_scene_object(SceneObjectPtr& _object) {
+    _object->timestamp = timestamp;
     scene_objects.push_back(_object);
 }
 
-std::vector<VDO_SLAM::SceneObject>& VDO_SLAM::Scene::get_scene_objects() {
+std::vector<std::shared_ptr<SceneObject>>& VDO_SLAM::Scene::get_scene_objects() {
     return scene_objects;
 }
 
-const int VDO_SLAM::Scene::scene_objects_size() {
+int VDO_SLAM::Scene::scene_objects_size() {
     return scene_objects.size();
 }
 
-VDO_SLAM::SceneObject* VDO_SLAM::Scene::get_scene_objects_ptr() {
-    return scene_objects.data();
-}
+// VDO_SLAM::SceneObject* VDO_SLAM::Scene::get_scene_objects_ptr() {
+//     return scene_objects.data();
+// }
  
-const int VDO_SLAM::Scene::get_id() const {
-    return id;
+int VDO_SLAM::Scene::get_id() {
+    return frame_id;
 }
-const double VDO_SLAM::Scene::get_timestamp() const {
+double VDO_SLAM::Scene::get_timestamp() {
     return timestamp;
 }
 

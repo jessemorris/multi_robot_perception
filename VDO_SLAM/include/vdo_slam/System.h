@@ -60,9 +60,9 @@ namespace VDO_SLAM {
          * from TrackRGBD (value only, not ptr). -1 (Default) means all scenes in the map. If it is greater than the number of frames
          * saved it will default to all the scenes and a warning will be raised.
          * 
-         * @return std::vector<Scene> 
+         * @return std::vector<std::shared_ptr<Scene>> 
          */
-        std::vector<Scene> construct_scenes(int back_frame_id = -1);
+        std::vector<VdoSlamScenePtr> construct_scenes(int back_frame_id = -1);
 
         
 

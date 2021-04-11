@@ -27,7 +27,7 @@ namespace VDO_SLAM {
 
         cv::Mat homogenous_identity() {
 
-            cv::Mat identity = (cv::Mat_<double>(4,4) << 1, 0, 0, 0,
+            cv::Mat identity = (cv::Mat_<float>(4,4) << 1, 0, 0, 0,
                                                         0, 1, 0, 0,
                                                         0, 0, 1, 0,
                                                         0, 0, 0, 1);
@@ -36,14 +36,18 @@ namespace VDO_SLAM {
 
         bool is_homogenous_matrix(const cv::Mat& mat) {
             if(mat.rows != 4 || mat.cols != 4) {
-                // VDO_DEBUG_MSG("Mat had size: " << mat.size());
+                VDO_DEBUG_MSG("Mat had size: " << mat.size());
                 return false;
             }
 
-            bool zero_result = mat.at<float>(3, 0) == mat.at<float>(3, 1) == mat.at<float>(3, 2) == 0;
-            bool one_result = mat.at<float>(3, 3) == 1.0;
- 
-            if (!zero_result || !one_result) {
+            cv::Mat bottom_row = mat.colRange(0, 4).row(3);
+            cv::Mat gt_bottom_row = (cv::Mat_<float>(1,4) << 0, 0, 0, 1);
+            cv::Mat diff = gt_bottom_row != bottom_row;
+            // Equal if no elements disagree
+            bool eq = cv::countNonZero(diff) == 0;
+
+
+            if (!eq) {
                 VDO_DEBUG_MSG("homo mat: " << mat);
                 return false;
             }

@@ -29,6 +29,7 @@ namespace VDO_SLAM
         int tracking_id; 
         int unique_id;
         double timestamp = -1;
+        BoundingBox bounding_box;
 
         //hack to make class polymorphic
         virtual void vf() {}
@@ -41,19 +42,19 @@ namespace VDO_SLAM
         
         public:
             Scene();
-            Scene(int _id, double _timestamp);
+            Scene(int frame_id_, double _timestamp);
 
 
-            void add_scene_object(SceneObject _object);
-            std::vector<SceneObject>& get_scene_objects();
-            SceneObject* get_scene_objects_ptr();
+            void add_scene_object(std::shared_ptr<SceneObject>& _object);
+            std::vector<std::shared_ptr<SceneObject>>& get_scene_objects();
+            // SceneObject* get_scene_objects_ptr();
 
-            const int scene_objects_size();
-            const int get_id() const;
-            const double get_timestamp() const;
+            int scene_objects_size();
+            int get_id();
+            double get_timestamp();
 
         protected:
-            std::vector<SceneObject> scene_objects;
+            std::vector<std::shared_ptr<SceneObject>> scene_objects;
             // cv::Point3f camera_pos_translation;
             // cv::Mat camera_pos_rotation; //should be 3x3 rotation matrix
 
@@ -62,16 +63,16 @@ namespace VDO_SLAM
             // g2o::SE3Quat pose;
             // g2o::SE3Quat twist;
 
-        private:
-            int id;
+            int frame_id;
             double timestamp;
     };
+
+    typedef std::shared_ptr<SceneObject> SceneObjectPtr;
+    typedef std::unique_ptr<SceneObject> SceneObjectUniquePtr;
 
     
 } // namespace VDO_SLAM
 
-typedef std::shared_ptr<VDO_SLAM::SceneObject> VdoSlamSceneObjectPtr;
-typedef std::unique_ptr<VDO_SLAM::SceneObject> VdoSlamSceneObjectUniquePtr;
 
 typedef std::shared_ptr<VDO_SLAM::Scene> VdoSlamScenePtr;
 typedef std::unique_ptr<VDO_SLAM::Scene> VdoSlamSceneUniquePtr;

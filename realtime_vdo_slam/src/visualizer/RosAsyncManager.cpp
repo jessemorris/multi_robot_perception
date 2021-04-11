@@ -1,4 +1,4 @@
-#include "visualizer/RosAsyncPublisher.hpp"
+#include "visualizer/RosAsyncManager.hpp"
 
 using namespace VDO_SLAM;
 

@@ -25,8 +25,7 @@
 
 #include <realtime_vdo_slam/VdoSlamScene.h>
 #include <realtime_vdo_slam/VdoSceneObject.h>
-
-
+#include <realtime_vdo_slam/VdoSlamMap.h>
 
 
 #include <iostream>
@@ -34,9 +33,11 @@
 #include <nav_msgs/Odometry.h>
 #include <mutex>
 
-#include <vdo_slam/vdo_slam.hpp>
+#include <vdo_slam/utils/Types.h>
+#include <vdo_slam/Scene.h>
 
 namespace VDO_SLAM {
+    
 
     /**
      * @brief ROS wrapper for the VDO_SLAM::SceneObject (found in the VDO_SLAM module).
@@ -55,6 +56,7 @@ namespace VDO_SLAM {
              * @param _msg 
              */
             RosSceneObject(realtime_vdo_slam::VdoSceneObjectConstPtr& _msg);
+            RosSceneObject(realtime_vdo_slam::VdoSceneObject& _msg);
 
             /**
              * @brief Construct a new Ros Scene Object object a VDO_SLAM::SceneObject, a ros::Time and
@@ -73,6 +75,9 @@ namespace VDO_SLAM {
              * @return realtime_vdo_slam::VdoSceneObjectPtr 
              */
             realtime_vdo_slam::VdoSceneObjectPtr to_msg();
+
+            friend std::ostream& operator<<(std::ostream& os, const RosSceneObject& scene);
+
 
             ros::Time time;
     };
@@ -105,6 +110,15 @@ namespace VDO_SLAM {
             RosScene(Scene& _object, ros::Time _time);
 
             /**
+             * @brief Creates a slam map message from a vector of Scenes. This can then be sent to the visualizer for
+             * map reconstruction
+             * 
+             * @param map std::vector<VdoSlamScenePtr>& 
+             * @return realtime_vdo_slam::VdoSlamMapConstPtr 
+             */
+            static realtime_vdo_slam::VdoSlamMapPtr make_map(std::vector<VdoSlamScenePtr>& map);
+
+            /**
              * @brief Gets the odometry of the camera as determined by the camera translation and rotation matrix.
              * 
              * @return const nav_msgs::Odometry& 
@@ -124,10 +138,14 @@ namespace VDO_SLAM {
              * @return const ros::Time& 
              */
             const ros::Time& get_ros_time();
+            friend std::ostream& operator<<(std::ostream& os, const RosScene& scene);
+
 
         private:
             ros::Time time;
             nav_msgs::Odometry odom;
+            cv::Mat rgb_image;
+
 
 
         

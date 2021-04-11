@@ -78,12 +78,12 @@ namespace VDO_SLAM {
         return mpTracker->GrabImageRGBD(im,depthmap,flowmap,masksem,mTcw_gt,vObjPose_gt,timestamp,imTraj,nImage);
     }
 
-    std::vector<Scene> System::construct_scenes(int back_frame_id) {
+    std::vector<VdoSlamScenePtr> System::construct_scenes(int back_frame_id) {
             //number of frames
         const int N = mpMap->vpFeatSta.size();
 
         if (N < 2) {
-            return std::vector<Scene>();
+            return std::vector<VdoSlamScenePtr>();
 
         }
 
@@ -102,10 +102,10 @@ namespace VDO_SLAM {
         // VDO_DEBUG_MSG(mpMap->vmCameraMotion.size());
         
         //loop for each scene, reconstructing each scene and objects
-        std::vector<Scene> scenes;
+        std::vector<VdoSlamScenePtr> scenes;
         for(int i = 0; i < N; i++) {
             double timestamp = mpMap->frame_times[i];
-            Scene scene(i, timestamp);
+            VdoSlamScenePtr scene = std::make_shared<Scene>(i, timestamp);
 
             cv::Mat camera_pose = mpMap->vmCameraPose[i];
             utils::image_to_global_coordinates(camera_pose, camera_pose);
@@ -113,8 +113,8 @@ namespace VDO_SLAM {
             utils::image_to_global_coordinates(camera_motion, camera_motion);
 
 
-            scene.pose_from_homogenous_mat(camera_pose);
-            scene.twist_from_homogenous_mat(camera_motion);
+            scene->pose_from_homogenous_mat(camera_pose);
+            scene->twist_from_homogenous_mat(camera_motion);
 
             //3D object centers
             //2D image frame centers
@@ -136,22 +136,27 @@ namespace VDO_SLAM {
             VDO_INFO_MSG("timing size " << mpMap->vfAll_time.size());
             //start at 1 because 0 is camera pose
             for (int j = 1; j < rigid_motion_size; j++) {
-                SceneObject object;
+                SceneObjectPtr object = std::make_shared<SceneObject>();
                 cv::Mat object_center = mpMap->vmRigidCentre[i][j]; //should be 3x1 matrix
                 cv::Mat image_center = mpMap->vmRigidImageCentre[i][j]; //should be 2x1 matrix
+                cv::Mat motion = mpMap->vmRigidMotion[i][j];
                 int tracking_label = mpMap->vnRMLabel[i][j];
                 int semantic_label = mpMap->vnSMLabel[i][j];
 
                 //TODO::object motion mpMap->vmRigidMotion
                 utils::image_to_global_coordinates(object_center, object_center);
 
-                object.pose_from_vector(object_center);
-                object.center_image = image_center;
-                object.tracking_id = tracking_label;
-                object.semantic_instance_index = semantic_label;
-                object.unique_id = j-1;
+                object->pose_from_vector(object_center);
+                object->twist_from_homogenous_mat(motion);
+                object->center_image = image_center;
+                object->tracking_id = tracking_label;
+                object->semantic_instance_index = semantic_label;
+                object->unique_id = j-1;
 
-                scene.add_scene_object(object);
+                VDO_INFO_MSG(object_center);
+                VDO_INFO_MSG(*object);
+
+                scene->add_scene_object(object);
 
 
             }

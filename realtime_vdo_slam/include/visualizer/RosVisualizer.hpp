@@ -24,9 +24,10 @@
 
 #include <opencv2/opencv.hpp>
 #include <realtime_vdo_slam/VdoSlamScene.h>
+#include <realtime_vdo_slam/VdoSlamMap.h>
 
 #include "utils/ThreadedQueue.hpp"
-#include "RosAsyncPublisher.hpp"
+#include "RosAsyncManager.hpp"
 
 namespace VDO_SLAM {
 
@@ -78,6 +79,13 @@ namespace VDO_SLAM {
              * @param slam_scene realtime_vdo_slam::VdoSlamSceneConstPtr&
              */
             void slam_scene_callback(const realtime_vdo_slam::VdoSlamSceneConstPtr& slam_scene);
+            /**
+             * @brief Asychronously subscribes to to the /vdoslam/output/map topic which contains a list of all VdoSlamScenes
+             * after graph optimization. Upon callback scenes will be redrawn with the updated pose
+             * 
+             * @param slam_scene realtime_vdo_slam::VdoSlamMapConstPtr&
+             */
+            void reconstruct_scenes_callback(const realtime_vdo_slam::VdoSlamMapConstPtr& map);
 
             /**
              * @brief Subscribes to nav_msgs::Odometry messages that will be used for ground truth. Listenes to the /ros_vdo/odometry_ground_truth_topic
@@ -102,12 +110,22 @@ namespace VDO_SLAM {
 
             /**
              * @brief Static function to create a ros publisher that publishes to the topic that the visualizer expects data on.
-             * Publishes a realtime_vdo_slam::VdoSlamScene messahe.
+             * Publishes a realtime_vdo_slam::VdoSlamScene message.
              * 
              * @param nh 
              * @return ros::Publisher 
              */
             static ros::Publisher create_viz_pub(ros::NodeHandle& nh);
+
+            /**
+             * @brief Static function to create a ros publisher that publishes to the topic that the visualizer expects data on
+             * that contains an updated map
+             * Publishes a realtime_vdo_slam::VdoSlamMap message.
+             * 
+             * @param nh 
+             * @return ros::Publisher 
+             */
+            static ros::Publisher create_map_update_pub(ros::NodeHandle& nh);
 
 
         private:
@@ -188,6 +206,8 @@ namespace VDO_SLAM {
 
             //subscribe to VdoSlamScene msg
             ros::Subscriber slam_scene_sub;
+            //subscribe to VdoSlamMap msg
+            ros::Subscriber slam_map_sub;
             
             //publishes the slam scene as markers for RVIZ
             ros::Publisher slam_scene_3d_pub;

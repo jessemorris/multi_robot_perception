@@ -25,6 +25,39 @@ namespace VDO_SLAM {
         ERROR = 2
     };
 
+    class BoundingBox {
+
+        public:
+
+            BoundingBox() {}
+            BoundingBox(double x_, double y_, double width_, double height_);
+            BoundingBox(const BoundingBox& bb) {
+                x = bb.x;
+                y = bb.y;
+                width = bb.width;
+                height = bb.height;
+            }
+
+            template<class T>
+            inline static BoundingBox create(T& t);
+
+            template<class T>
+            inline T convert();
+
+            //TODO: add an 'is_constructed_ func
+
+            cv::Rect2d to_rect();
+
+            //this should follow the same structure as cv::Rect
+            double x;
+            double y;
+            double width;
+            double height;
+
+        protected:
+            bool is_init = false;
+    };
+
 
       /**
      * @brief Defines a base class that contains information to

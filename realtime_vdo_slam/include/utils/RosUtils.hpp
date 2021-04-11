@@ -9,6 +9,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <vision_msgs/BoundingBox2D.h>
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/Vector3.h>
 #include <tf/transform_listener.h>
@@ -25,6 +26,22 @@
 
 
 namespace VDO_SLAM {
+
+    template<>
+    inline BoundingBox BoundingBox::create<vision_msgs::BoundingBox2D>(vision_msgs::BoundingBox2D& t) {
+        return BoundingBox(t.center.x, t.center.y, t.size_x, t.size_y);
+    }
+
+    template<>
+    inline vision_msgs::BoundingBox2D BoundingBox::convert<vision_msgs::BoundingBox2D>() {
+        vision_msgs::BoundingBox2D bb;
+        bb.center.x = x;
+        bb.center.y = y;
+        bb.size_x = width;
+        bb.size_y = height;
+        return bb;
+    }
+
 
     namespace utils {
 

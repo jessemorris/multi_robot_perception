@@ -126,6 +126,7 @@ class RosVdoSlam {
         bool use_viz;
 
         ros::Publisher scene_pub;
+        ros::Publisher map_pub;
         VDO_SLAM::RosVisualizerPtr ros_viz;
         VDO_SLAM::RosVizualizerSpinHandler ros_viz_handler;
 

@@ -10,6 +10,7 @@
 #include <nav_msgs/Odometry.h>
 #include <opencv2/core.hpp>
 #include <vdo_slam/Scene.h>
+#include <vdo_slam/utils/Types.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <geometry_msgs/PoseWithCovariance.h>
@@ -17,7 +18,7 @@
 
 #include "utils/RosUtils.hpp"
 
-
+using namespace VDO_SLAM;
 /**
  * @brief Converts a segmentation index (ie. a pixel level segmentation or the classification index
  * assignment to a scene object) to a colour so each different classification can be visualisaed.
@@ -66,21 +67,15 @@ cv::Scalar seg_index_to_colour(int index) {
 }
 
 
+
+
 //should also convert unix timestamp to ROS time
 //current timetstamp is just time difference and not unix time
-
 VDO_SLAM::RosSceneObject::RosSceneObject(realtime_vdo_slam::VdoSceneObjectConstPtr& _msg) : 
     time(_msg->time) {
 
-        // //TODO: currently ignoring rotation
-        // pose.x = _msg->pose.position.x;
-        // pose.y = _msg->pose.position.y;
-        // pose.z = _msg->pose.position.z;
         *pose = utils::g2o_converter::from_pose_msg(_msg->pose);
         *twist = utils::g2o_converter::from_twist_msg(_msg->twist);
-
-        // velocity.x = _msg->twist.linear.x;
-        // velocity.y = _msg->twist.linear.y;
 
         semantic_instance_index = _msg->semantic_label;
         //this one should have lavel
@@ -89,8 +84,28 @@ VDO_SLAM::RosSceneObject::RosSceneObject(realtime_vdo_slam::VdoSceneObjectConstP
         tracking_id = _msg->tracking_id;
         unique_id = _msg->uid;
 
+        vision_msgs::BoundingBox2D bb = _msg->bounding_box;
+        bounding_box = BoundingBox::create<vision_msgs::BoundingBox2D>(bb);
+
 
     }
+
+VDO_SLAM::RosSceneObject::RosSceneObject(realtime_vdo_slam::VdoSceneObject& _msg):
+    time(_msg.time) {
+        *pose = utils::g2o_converter::from_pose_msg(_msg.pose);
+        *twist = utils::g2o_converter::from_twist_msg(_msg.twist);
+
+        semantic_instance_index = _msg.semantic_label;
+        //this one should have lavel
+        //TODO: some assert if label not default - shoudl set this somehwere?
+        label = _msg.label;
+        tracking_id = _msg.tracking_id;
+        unique_id = _msg.uid;
+        vision_msgs::BoundingBox2D bb = _msg.bounding_box;
+
+        bounding_box = BoundingBox::create<vision_msgs::BoundingBox2D>(bb);
+}
+
 
 VDO_SLAM::RosSceneObject::RosSceneObject(SceneObject& _object, ros::Time& _time) :
     SceneObject(_object),
@@ -113,11 +128,16 @@ realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
     msg->tracking_id = tracking_id;
     msg->time = time;
     msg->uid = unique_id;
-    // ROS_INFO_STREAM("done making ros slam scene");
+    msg->bounding_box = bounding_box.convert<vision_msgs::BoundingBox2D>();
 
 
     return msg;
 
+}
+
+std::ostream& VDO_SLAM::operator<<(std::ostream& os, const RosSceneObject& scene) {
+    os << "RosSceneObject\nPose: " << *scene.pose << "\nlabel: " << scene.label << "\ntracking id: " << scene.tracking_id;
+    return os;
 }
 
 VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
@@ -126,7 +146,7 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
 
         //convert them all into RosSceneObjects
         for(int i = 0; i < scene_objects.size(); i++) {
-            RosSceneObject ros_scene_object(scene_objects[i], time);
+            RosSceneObjectPtr ros_scene_object = std::make_shared<RosSceneObject>(*scene_objects[i], time);
             scene_objects[i] = ros_scene_object;
         }
 
@@ -140,9 +160,26 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
 
 }
 
+//Jesse: unsire how to convert timestamp into ros time becuase we're using
+//rostime not walltime
+VDO_SLAM::RosScene::RosScene(realtime_vdo_slam::VdoSlamSceneConstPtr& _msg)
+    :   time(_msg->header.stamp) {
 
-VDO_SLAM::RosScene::RosScene(realtime_vdo_slam::VdoSlamSceneConstPtr& _msg) :
-    time(_msg->header.stamp) {}
+        frame_id = _msg->id;
+
+        *pose = utils::g2o_converter::from_pose_msg(_msg->camera_pose);
+        *twist = utils::g2o_converter::from_twist_msg(_msg->camera_twist);
+        
+        for(const realtime_vdo_slam::VdoSceneObject& c_object : _msg->objects) {
+            realtime_vdo_slam::VdoSceneObject object = c_object;
+            // RosSceneObject ros_object(object);
+            RosSceneObjectPtr ros_object = std::make_shared<RosSceneObject>(object);
+            scene_objects.push_back(ros_object);
+
+        }
+
+
+    }
 
 const nav_msgs::Odometry& VDO_SLAM::RosScene::odom_msg() const {
     return odom;
@@ -153,6 +190,48 @@ const ros::Time& VDO_SLAM::RosScene::get_ros_time() {
     return time;
 }
 
-realtime_vdo_slam::VdoSlamScenePtr VDO_SLAM::RosScene::to_msg() {
+std::ostream& VDO_SLAM::operator<<(std::ostream& os, const VDO_SLAM::RosScene& scene) {
+    os << "\nRosScene\nPose: " << *scene.pose << "\nframe ID: " << scene.frame_id << "\nObjects (" << scene.scene_objects.size() << ")";
+    return os;
+}
 
+
+realtime_vdo_slam::VdoSlamScenePtr VDO_SLAM::RosScene::to_msg() {
+    realtime_vdo_slam::VdoSlamScenePtr msg(new realtime_vdo_slam::VdoSlamScene);
+    msg->camera_pose = utils::g2o_converter::to_pose_msg(*pose);
+    msg->camera_twist = utils::g2o_converter::to_twist_msg(*twist);
+
+    msg->id = frame_id;
+    for (SceneObjectPtr& object : scene_objects) {
+        RosSceneObjectPtr ros_object = std::dynamic_pointer_cast<RosSceneObject>(object);
+        ROS_INFO_STREAM(*ros_object);
+        realtime_vdo_slam::VdoSceneObject object_msg = *ros_object->to_msg();
+        msg->objects.push_back(object_msg);
+
+    }
+    //TODO msg->original_frame
+
+    return msg;
+}
+
+realtime_vdo_slam::VdoSlamMapPtr RosScene::make_map(std::vector<VdoSlamScenePtr>& map) {
+    if (map.size() == 0) {
+        return nullptr;
+    }
+    else {
+        ROS_INFO_STREAM("reconstructing slam map for ROS " << map.size());
+        realtime_vdo_slam::VdoSlamMapPtr slam_map =  boost::make_shared<realtime_vdo_slam::VdoSlamMap>();
+        for (VdoSlamScenePtr& scene : map) {
+
+            //should not be time now but the time of the frame -> currenrly
+            //the frame timestamp is "timdiff" and unsure how to actually convert from
+            //a ISO timestamp to ROS time. Could keep a list of original timestamp
+            //and associate with the frames later -> assuming all the frames are correct
+            //when we reconstruct them from the map!
+            RosScene unique_ros_scene(*scene, ros::Time::now());
+            ROS_INFO_STREAM(unique_ros_scene);
+            slam_map->scenes.push_back(*unique_ros_scene.to_msg());
+        }
+        return slam_map;
+    }
 }

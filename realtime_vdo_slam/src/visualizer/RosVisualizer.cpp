@@ -66,6 +66,19 @@ namespace VDO_SLAM {
 
             vdo_slam_subscriber_options.transport_hints.tcpNoDelay(true);
             slam_scene_sub = nh.subscribe(vdo_slam_subscriber_options);
+
+
+            ros::SubscribeOptions vdo_slam_map_subscriber_options =
+                ros::SubscribeOptions::create<realtime_vdo_slam::VdoSlamMap>(
+                    "/vdoslam/output/map",
+                    kMaxSceneQueueSize,
+                    boost::bind(&RosVisualizer::reconstruct_scenes_callback, this, _1),
+                    ros::VoidPtr(),
+                    vdo_scene_queue_ptr.get());
+
+            vdo_slam_map_subscriber_options.transport_hints.tcpNoDelay(true);
+            slam_map_sub = nh.subscribe(vdo_slam_map_subscriber_options);
+
             //create the actual async spinner to listen to the vdoslam/output/scene topic
             static constexpr size_t kSceneSpinnerThreads = 2u;
             async_spinner_scene =
@@ -168,6 +181,11 @@ namespace VDO_SLAM {
         update_spin(slam_scene_ptr);
     }
 
+    void RosVisualizer::reconstruct_scenes_callback(const realtime_vdo_slam::VdoSlamMapConstPtr& map) {
+
+    }
+
+
     void RosVisualizer::odom_gt_callback(const nav_msgs::OdometryConstPtr& msg) {
         if (is_first_odom) {
             odom_x_offset = msg->pose.pose.position.x;
@@ -210,6 +228,10 @@ namespace VDO_SLAM {
 
     ros::Publisher RosVisualizer::create_viz_pub(ros::NodeHandle& nh) {
         return nh.advertise<realtime_vdo_slam::VdoSlamScene>("/vdoslam/output/scene", 10);
+    }
+
+    ros::Publisher RosVisualizer::create_map_update_pub(ros::NodeHandle& nh) {
+        return nh.advertise<realtime_vdo_slam::VdoSlamMap>("/vdoslam/output/map", 10);
     }
 
     bool RosVisualizer::update_spin(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {

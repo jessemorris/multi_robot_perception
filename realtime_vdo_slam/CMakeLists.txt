@@ -93,7 +93,7 @@ set(minisam_INCLUDE_DIR /usr/local/include/minisam/)
 add_message_files(
    FILES
    VdoSlamScene.msg
-   VdoSlamScenes.msg
+   VdoSlamMap.msg
    VdoSceneObject.msg
    VdoInput.msg
 )
@@ -170,7 +170,7 @@ add_library(${PROJECT_NAME} STATIC
 	src/tracking/HungarianSolver.cpp
 	src/tracking/SemanticTracker.cpp
 	src/visualizer/RosVisualizer.cpp
-	src/visualizer/RosAsyncPublisher.cpp
+	src/visualizer/RosAsyncManager.cpp
 	src/data_provider/DataProviderInterface.cpp
 	src/data_provider/RosBagDataProvider.cpp
 	src/scene_graph/SceneGraphBuilder.cpp
