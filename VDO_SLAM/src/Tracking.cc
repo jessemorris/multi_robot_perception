@@ -669,35 +669,8 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
             cv::waitKey(1);
 
     }
-    // ************** show bounding box with speed ***************
-    // if(timestamp!=0 && bFrame2Frame == true && mTestData==KITTI)
-    // {
-    //     cout << "Showing bb with speed" << endl;
-    //     cv::Mat mImBGR(mImGray.size(), CV_8UC3);
-    //     cvtColor(mImGray, mImBGR, CV_GRAY2RGB);
-    //     cout << "v obj box size " << mCurrentFrame.vObjBoxID.size() << endl;
-    //     for (int i = 0; i < mCurrentFrame.vObjBoxID.size(); ++i)
-    //     {
-    //         if (mCurrentFrame.vSpeed[i].x==0)
-    //             continue;
-    //         cout << "ID: " << mCurrentFrame.vObjBoxID[i] << endl;
-    //         cv::Point pt1(vObjPose_gt[mCurrentFrame.vObjBoxID[i]][2], vObjPose_gt[mCurrentFrame.vObjBoxID[i]][3]);
-    //         cv::Point pt2(vObjPose_gt[mCurrentFrame.vObjBoxID[i]][4], vObjPose_gt[mCurrentFrame.vObjBoxID[i]][5]);
-    //         // cout << pt1.x << " " << pt1.y << " " << pt2.x << " " << pt2.y << endl;
-    //         cv::rectangle(mImBGR, pt1, pt2, cv::Scalar(0, 255, 0),2);
-    //         // string sp_gt = std::to_string(mCurrentFrame.vSpeed[i].y);
-    //         string sp_est = std::to_string(mCurrentFrame.vSpeed[i].x/36);
-    //         // sp_gt.resize(5);
-    //         sp_est.resize(5);
-    //         // string output_gt = "GT:" + sp_gt + "km/h";
-    //         string output_est = sp_est + "km/h";
-    //         cv::putText(mImBGR, output_est, cv::Point(pt1.x, pt1.y-10), cv::FONT_HERSHEY_DUPLEX, 0.9, CV_RGB(0,255,0), 2); // CV_RGB(255,140,0)
-    //         // cv::putText(mImBGR, output_gt, cv::Point(pt1.x, pt1.y-32), cv::FONT_HERSHEY_DUPLEX, 0.7, CV_RGB(255, 0, 0), 2);
-    //     }
-    //     cv::imshow("Object Speed", mImBGR);
-    //     cv::waitKey(1);
-    // }
 
+    VDO_INFO_MSG("here");
     // // ************** show trajectory results ***************
     if (mTestData==KITTI && !mCurrentFrame.mTcw.empty())
     {
@@ -735,7 +708,6 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
             cv::Mat identity = utils::homogenous_identity();
             scene->twist_from_homogenous_mat(identity);
         }
-
 
         cv::putText(imTraj, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
         cv::putText(imTraj, "Object Trajectories (COLORED CIRCLES)", cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
@@ -922,7 +894,6 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
-
     mImGrayLast = mImGray;
     TemperalMatch.clear();
     mSegMapLast = mSegMap;   // new added Nov 21 2019

@@ -14,7 +14,7 @@ using namespace VDO_SLAM;
 
 std::ostream &VDO_SLAM::operator << (std::ostream& output, const VDO_SLAM::SceneObject& object) {
     output << "SceneObject [pose:\n: " << *object.pose;
-    output << "\n Velocity:\n: " << object.twist;
+    output << "\n Velocity:\n: " << *object.twist;
     output << "\nLabel: " << object.label<< " Semantic Instance: " << object.semantic_instance_index << " tracking ID " << object.tracking_id << " ]";
 
     return output;
@@ -54,7 +54,7 @@ void VDO_SLAM::Scene::add_scene_object(SceneObjectPtr& _object) {
 }
 
 bool VDO_SLAM::Scene::update_from_map(const Map* map) {
-    cv::Mat rf_camera_pose = map->vmCameraPose_RF[frame_id+1];
+    cv::Mat rf_camera_pose = map->vmCameraPose_RF[frame_id-1];
 
     utils::image_to_global_coordinates(rf_camera_pose, rf_camera_pose);
     pose_from_homogenous_mat(rf_camera_pose);

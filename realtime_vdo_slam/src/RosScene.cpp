@@ -144,11 +144,12 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
     time(_time),
     Scene(_object) {
 
-        //convert them all into RosSceneObjects
-        for(int i = 0; i < scene_objects.size(); i++) {
-            RosSceneObjectPtr ros_scene_object = std::make_shared<RosSceneObject>(*scene_objects[i], time);
-            scene_objects[i] = ros_scene_object;
-        }
+        // convert them all into RosSceneObjects
+        // for(int i = 0; i < scene_objects.size(); i++) {
+        //     // RosSceneObjectPtr ros_scene_object = std::make_shared<RosSceneObject>(*scene_objects[i], time);
+        //     // scene_objects[i] = ros_scene_object;
+        //     ROS_INFO_STREAM(*scene_objects[i]);
+        // }
 
         //Note: we dont add transform frame and child frame here
         odom.header.stamp = time;
@@ -203,8 +204,9 @@ realtime_vdo_slam::VdoSlamScenePtr VDO_SLAM::RosScene::to_msg() {
 
     msg->id = frame_id;
     for (SceneObjectPtr& object : scene_objects) {
-        RosSceneObjectPtr ros_object = std::dynamic_pointer_cast<RosSceneObject>(object);
-        // ROS_INFO_STREAM(*ros_object);
+        ROS_INFO_STREAM(object);
+        RosSceneObjectPtr ros_object = std::make_shared<RosSceneObject>(*object, time);
+        // RosSceneObjectPtr ros_object = std::dynamic_pointer_cast<RosSceneObject>(object);
         realtime_vdo_slam::VdoSceneObject object_msg = *ros_object->to_msg();
         msg->objects.push_back(object_msg);
 

@@ -28,8 +28,8 @@ void VDO_SLAM::EuclideanObject::pose_from_vector(const cv::Mat& vector) {
     }
     cv::Mat pose_hom = utils::homogenous_identity();
     pose_hom.at<float>(0, 3) = vector.at<float>(0, 0);
-    pose_hom.at<float>(1, 3) = vector.at<float>(1, 0);
-    pose_hom.at<float>(2, 3) = vector.at<float>(2, 0);
+    pose_hom.at<float>(1, 3) = vector.at<float>(2, 0);
+    pose_hom.at<float>(2, 3) = vector.at<float>(1, 0);
     pose_from_homogenous_mat(pose_hom);
 }
 
@@ -49,8 +49,8 @@ void VDO_SLAM::EuclideanObject::twist_from_vector(const cv::Mat& vector) {
     }    
     cv::Mat twist_hom = utils::homogenous_identity();
     twist_hom.at<float>(0, 3) = vector.at<float>(0, 0);
-    twist_hom.at<float>(1, 3) = vector.at<float>(1, 0);
-    twist_hom.at<float>(2, 3) = vector.at<float>(2, 0);
+    twist_hom.at<float>(1, 3) = vector.at<float>(2, 0);
+    twist_hom.at<float>(2, 3) = vector.at<float>(1, 0);
     twist_from_homogenous_mat(twist_hom);
 
 }

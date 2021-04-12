@@ -322,7 +322,7 @@ namespace VDO_SLAM {
         if (gt_odom_in_use()) {
             // ROS_INFO_STREAM(gt_odom);
             x = gt_odom.pose.pose.position.x;
-            y = - gt_odom.pose.pose.position.y;
+            y = gt_odom.pose.pose.position.y;
             z = gt_odom.pose.pose.position.z;
             //here we update the odom repub to the display mat
             //we use 10 for scale    

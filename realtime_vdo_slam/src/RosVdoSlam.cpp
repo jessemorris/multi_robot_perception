@@ -217,7 +217,7 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
 }
 
 
-void RosVdoSlam::merge_scene_semantics(RosScenePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
+void RosVdoSlam::merge_scene_semantics(SlamScenePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
     std::vector<cv::Point2f> points;
     std::vector<vision_msgs::BoundingBox2D> bb;
     std::vector<VDO_SLAM::SceneObjectPtr> scene_objects = scene->get_scene_objects();
@@ -301,6 +301,7 @@ void RosVdoSlam::merge_scene_semantics(RosScenePtr& scene, const std::vector<mas
 void RosVdoSlam::vdo_worker() {
 
     std::unique_ptr<VDO_SLAM::Scene> scene;
+    RosScenePtr ros_scene;
     VdoSlamInputPtr input;
     while (ros::ok() && !vdo_input_queue.isShutdown()) {
 
@@ -311,6 +312,7 @@ void RosVdoSlam::vdo_worker() {
 
             cv::Mat original_rgb;
             input->raw.copyTo(original_rgb);
+            ROS_INFO_STREAM("here1");
 
             std::pair<SceneType, std::shared_ptr<Scene>> track_result = slam_system->TrackRGBD(input->raw,input->depth,
                 input->flow,
@@ -321,22 +323,19 @@ void RosVdoSlam::vdo_worker() {
                 image_trajectory,global_optim_trigger);
 
             // std::unique_ptr<VDO_SLAM::Scene> unique_scene =  
-            // ROS_INFO_STREAM("made scene");
 
             SceneType scene_type = track_result.first;
-            SlamScenePtr scene = track_result.second;
+            vdo_scene = track_result.second;
 
             std::vector<mask_rcnn::SemanticObject> semantic_objects = input->semantic_objects;
 
-            ros_scene = std::make_shared<VDO_SLAM::RosScene>(*scene, input->image_time);
-            ros_scene_vector.push_back(ros_scene);
+            // ros_scene = std::make_shared<VDO_SLAM::RosScene>(*scene, input->image_time);
+            vdo_scene_vector.push_back(vdo_scene);
 
 
             if (scene_type == SceneType::OPTIMIZED) {
                 ROS_INFO_STREAM("Reconstructing scene!!!!");
-                //for now just be naive and convert to and from rosscene <--> scene
-                std::vector<SlamScenePtr>
-                slam_system->construct_scenes(ros_scene_vector);
+                slam_system->construct_scenes(vdo_scene_vector);
                 // realtime_vdo_slam::VdoSlamMapPtr map_ptr = RosScene::make_map(map);
 
                 // if (map_ptr != nullptr) {
@@ -344,8 +343,10 @@ void RosVdoSlam::vdo_worker() {
                 // }
             }
             
-            merge_scene_semantics(ros_scene, semantic_objects);
+            merge_scene_semantics(vdo_scene, semantic_objects);
+            ros_scene = std::make_shared<VDO_SLAM::RosScene>(*vdo_scene, input->image_time);
             realtime_vdo_slam::VdoSlamScenePtr summary_msg = ros_scene->to_msg();
+            ROS_INFO_STREAM("here");
             if(summary_msg != nullptr) {
                 sensor_msgs::Image image_msg;
                 utils::mat_to_image_msg(image_msg, input->raw, sensor_msgs::image_encodings::RGB8, summary_msg->header);
@@ -354,6 +355,7 @@ void RosVdoSlam::vdo_worker() {
                 //we send a std::shared ptr as the visualizer is in the same node so we maximise sending speed
                 //see ros interprocess comms: http://wiki.ros.org/roscpp/Overview/Publishers%20and%20Subscribers#Intraprocess_Publishing
                 scene_pub.publish(summary_msg);
+
 
             }
         }
