@@ -2,9 +2,9 @@
 #define VDO_SLAM_UTILS_H
 
 #include <opencv2/opencv.hpp>
-#include "vdo_slam/Macros.h"
+#include "Macros.h"
 
-#include "vdo_slam/utils/Types.h"
+#include "utils/Types.h"
 
 
 namespace VDO_SLAM {

@@ -214,14 +214,14 @@ realtime_vdo_slam::VdoSlamScenePtr VDO_SLAM::RosScene::to_msg() {
     return msg;
 }
 
-realtime_vdo_slam::VdoSlamMapPtr RosScene::make_map(std::vector<VdoSlamScenePtr>& map) {
+realtime_vdo_slam::VdoSlamMapPtr RosScene::make_map(std::vector<SlamScenePtr>& map) {
     if (map.size() == 0) {
         return nullptr;
     }
     else {
         ROS_INFO_STREAM("reconstructing slam map for ROS " << map.size());
-        realtime_vdo_slam::VdoSlamMapPtr slam_map =  boost::make_shared<realtime_vdo_slam::VdoSlamMap>();
-        for (VdoSlamScenePtr& scene : map) {
+        realtime_vdo_slam::VdoSlamMapPtr slam_map = boost::make_shared<realtime_vdo_slam::VdoSlamMap>();
+        for (SlamScenePtr& scene : map) {
 
             //should not be time now but the time of the frame -> currenrly
             //the frame timestamp is "timdiff" and unsure how to actually convert from

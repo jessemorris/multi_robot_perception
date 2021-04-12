@@ -1,7 +1,7 @@
-#include "vdo_slam/utils/Types.h"
-#include "vdo_slam/utils/VdoUtils.h"
-#include "vdo_slam/Macros.h"
-#include "vdo_slam/Converter.h"
+#include "utils/Types.h"
+#include "utils/VdoUtils.h"
+#include "Macros.h"
+#include "Converter.h"
 
 #include <opencv2/opencv.hpp>
 

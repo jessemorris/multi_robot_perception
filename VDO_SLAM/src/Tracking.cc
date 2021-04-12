@@ -34,13 +34,12 @@
 #include <map>
 #include <random>
 
-#include "vdo_slam/Tracking.h"
-#include "vdo_slam/System.h"
-#include "vdo_slam/Macros.h"
-#include "vdo_slam/Converter.h"
-
-#include "vdo_slam/utils/VdoUtils.h"
-#include "vdo_slam/utils/Types.h"
+#include "Tracking.h"
+#include "System.h"
+#include "Macros.h"
+#include "Converter.h"
+#include "utils/VdoUtils.h"
+#include "utils/Types.h"
 
 #include "vdo_slam.hpp" //only need for cvplot module so weill eventually move
 
@@ -310,7 +309,7 @@ Tracking::Tracking(Map *pMap, const string &strSettingPath, const eSensor sensor
         cout << "- used detected feature for background scene..." << endl;
 }
 
-std::pair<SceneType, std::unique_ptr<Scene>> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow,
+std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow,
                                 const cv::Mat &maskSEM, const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt,
                                 const double &timestamp, cv::Mat &imTraj, const int &nImage)
 {
@@ -324,7 +323,7 @@ std::pair<SceneType, std::unique_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
     // Initialize Global ID
     if (mState==NO_IMAGES_YET) {
         f_id = 0;
-        global_f_id = 0;
+        global_f_id = 1;
     }
 
     mImGray = imRGB;
@@ -418,7 +417,7 @@ std::pair<SceneType, std::unique_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
     mCurrentFrame = Frame(mImGray,imDepth,imFlow,maskSEM,timestamp,mpORBextractorLeft,mK,mDistCoef,mbf,mThDepth,mThDepthObj,nUseSampleFea);
 
 
-    scene = std::unique_ptr<Scene>(new Scene(global_f_id, timestamp));
+    scene = std::make_shared<Scene>(global_f_id, timestamp);
 
     // ---------------------------------------------------------------------------------------
     // +++++++++++++++++++++++++ For sampled features ++++++++++++++++++++++++++++++++++++++++

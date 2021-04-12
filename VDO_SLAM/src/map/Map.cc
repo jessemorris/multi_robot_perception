@@ -8,7 +8,8 @@
 
 #include <iostream>
 
-#include "vdo_slam/Map.h"
+#include "map/Map.h"
+#include "map/MapObject.h"
 
 namespace VDO_SLAM
 {
@@ -16,6 +17,11 @@ namespace VDO_SLAM
     Map::Map():mnMaxKFid(0),mnBigChangeIdx(0)
     {
     }
+
+    bool Map::update_from_map(MapObject* map_object) {
+        return map_object->update_from_map(this);
+    }
+
 
     void Map::reset() {
         std::cout << "Resetting map" << std::endl;

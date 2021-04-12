@@ -59,6 +59,8 @@ find_package(CSparse REQUIRED)
 find_package(vdo_slam_g2o REQUIRED)
 
 include_directories(
+   include
+   include/${PROJECT_NAME}
    # ${PROJECT_SOURCE_DIR}
    # ${PROJECT_SOURCE_DIR}/include
    ${EIGEN3_INCLUDE_DIR}
@@ -69,7 +71,6 @@ set(PUBLIC_HEADER_FILES
     include/vdo_slam.hpp
     include/${PROJECT_NAME}/Converter.h
     include/${PROJECT_NAME}/Frame.h
-    include/${PROJECT_NAME}/Map.h
     include/${PROJECT_NAME}/Optimizer.h
     include/${PROJECT_NAME}/ORBextractor.h
     include/${PROJECT_NAME}/System.h
@@ -79,6 +80,9 @@ set(PUBLIC_HEADER_FILES
     include/${PROJECT_NAME}/Macros.h
     include/${PROJECT_NAME}/utils/Types.h
     include/${PROJECT_NAME}/utils/VdoUtils.h
+
+    include/${PROJECT_NAME}/map/Map.h
+    include/${PROJECT_NAME}/map/MapObject.h
 
     include/${PROJECT_NAME}/cvplot/color.h
     include/${PROJECT_NAME}/cvplot/cvplot.h
@@ -107,10 +111,12 @@ add_library(${PROJECT_NAME} SHARED
    src/Tracking.cc
    src/ORBextractor.cc
    src/Converter.cc
-   src/Map.cc
    src/Optimizer.cc
    src/Frame.cc
    src/Scene.cc
+
+   src/map/Map.cc 
+   # src/map/MapObject.cc
 
    src/cvplot/color.cc
    src/cvplot/figure.cc

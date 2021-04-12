@@ -16,13 +16,13 @@
 // eigen
 #include <eigen3/Eigen/Core>
 
-#include "vdo_slam/Map.h"
-#include "vdo_slam/Frame.h"
-#include "vdo_slam/ORBextractor.h"
-#include "vdo_slam/System.h"
-#include "vdo_slam/Scene.h"
-#include "vdo_slam/utils/Types.h"
-#include "vdo_slam/Params.h"
+#include "map/Map.h"
+#include "Frame.h"
+#include "ORBextractor.h"
+#include "System.h"
+#include "Scene.h"
+#include "utils/Types.h"
+#include "Params.h"
 
 #include <memory>
 #include <mutex>
@@ -65,7 +65,7 @@ class Tracking
         Tracking(Map* pMap, const string &strSettingPath, const eSensor sensor);
 
         // Preprocess the input and call Track(). Extract features and performs stereo matching.
-        std::pair<SceneType, std::unique_ptr<Scene>> GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow, const cv::Mat &maskSEM,
+        std::pair<SceneType, std::shared_ptr<Scene>> GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow, const cv::Mat &maskSEM,
                             const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt, const double &timestamp,
                             cv::Mat &imTraj, const int &nImage);
 
@@ -220,7 +220,7 @@ class Tracking
         //Map
         Map* mpMap;
 
-        std::unique_ptr<Scene> scene;
+        std::shared_ptr<Scene> scene;
 
 
         //Calibration matrix

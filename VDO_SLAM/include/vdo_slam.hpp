@@ -4,7 +4,6 @@
 
 #include "vdo_slam/Converter.h"
 #include "vdo_slam/Frame.h"
-#include "vdo_slam/Map.h"
 #include "vdo_slam/Optimizer.h"
 #include "vdo_slam/ORBextractor.h"
 #include "vdo_slam/System.h"
@@ -14,6 +13,10 @@
 #include "vdo_slam/Macros.h"
 #include "vdo_slam/utils/Types.h"
 #include "vdo_slam/utils/VdoUtils.h"
+
+#include "vdo_slam/map/Map.h"
+#include "vdo_slam/map/MapObject.h"
+
 
 #include "vdo_slam/cvplot/color.h"
 #include "vdo_slam/cvplot/cvplot.h"

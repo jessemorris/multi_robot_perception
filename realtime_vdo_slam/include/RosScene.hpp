@@ -113,10 +113,10 @@ namespace VDO_SLAM {
              * @brief Creates a slam map message from a vector of Scenes. This can then be sent to the visualizer for
              * map reconstruction
              * 
-             * @param map std::vector<VdoSlamScenePtr>& 
+             * @param map std::vector<SlamScenePtr>& 
              * @return realtime_vdo_slam::VdoSlamMapConstPtr 
              */
-            static realtime_vdo_slam::VdoSlamMapPtr make_map(std::vector<VdoSlamScenePtr>& map);
+            static realtime_vdo_slam::VdoSlamMapPtr make_map(std::vector<SlamScenePtr>& map);
 
             /**
              * @brief Gets the odometry of the camera as determined by the camera translation and rotation matrix.

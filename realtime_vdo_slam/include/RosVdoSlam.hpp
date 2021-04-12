@@ -95,11 +95,11 @@ class RosVdoSlam {
          * 
          * Essentially we try and associate a point (representing a centroid in the image frame), to a bounding box in the same image frame.
          * 
-         * @param scene std::unique_ptr<VDO_SLAM::RosScene>&
+         * @param scene std::shared_ptr<VDO_SLAM::RosScene>&
          * @param semantic_objects const std::vector<mask_rcnn::SemanticObject>&
-         * @return realtime_vdo_slam::VdoSlamScenePtr summary of all information from the VDO algorithm.
+         * @return RosScenePtr summary of all information from the VDO algorithm.
          */
-        realtime_vdo_slam::VdoSlamScenePtr merge_scene_semantics(RosSceneUniquePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects);
+        void merge_scene_semantics(RosScenePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects);
 
 
         /**
@@ -131,10 +131,10 @@ class RosVdoSlam {
         VDO_SLAM::RosVizualizerSpinHandler ros_viz_handler;
 
 
-        std::unique_ptr<VDO_SLAM::RosScene> ros_scene;
+        std::shared_ptr<VDO_SLAM::RosScene> ros_scene;
 
         //this will grow unfiltered with time - could have a cap on size?
-        std::vector<realtime_vdo_slam::VdoSlamScenePtr> scene_vector;
+        std::vector<RosScenePtr> ros_scene_vector;
 
         cv::Mat image_trajectory;
         std::shared_ptr<VDO_SLAM::System> slam_system;

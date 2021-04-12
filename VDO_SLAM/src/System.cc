@@ -8,12 +8,12 @@
 
 // #include "System.h"
 // #include "Converter.h"
-#include "vdo_slam/Scene.h"
-#include "vdo_slam/System.h"
-#include "vdo_slam/Tracking.h"
-#include "vdo_slam/Macros.h"
-#include "vdo_slam/utils/Types.h"
-#include "vdo_slam/utils/VdoUtils.h"
+#include "Scene.h"
+#include "System.h"
+#include "Tracking.h"
+#include "Macros.h"
+#include "utils/Types.h"
+#include "utils/VdoUtils.h"
 
 #include <thread>
 #include <iomanip>
@@ -65,7 +65,7 @@ namespace VDO_SLAM {
 
 
 
-    std::pair<SceneType, std::unique_ptr<Scene>> System::TrackRGBD(const cv::Mat &im, cv::Mat &depthmap, const cv::Mat &flowmap, const cv::Mat &masksem,
+    std::pair<SceneType, std::shared_ptr<Scene>> System::TrackRGBD(const cv::Mat &im, cv::Mat &depthmap, const cv::Mat &flowmap, const cv::Mat &masksem,
                             const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt,
                             const double &timestamp, cv::Mat &imTraj, const int &nImage)
     {
@@ -78,98 +78,130 @@ namespace VDO_SLAM {
         return mpTracker->GrabImageRGBD(im,depthmap,flowmap,masksem,mTcw_gt,vObjPose_gt,timestamp,imTraj,nImage);
     }
 
-    std::vector<VdoSlamScenePtr> System::construct_scenes(int back_frame_id) {
-            //number of frames
-        const int N = mpMap->vpFeatSta.size();
+    // std::vector<SlamScenePtr> System::construct_scenes(int back_frame_id) {
+    //         //number of frames
+    //     const int N = mpMap->vpFeatSta.size();
+
+    //     if (N < 2) {
+    //         return std::vector<SlamScenePtr>();
+
+    //     }
+
+    //     if(back_frame_id == -1) {
+    //         back_frame_id = N;
+    //         VDO_INFO_MSG(back_frame_id);
+    //     }
+    //     else if(back_frame_id > N) {
+    //         VDO_WARN_MSG("Back frame ID " << back_frame_id << " greater than size of map " << N);
+    //         back_frame_id = N;
+    //     }
+
+    //     VDO_INFO_MSG("Constructing scenes using last " << back_frame_id << "/" << N);
+    //     VDO_INFO_MSG(mpMap->frame_times.size());
+    //     VDO_INFO_MSG(mpMap->vmCameraPose.size());
+    //     VDO_INFO_MSG(mpMap->vmCameraPose_RF.size());
+    //     VDO_INFO_MSG(mpMap->vmRigidMotion_RF.size());
+    //     // VDO_DEBUG_MSG(mpMap->vmCameraPose.size());
+    //     // VDO_DEBUG_MSG(mpMap->vmCameraMotion.size());
+        
+    //     //loop for each scene, reconstructing each scene and objects
+    //     std::vector<SlamScenePtr> scenes;
+    //     for(int i = 0; i < N; i++) {
+    //         double timestamp = mpMap->frame_times[i];
+    //         SlamScenePtr scene = std::make_shared<Scene>(i, timestamp);
+
+    //         cv::Mat camera_pose = mpMap->vmCameraPose[i];
+    //         utils::image_to_global_coordinates(camera_pose, camera_pose);
+    //         cv::Mat camera_motion = mpMap->vmCameraMotion[i];
+    //         utils::image_to_global_coordinates(camera_motion, camera_motion);
+
+
+    //         scene->pose_from_homogenous_mat(camera_pose);
+    //         scene->twist_from_homogenous_mat(camera_motion);
+
+    //         VDO_INFO_MSG(mpMap->vmRigidMotion_RF[i].size());
+
+    //         //3D object centers
+    //         //2D image frame centers
+    //         //tracking label (nModelLabels)
+    //         //semantic label (nSematic Position)
+
+    //         //loop through object motions vmRigidMotion to get nModLabel and nSemPosition
+    //         //loop through vmRigidCentre to get vObjectCentre3D (and eventually 2D)
+    //         //asset same length?
+    //         int rigid_motion_size = mpMap->vmRigidMotion[i].size();
+    //         int rigid_center_size = mpMap->vmRigidCentre[i].size();
+
+    //         if (rigid_motion_size < 1 || rigid_center_size < 1 || rigid_motion_size != rigid_center_size) {
+    //             continue;
+    //         }
+    //         VDO_INFO_MSG(rigid_center_size  << " " << rigid_motion_size);
+    //         //first matrix in each array should be the pose (motion and position) of the camera
+    //         //this is odd but is the way the original algorithm was written (see tracking.cc)
+    //         VDO_INFO_MSG("timing size " << mpMap->vfAll_time.size());
+    //         //start at 1 because 0 is camera pose
+    //         for (int j = 1; j < rigid_motion_size; j++) {
+    //             SceneObjectPtr object = std::make_shared<SceneObject>();
+    //             cv::Mat object_center = mpMap->vmRigidCentre[i][j]; //should be 3x1 matrix
+    //             cv::Mat image_center = mpMap->vmRigidImageCentre[i][j]; //should be 2x1 matrix
+    //             cv::Mat motion = mpMap->vmRigidMotion[i][j];
+    //             int tracking_label = mpMap->vnRMLabel[i][j];
+    //             int semantic_label = mpMap->vnSMLabel[i][j];
+
+    //             //TODO::object motion mpMap->vmRigidMotion
+    //             utils::image_to_global_coordinates(object_center, object_center);
+
+    //             object->pose_from_vector(object_center);
+    //             object->twist_from_homogenous_mat(motion);
+    //             object->center_image = image_center;
+    //             object->tracking_id = tracking_label;
+    //             object->semantic_instance_index = semantic_label;
+    //             object->unique_id = j-1;
+
+    //             // VDO_INFO_MSG(object_center);
+    //             // VDO_INFO_MSG(*object);
+
+    //             scene->add_scene_object(object);
+
+
+    //         }
+    //         scenes.push_back(scene);
+    //     }
+
+    //     return scenes;
+
+    // }
+
+    bool System::construct_scenes(std::vector<SlamScenePtr>& scenes, int back_frame_id) {
+        // const int N = mpMap->vpFeatSta.size();
+        //need to check scenes.size() == vmCameraPose_RF.size()
+        assert(scenes.size() == mpMap->vmCameraPose_RF.size());
+        const int N = scenes.size();
 
         if (N < 2) {
-            return std::vector<VdoSlamScenePtr>();
+            return false;
 
         }
-
+        int n_frames = N;
         if(back_frame_id == -1) {
-            back_frame_id = N;
-            VDO_INFO_MSG(back_frame_id);
+            n_frames = N;
+            VDO_INFO_MSG(n_frames);
         }
         else if(back_frame_id > N) {
             VDO_WARN_MSG("Back frame ID " << back_frame_id << " greater than size of map " << N);
-            back_frame_id = N;
+            n_frames = N;
+        }
+        else {
+            n_frames = N - back_frame_id;
         }
 
-        VDO_INFO_MSG("Constructing scenes using last " << back_frame_id << "/" << N);
-        VDO_INFO_MSG(mpMap->frame_times.size());
-        VDO_INFO_MSG(mpMap->vmCameraPose.size());
-        VDO_INFO_MSG(mpMap->vmCameraPose_RF.size());
-        VDO_INFO_MSG(mpMap->vmRigidMotion_RF.size());
-        // VDO_DEBUG_MSG(mpMap->vmCameraPose.size());
-        // VDO_DEBUG_MSG(mpMap->vmCameraMotion.size());
-        
-        //loop for each scene, reconstructing each scene and objects
-        std::vector<VdoSlamScenePtr> scenes;
-        for(int i = 0; i < N; i++) {
-            double timestamp = mpMap->frame_times[i];
-            VdoSlamScenePtr scene = std::make_shared<Scene>(i, timestamp);
-
-            cv::Mat camera_pose = mpMap->vmCameraPose[i];
-            utils::image_to_global_coordinates(camera_pose, camera_pose);
-            cv::Mat camera_motion = mpMap->vmCameraMotion[i];
-            utils::image_to_global_coordinates(camera_motion, camera_motion);
-
-
-            scene->pose_from_homogenous_mat(camera_pose);
-            scene->twist_from_homogenous_mat(camera_motion);
-
-            VDO_INFO_MSG(mpMap->vmRigidMotion_RF[i].size());
-
-            //3D object centers
-            //2D image frame centers
-            //tracking label (nModelLabels)
-            //semantic label (nSematic Position)
-
-            //loop through object motions vmRigidMotion to get nModLabel and nSemPosition
-            //loop through vmRigidCentre to get vObjectCentre3D (and eventually 2D)
-            //asset same length?
-            int rigid_motion_size = mpMap->vmRigidMotion[i].size();
-            int rigid_center_size = mpMap->vmRigidCentre[i].size();
-
-            if (rigid_motion_size < 1 || rigid_center_size < 1 || rigid_motion_size != rigid_center_size) {
-                continue;
-            }
-            VDO_INFO_MSG(rigid_center_size  << " " << rigid_motion_size);
-            //first matrix in each array should be the pose (motion and position) of the camera
-            //this is odd but is the way the original algorithm was written (see tracking.cc)
-            VDO_INFO_MSG("timing size " << mpMap->vfAll_time.size());
-            //start at 1 because 0 is camera pose
-            for (int j = 1; j < rigid_motion_size; j++) {
-                SceneObjectPtr object = std::make_shared<SceneObject>();
-                cv::Mat object_center = mpMap->vmRigidCentre[i][j]; //should be 3x1 matrix
-                cv::Mat image_center = mpMap->vmRigidImageCentre[i][j]; //should be 2x1 matrix
-                cv::Mat motion = mpMap->vmRigidMotion[i][j];
-                int tracking_label = mpMap->vnRMLabel[i][j];
-                int semantic_label = mpMap->vnSMLabel[i][j];
-
-                //TODO::object motion mpMap->vmRigidMotion
-                utils::image_to_global_coordinates(object_center, object_center);
-
-                object->pose_from_vector(object_center);
-                object->twist_from_homogenous_mat(motion);
-                object->center_image = image_center;
-                object->tracking_id = tracking_label;
-                object->semantic_instance_index = semantic_label;
-                object->unique_id = j-1;
-
-                // VDO_INFO_MSG(object_center);
-                // VDO_INFO_MSG(*object);
-
-                scene->add_scene_object(object);
-
-
-            }
-            scenes.push_back(scene);
+        VDO_INFO_MSG("Constructing scenes using last " << n_frames << "/" << N);
+        // for(int i = 0; i < N; i++) {
+        //     mpMap->update_from_map()
+        // }
+        for(SlamScenePtr& scene : scenes) {
+            mpMap->update_from_map(scene.get());
         }
-
-        return scenes;
-
     }
 
     void System::SaveResultsIJRR2020(const string &filename)

@@ -217,7 +217,7 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
 }
 
 
-realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_scene_semantics(RosSceneUniquePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
+void RosVdoSlam::merge_scene_semantics(RosScenePtr& scene, const std::vector<mask_rcnn::SemanticObject>& semantic_objects) {
     std::vector<cv::Point2f> points;
     std::vector<vision_msgs::BoundingBox2D> bb;
     std::vector<VDO_SLAM::SceneObjectPtr> scene_objects = scene->get_scene_objects();
@@ -233,14 +233,13 @@ realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_scene_semantics(RosSceneUni
         bb.push_back(object.bounding_box);
     }
 
-    realtime_vdo_slam::VdoSlamScenePtr vdo_slam_scene = boost::make_shared<realtime_vdo_slam::VdoSlamScene>();
     //make pose out of camera pose
-    vdo_slam_scene->camera_pose = scene->odom_msg().pose.pose;
-    vdo_slam_scene->camera_twist = scene->odom_msg().twist.twist;
+    // vdo_slam_scene->camera_pose = scene->odom_msg().pose.pose;
+    // vdo_slam_scene->camera_twist = scene->odom_msg().twist.twist;
 
-    //we give the msg the same header as the scene, which is the same header time as the original img
-    ros::Time scene_time = scene->get_ros_time();
-    vdo_slam_scene->header.stamp = scene_time;
+    // //we give the msg the same header as the scene, which is the same header time as the original img
+    // ros::Time scene_time = scene->get_ros_time();
+    // vdo_slam_scene->header.stamp = scene_time;
 
     //this will be a vector of length scene->get_scene_objects() where the value is an index
     // associating the object semantic object. There will be more semantic objects than secene objects as not everything will be tracked
@@ -254,32 +253,35 @@ realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_scene_semantics(RosSceneUni
         std::fill(tracked.begin(), tracked.end(), -1);
     }
 
-
+    for (SceneObjectPtr& object_ptr : scene->get_scene_objects())
     for(int i = 0; i < scene_objects.size(); i++) {
         int association = tracked[i];
 
-        VDO_SLAM::RosSceneObject scene_object(*scene_objects[i], scene_time);
-        realtime_vdo_slam::VdoSceneObjectPtr vdo_scene_object_ptr = scene_object.to_msg();
+        // VDO_SLAM::RosSceneObject scene_object(*scene_objects[i], scene_time);
+        // realtime_vdo_slam::VdoSceneObjectPtr vdo_scene_object_ptr = scene_object.to_msg();
  
 
         //check association was valid
         if (association >= 0 || association < semantic_objects.size()) {
             mask_rcnn::SemanticObject semantic_object = semantic_objects[association];
 
-            vdo_scene_object_ptr->label = semantic_object.label;
+            // vdo_scene_object_ptr->label = semantic_object.label;
 
-            vdo_scene_object_ptr->bounding_box = semantic_object.bounding_box;
+            // vdo_scene_object_ptr->bounding_box = semantic_object.bounding_box;
+            object_ptr->label = semantic_object.label;
+            object_ptr->bounding_box = BoundingBox::create<vision_msgs::BoundingBox2D>(semantic_object.bounding_box);
 
             //we naively add the label to the map. Here is an opportunity to check previous label
             //for the same tracking ID and do some probalisitic matching but for now we wont
-            tracking_class_map.insert({vdo_scene_object_ptr->tracking_id, vdo_scene_object_ptr->label});
+            // tracking_class_map.insert({vdo_scene_object_ptr->tracking_id, vdo_scene_object_ptr->label});
+            tracking_class_map.insert({object_ptr->tracking_id, object_ptr->label});
 
         }
         else {
             //try to get the previous label from the tracking ID
-            if (tracking_class_map.find(vdo_scene_object_ptr->tracking_id) != tracking_class_map.end() ) {
+            if (tracking_class_map.find(object_ptr->tracking_id) != tracking_class_map.end() ) {
                 //found -> assign label to scene object. Note, we will not have bounding box
-                vdo_scene_object_ptr->label = tracking_class_map[vdo_scene_object_ptr->tracking_id];
+                object_ptr->label = tracking_class_map[object_ptr->tracking_id];
             } 
             else {
                 ROS_WARN_STREAM("Tracking association was invalid: Coud not find association in tracking map or by matching");
@@ -287,10 +289,10 @@ realtime_vdo_slam::VdoSlamScenePtr RosVdoSlam::merge_scene_semantics(RosSceneUni
 
         }
 
-        vdo_slam_scene->objects.push_back(*vdo_scene_object_ptr);
+        // vdo_slam_scene->objects.push_back(*vdo_scene_object_ptr);
 
     }
-    return vdo_slam_scene;
+    // return vdo_slam_scene;
 
 }
 
@@ -310,7 +312,7 @@ void RosVdoSlam::vdo_worker() {
             cv::Mat original_rgb;
             input->raw.copyTo(original_rgb);
 
-            std::pair<SceneType, std::unique_ptr<Scene>> track_result = slam_system->TrackRGBD(input->raw,input->depth,
+            std::pair<SceneType, std::shared_ptr<Scene>> track_result = slam_system->TrackRGBD(input->raw,input->depth,
                 input->flow,
                 input->mask,
                 input->ground_truth,
@@ -322,32 +324,32 @@ void RosVdoSlam::vdo_worker() {
             // ROS_INFO_STREAM("made scene");
 
             SceneType scene_type = track_result.first;
-            scene = std::move(track_result.second);
-            ROS_INFO_STREAM(scene_type);
+            SlamScenePtr scene = track_result.second;
 
             std::vector<mask_rcnn::SemanticObject> semantic_objects = input->semantic_objects;
 
-            std::unique_ptr<VDO_SLAM::RosScene> unique_ros_scene = std::unique_ptr<VDO_SLAM::RosScene>(
-                    new VDO_SLAM::RosScene(*scene, input->image_time));
+            ros_scene = std::make_shared<VDO_SLAM::RosScene>(*scene, input->image_time);
+            ros_scene_vector.push_back(ros_scene);
 
-            ros_scene = std::move(unique_ros_scene);
 
             if (scene_type == SceneType::OPTIMIZED) {
                 ROS_INFO_STREAM("Reconstructing scene!!!!");
-                std::vector<VdoSlamScenePtr> map = slam_system->construct_scenes();
-                realtime_vdo_slam::VdoSlamMapPtr map_ptr = RosScene::make_map(map);
+                //for now just be naive and convert to and from rosscene <--> scene
+                std::vector<SlamScenePtr>
+                slam_system->construct_scenes(ros_scene_vector);
+                // realtime_vdo_slam::VdoSlamMapPtr map_ptr = RosScene::make_map(map);
 
-                if (map_ptr != nullptr) {
-                    map_pub.publish(map_ptr);
-                }
+                // if (map_ptr != nullptr) {
+                //     map_pub.publish(map_ptr);
+                // }
             }
             
-            realtime_vdo_slam::VdoSlamScenePtr summary_msg = merge_scene_semantics(ros_scene, semantic_objects);
+            merge_scene_semantics(ros_scene, semantic_objects);
+            realtime_vdo_slam::VdoSlamScenePtr summary_msg = ros_scene->to_msg();
             if(summary_msg != nullptr) {
                 sensor_msgs::Image image_msg;
                 utils::mat_to_image_msg(image_msg, input->raw, sensor_msgs::image_encodings::RGB8, summary_msg->header);
                 summary_msg->original_frame = image_msg;
-                scene_vector.push_back(summary_msg);
 
                 //we send a std::shared ptr as the visualizer is in the same node so we maximise sending speed
                 //see ros interprocess comms: http://wiki.ros.org/roscpp/Overview/Publishers%20and%20Subscribers#Intraprocess_Publishing

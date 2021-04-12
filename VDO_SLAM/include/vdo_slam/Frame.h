@@ -11,7 +11,7 @@
 
 #include <vector>
 
-#include "vdo_slam/ORBextractor.h"
+#include "ORBextractor.h"
 
 #include <opencv2/opencv.hpp>
 

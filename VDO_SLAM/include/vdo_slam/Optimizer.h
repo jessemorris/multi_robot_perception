@@ -9,8 +9,8 @@
 #ifndef VDO_SLAM_OPTIMIZER_H
 #define VDO_SLAM_OPTIMIZER_H
 
-#include "vdo_slam/Map.h"
-#include "vdo_slam/Frame.h"
+#include "map/Map.h"
+#include "Frame.h"
 #include <vdo_slam_g2o/types/types_six_dof_expmap.h>
 
 
