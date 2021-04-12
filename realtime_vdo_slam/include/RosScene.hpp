@@ -144,7 +144,6 @@ namespace VDO_SLAM {
         private:
             ros::Time time;
             nav_msgs::Odometry odom;
-            cv::Mat rgb_image;
 
 
 

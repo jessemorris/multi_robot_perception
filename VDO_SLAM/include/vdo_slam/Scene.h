@@ -55,6 +55,9 @@ namespace VDO_SLAM
             int get_id();
             double get_timestamp();
 
+            cv::Mat rgb_frame;
+
+
 
         protected:
             std::vector<std::shared_ptr<SceneObject>> scene_objects;

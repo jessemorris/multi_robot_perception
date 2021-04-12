@@ -17,6 +17,7 @@ cv::Rect2d BoundingBox::to_rect() {
 
 void VDO_SLAM::EuclideanObject::pose_from_homogenous_mat(const cv::Mat& pose_) {
     assert(pose_.rows == pose_.cols == 4 && "Pose matrix should be in homogenous form");
+
     g2o::SE3Quat quat = VDO_SLAM::Converter::toSE3Quat(pose_);
     std::shared_ptr<g2o::SE3Quat> quat_ptr = std::make_shared<g2o::SE3Quat>(quat);
     pose = quat_ptr;

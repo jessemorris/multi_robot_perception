@@ -182,7 +182,14 @@ namespace VDO_SLAM {
     }
 
     void RosVisualizer::reconstruct_scenes_callback(const realtime_vdo_slam::VdoSlamMapConstPtr& map) {
+        ROS_INFO_STREAM("Recieved slam map updated");
 
+        //reset display
+        display = cv::Mat::zeros(800, 800, CV_8UC3);
+        for(const realtime_vdo_slam::VdoSlamScene& scene: map->scenes) {
+            boost::shared_ptr<realtime_vdo_slam::VdoSlamScene> slam_scene_ptr = boost::make_shared<realtime_vdo_slam::VdoSlamScene>(scene);
+            update_spin(slam_scene_ptr);
+        }
     }
 
 

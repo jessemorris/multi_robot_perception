@@ -55,8 +55,8 @@ void VDO_SLAM::Scene::add_scene_object(SceneObjectPtr& _object) {
 
 bool VDO_SLAM::Scene::update_from_map(const Map* map) {
     cv::Mat rf_camera_pose = map->vmCameraPose_RF[frame_id-1];
-
-    utils::image_to_global_coordinates(rf_camera_pose, rf_camera_pose);
+    VDO_INFO_MSG(rf_camera_pose);
+    // utils::image_to_global_coordinates(rf_camera_pose, rf_camera_pose);
     pose_from_homogenous_mat(rf_camera_pose);
     return true;
 }

@@ -418,6 +418,7 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
 
 
     scene = std::make_shared<Scene>(global_f_id, timestamp);
+    scene->rgb_frame = imRGB;
 
     // ---------------------------------------------------------------------------------------
     // +++++++++++++++++++++++++ For sampled features ++++++++++++++++++++++++++++++++++++++++
@@ -670,7 +671,6 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
 
     }
 
-    VDO_INFO_MSG("here");
     // // ************** show trajectory results ***************
     if (mTestData==KITTI && !mCurrentFrame.mTcw.empty())
     {
@@ -1433,9 +1433,6 @@ SceneType Tracking::Track()
             scene->add_scene_object(scene_object);
 
         }
-
-        VDO_INFO_MSG(Mot_Tmp.size());
-        VDO_INFO_MSG(Centre_Tmp.size());
         // (6.3) Save to The Map
         mpMap->vmRigidMotion.push_back(Mot_Tmp); //THIS ONE IS OBJECT MOTION (4x4 matrix) -> 
         mpMap->vmObjPosePre.push_back(ObjPose_Tmp);

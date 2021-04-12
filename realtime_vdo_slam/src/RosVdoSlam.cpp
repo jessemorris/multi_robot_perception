@@ -336,11 +336,11 @@ void RosVdoSlam::vdo_worker() {
             if (scene_type == SceneType::OPTIMIZED) {
                 ROS_INFO_STREAM("Reconstructing scene!!!!");
                 slam_system->construct_scenes(vdo_scene_vector);
-                // realtime_vdo_slam::VdoSlamMapPtr map_ptr = RosScene::make_map(map);
+                realtime_vdo_slam::VdoSlamMapPtr map_ptr = RosScene::make_map(vdo_scene_vector);
 
-                // if (map_ptr != nullptr) {
-                //     map_pub.publish(map_ptr);
-                // }
+                if (map_ptr != nullptr) {
+                    map_pub.publish(map_ptr);
+                }
             }
             
             merge_scene_semantics(vdo_scene, semantic_objects);

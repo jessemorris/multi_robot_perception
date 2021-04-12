@@ -102,9 +102,10 @@ namespace VDO_SLAM {
 
         /**
          * @brief Sets the pose object from a cv::Mat. The matrix should be in homogenous 
-         * ([R | t]) form.
+         * ([R | t]) form. If it is in camera frame form ([x,z,y]) use the 
+         * utils::image_to_global_coordinates function to convert to [x,y,z].
          * 
-         * @param const cv::Mat&  pose 
+         * @param cv::Mat&  pose 
          */
         void pose_from_homogenous_mat(const cv::Mat& pose);
 
@@ -117,7 +118,8 @@ namespace VDO_SLAM {
         void pose_from_vector(const cv::Mat& vector);
         /**
          * @brief Sets the twist object from a cv::Mat. The matrix should be in homogenous 
-         * ([R | t]) form.
+         * ([R | t]) form. If it is in camera frame form ([x,z,y]) use the 
+         * utils::image_to_global_coordinates function to convert to [x,y,z].
          * 
          * @param const cv::Mat& twist 
          */

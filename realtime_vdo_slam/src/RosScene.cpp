@@ -123,6 +123,7 @@ realtime_vdo_slam::VdoSceneObjectPtr VDO_SLAM::RosSceneObject::to_msg() {
     // msg->twist.linear.x = velocity.x;
     // msg->twist.linear.y = velocity.y;
     msg->semantic_label = semantic_instance_index;
+    msg->label = label;
 
     //we should not label here becuase the scene object may not have the correct label
     msg->tracking_id = tracking_id;
@@ -167,6 +168,9 @@ VDO_SLAM::RosScene::RosScene(realtime_vdo_slam::VdoSlamSceneConstPtr& _msg)
     :   time(_msg->header.stamp) {
 
         frame_id = _msg->id;
+        cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(_msg->original_frame, sensor_msgs::image_encodings::RGB8);
+        rgb_frame = cv_ptr->image;
+
 
         *pose = utils::g2o_converter::from_pose_msg(_msg->camera_pose);
         *twist = utils::g2o_converter::from_twist_msg(_msg->camera_twist);
@@ -211,7 +215,10 @@ realtime_vdo_slam::VdoSlamScenePtr VDO_SLAM::RosScene::to_msg() {
         msg->objects.push_back(object_msg);
 
     }
-    //TODO msg->original_frame
+    std_msgs::Header header = std_msgs::Header();
+    header.stamp = time;
+    utils::mat_to_image_msg(msg->original_frame, rgb_frame, sensor_msgs::image_encodings::RGB8, header);
+
 
     return msg;
 }
