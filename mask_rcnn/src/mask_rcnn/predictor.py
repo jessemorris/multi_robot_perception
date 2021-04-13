@@ -178,6 +178,7 @@ class COCODemo(object):
         self.model = build_detection_model(cfg)
         self.model.eval()
         self.device = torch.device(cfg.MODEL.DEVICE)
+        # self.device = torch.device("cpu")
         print(self.device)
         self.model.to(self.device)
         self.min_image_size = min_image_size
@@ -264,7 +265,6 @@ class COCODemo(object):
 
 
     @torch.no_grad()
-    @profile(precision=4)
     def compute_prediction(self, original_image):
         """
         Arguments:
@@ -293,9 +293,12 @@ class COCODemo(object):
 
         # image_list = to_image_list(image_tensor, self.cfg.DATALOADER.SIZE_DIVISIBILITY)
         image_list = to_image_list(image_tensor, 0)
+        image_tensor.cpu().detach()
         image_list = image_list.to(self.device)
         # # compute predictions
         predictions = self.model(image_list)
+        image_list = image_list.to(self.cpu_device)
+        
         # print(predictions)
         predictions = [o.to(self.cpu_device) for o in predictions]
 
@@ -307,7 +310,6 @@ class COCODemo(object):
         # reshape prediction (a BoxList) into the original image size
         height, width = original_image.shape[:-1]
         prediction = prediction.resize((width, height))
-
         if prediction.has_field("mask"):
             # if we have masks, paste the masks in the right position
             # in the image, as defined by the bounding boxes
@@ -315,7 +317,6 @@ class COCODemo(object):
             # always single image is passed at a time
             masks = self.masker([masks], [prediction])[0]
             prediction.add_field("mask", masks)
-
         del image_tensor
         del predictions
         del image_list
