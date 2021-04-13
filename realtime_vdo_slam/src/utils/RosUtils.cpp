@@ -181,7 +181,7 @@ namespace VDO_SLAM {
                 quat.x = orientation.x();
                 quat.y = orientation.y();
                 quat.z = orientation.z();
-                quat.w = orientation.z();
+                quat.w = orientation.w();
                 return quat;
             }
    

@@ -9,16 +9,10 @@
 
 namespace VDO_SLAM {
 
+    //TODO: pull this out of maskrcnn and into VDO_SLAM to make independant
+    //of other packages
     typedef std::vector<mask_rcnn::SemanticObject> SemanticObjectVector;
 
-    // /**
-    //  * @brief We need the semantic mask and semantic objects for data association so we wrap them
-    //  * 
-    //  */
-    // struct SemanticWrapper {
-    //     std::vector<mask_rcnn::SemanticObject> semantic_objects;
-    //     cv::Mat mask;
-    // }
 
     /**
      * @brief Defines a wrapper that holds the all the required input to the VDO algorithm. Requires RGB image,
@@ -57,8 +51,6 @@ namespace VDO_SLAM {
 
         {
             ground_truth = cv::Mat::eye(4,4,CV_32F);
-            // _depth.convertTo(depth, CV_32F);
-            // _depth.convertTo(depth, CV_16UC1);
             _mask.convertTo(mask, CV_32SC1);
         }
 

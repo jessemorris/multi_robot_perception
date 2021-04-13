@@ -145,13 +145,6 @@ VDO_SLAM::RosScene::RosScene(Scene& _object, ros::Time _time) :
     time(_time),
     Scene(_object) {
 
-        // convert them all into RosSceneObjects
-        // for(int i = 0; i < scene_objects.size(); i++) {
-        //     // RosSceneObjectPtr ros_scene_object = std::make_shared<RosSceneObject>(*scene_objects[i], time);
-        //     // scene_objects[i] = ros_scene_object;
-        //     ROS_INFO_STREAM(*scene_objects[i]);
-        // }
-
         //Note: we dont add transform frame and child frame here
         odom.header.stamp = time;
         //we ignore covariance on odom here for now

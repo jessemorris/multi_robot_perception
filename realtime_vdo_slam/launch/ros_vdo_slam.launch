@@ -87,14 +87,6 @@
 
 
 
-
-  <!-- <param name="frame_id" value="vdo_camera_link" />
-  <param name="global_optim_trigger" value="100" /> -->
-
-  <!-- <group ns="mask_rcnn_interface">
-    <param name="coco_dataset" value="ms_coco_classnames.json" />
-  </group> -->
-
   <node pkg="realtime_vdo_slam" type="ros_vdoslam_node" name="ros_vdo_slam" output="screen">
 
     <param name="online" value="$(arg online)" />
