@@ -122,7 +122,7 @@ ImageRgb::ImageRgb(ros::NodeHandle& nh_, PROCESSING_INTERFACES)
 
     }
     else {
-        rgb_subscriber_synch = std::make_shared<message_filters::Subscriber<sensor_msgs::Image>>(handler, rgb_topic, 100);
+        rgb_subscriber_synch = std::make_shared<message_filters::Subscriber<sensor_msgs::Image>>(handler, rgb_topic, 1000);
 
     }
     
@@ -262,12 +262,12 @@ void ImageRgb::image_callback(ImageConstPtr& rgb) {
 ImageRgbDepth::ImageRgbDepth(ros::NodeHandle& nh_, PROCESSING_INTERFACES)
     :   ImageRgb(nh_, INIT_INTERFACES)
 {
-    depth_subscriber_synch = std::make_shared<MessageFilterSubscriber>(handler, depth_topic, 100);
+    depth_subscriber_synch = std::make_shared<MessageFilterSubscriber>(handler, depth_topic, 1000);
 
     if (input_type == InputType::RGB_DEPTH) {
         ROS_INFO_STREAM("Starting RGB-Depth preprocesser");
-        rgb_depth_synch = std::make_shared<RgbDepthSynch>(*rgb_subscriber_synch, *depth_subscriber_synch, 100);
-        rgb_depth_synch->registerCallback(boost::bind(&ImageRgbDepth::image_callback,this, _1, _2));
+        rgb_depth_synch_ptr = std::make_shared<ApproxRgbDepthSynch>(ApproxRgbDepthSynch(50), *rgb_subscriber_synch, *depth_subscriber_synch);
+        rgb_depth_synch_ptr->registerCallback(boost::bind(&ImageRgbDepth::image_callback,this, _1, _2));
         run_scene_flow = true;
         run_mask_rcnn = true;
 

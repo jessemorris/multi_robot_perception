@@ -174,9 +174,7 @@ class Masker(object):
         self.threshold = threshold
         self.padding = padding
 
-    @profile(precision=4)
     def forward_single_image(self, masks, boxes):
-        print(type(boxes))
         boxes = boxes.convert("xyxy")
         im_w, im_h = boxes.size
         res = [

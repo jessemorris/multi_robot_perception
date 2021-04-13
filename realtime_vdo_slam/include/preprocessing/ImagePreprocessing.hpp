@@ -68,14 +68,23 @@ namespace VDO_SLAM {
         typedef message_filters::Subscriber<sensor_msgs::Image> MessageFilterSubscriber;
         typedef std::shared_ptr<MessageFilterSubscriber> MessageFilterSubscriberPtr;
 
+        typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ApproxRgbDepthSynchPolicy;
+        typedef message_filters::Synchronizer<ApproxRgbDepthSynchPolicy> ApproxRgbDepthSynch;
         typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image> RgbDepthSynch;
         typedef std::shared_ptr<RgbDepthSynch> RgbDepthSynchPtr;
+        typedef std::shared_ptr<ApproxRgbDepthSynch> ApproxRgbDepthSynchPtr;
 
+        typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> ApproxRgbDepthSegSynchPolicy;
+        typedef message_filters::Synchronizer<ApproxRgbDepthSegSynchPolicy> ApproxRgbDepthSegSynch;
         typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> RgbDepthSegSynch;
         typedef std::shared_ptr<RgbDepthSegSynch> RgbDepthSegSynchPtr;
+        typedef std::shared_ptr<ApproxRgbDepthSegSynch> ApproxRgbDepthSegSynchPtr;
 
+        typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> ApproxAllSynchPolicy;
+        typedef message_filters::Synchronizer<ApproxAllSynchPolicy> ApproxAllSynch;
         typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> AllSynch;
         typedef std::shared_ptr<AllSynch> AllSynchPtr;
+        typedef std::shared_ptr<ApproxAllSynch> ApproxAllSynchPtr;
 
         typedef const sensor_msgs::ImageConstPtr ImageConstPtr;
 
@@ -211,7 +220,8 @@ namespace VDO_SLAM {
             protected:
                 MessageFilterSubscriberPtr depth_subscriber_synch;
             private:
-                RgbDepthSynchPtr rgb_depth_synch;
+                // RgbDepthSynchPtr rgb_depth_synch;
+                ApproxRgbDepthSynchPtr rgb_depth_synch_ptr;
 
         };
 

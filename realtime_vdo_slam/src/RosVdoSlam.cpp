@@ -179,7 +179,7 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
 // void RosVdoSlam::vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth) {
 void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& vdo_input) {
     //the actual time the image was craeted
-
+    ROS_INFO_STREAM("got input");
     if(vdo_input->header.stamp.is_zero()) {
         ROS_ERROR_STREAM("VDO SLAM input time is zero");
     }
