@@ -1398,8 +1398,7 @@ SceneType Tracking::Track()
         Sem_Lab_Tmp.push_back(0);
         Obj_Stat_Tmp.push_back(true);
         // (6.2) Save Object Motions and Label
-        for (int i = 0; i < mCurrentFrame.vObjMod.size(); ++i)
-        {
+        for (int i = 0; i < mCurrentFrame.vObjMod.size(); ++i) {
             if (!mCurrentFrame.bObjStat[i])
                 continue;
             Obj_Stat_Tmp.push_back(mCurrentFrame.bObjStat[i]);

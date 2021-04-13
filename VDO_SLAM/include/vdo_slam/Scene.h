@@ -61,14 +61,6 @@ namespace VDO_SLAM
 
         protected:
             std::vector<std::shared_ptr<SceneObject>> scene_objects;
-            // cv::Point3f camera_pos_translation;
-            // cv::Mat camera_pos_rotation; //should be 3x3 rotation matrix
-
-            // cv::Point3f camera_vel_translation;
-            // cv::Mat camera_vel_rotation; //should be 3x3 rotation matrix
-            // g2o::SE3Quat pose;
-            // g2o::SE3Quat twist;
-
             int frame_id;
             double timestamp;
     };
