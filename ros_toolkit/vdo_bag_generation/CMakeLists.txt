@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(vdo_bag_generation)
 
+set (CMAKE_CXX_STANDARD 17)
+
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
@@ -19,20 +21,50 @@ find_package(catkin REQUIRED COMPONENTS
 	mask_rcnn
 	mono_depth_2
 	python_service_starter
+	lidar_camera_projection
 	realtime_vdo_slam
 	visualization_msgs
 	message_generation
 	std_msgs
 	cv_bridge
+	midas_ros
 	nav_msgs
 	sensor_msgs)
 
 find_package(OpenCV)
+find_package(vdo_slam REQUIRED COMPONENTS)
+
+find_package(minisam REQUIRED)
+set(minisam_INCLUDE_DIR /usr/local/include/minisam/)
+
+LINK_DIRECTORIES(/usr/local/lib)
+
 
 ## Setup include directories
 #include_directories(${catkin_INCLUDE_DIRS},
 #  include/${PROJECT_NAME}
 #  include)
+
+
+# set(PROJECT_INCLUDE_DIRS
+# 	include
+# 	# ${CMAKE_CURRENT_SOURCE_DIR}
+# 	# ${GTSAM_INCLUDE_DIR})
+# 	${minisam_INCLUDE_DIR}
+# )
+
+# include_directories(
+# 	${PROJECT_INCLUDE_DIRS}
+# )
+
+# add_library(usyd_dataset_pc_collect 
+# 	src/LLSOptimizer.cpp)
+
+# target_link_libraries(usyd_dataset_pc_collect
+# 		# gtsam
+#     	# gtsam_unstable
+# 		minisam
+# 		)
 
 
 
@@ -70,9 +102,9 @@ find_package(OpenCV)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-   FILES
-)
+# add_message_files(
+#    FILES
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -89,10 +121,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-   DEPENDENCIES
-   std_msgs  # Or other packages containing msgs
- )
+# generate_messages(
+#    DEPENDENCIES
+#    std_msgs  # Or other packages containing msgs
+#  )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -126,14 +158,15 @@ generate_messages(
 
 
 catkin_package(
-  LIBRARIES ${PROJECT_NAME}
-  	INCLUDE_DIRS include
+  LIBRARIES ${PROJECT_NAME} usyd_dataset_pc_collect
+  	INCLUDE_DIRS include ${PROJECT_INCLUDE_DIRS}
 	CATKIN_DEPENDS
 	roscpp
 	rosbag
 	rosbag_storage
 	image_transport
 	python_service_starter
+	lidar_camera_projection
 	std_msgs
 	tf2_ros
 	tf2_sensor_msgs
@@ -144,8 +177,10 @@ catkin_package(
 	flow_net
 	mask_rcnn
 	mono_depth_2
+	midas_ros
 	message_runtime
 	DEPENDS system_lib
+	minisam
 )
 
 ###########
@@ -157,8 +192,10 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
     include
+	${vdo_slam_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS}
+	${minisam_INCLUDE_DIR}
 )
 
 
@@ -170,10 +207,34 @@ add_executable(${PROJECT_NAME}_node
 target_link_libraries(${PROJECT_NAME}_node
 		${catkin_LIBRARIES}
 		${OpenCV_LIBS}
+		${vdo_slam_LIB_DIRS}
 		)
 
 if(catkin_EXPORTED_LIBRARIES)
   add_dependencies(${PROJECT_NAME}_node
+		  ${catkin_EXPORTED_LIBRARIES}
+		  ${catkin_LIBRARIES}
+		  ${OpenCV_LIBS})
+endif()
+
+##### USYD Campus Dataset PC extract ######
+add_executable(usyd_dataset_pc_collect_node
+		src/usyd_dataset_pc_collect.cpp
+		)
+
+target_include_directories(usyd_dataset_pc_collect_node PUBLIC
+	include
+	${minisam_INCLUDE_DIR})
+
+target_link_libraries(usyd_dataset_pc_collect_node
+		/usr/local/lib/libminisam.so
+		${catkin_LIBRARIES}
+		${OpenCV_LIBS}
+		${vdo_slam_LIB_DIRS}
+		)
+
+if(catkin_EXPORTED_LIBRARIES)
+  add_dependencies(usyd_dataset_pc_collect_node
 		  ${catkin_EXPORTED_LIBRARIES}
 		  ${catkin_LIBRARIES}
 		  ${OpenCV_LIBS})

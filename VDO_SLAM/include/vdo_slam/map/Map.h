@@ -13,7 +13,6 @@
 
 #include <set>
 
-#include "map/Map.h"
 #include "map/MapObject.h"
 
 

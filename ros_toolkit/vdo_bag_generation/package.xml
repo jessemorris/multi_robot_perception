@@ -59,12 +59,14 @@
   <depend>std_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>python_service_starter</depend>
+  <depend>lidar_camera_projection</depend>
   <depend>visualization_msgs</depend>
   <depend>darknet_ros_msgs</depend>
   <depend>flow_net</depend>
   <depend>mask_rcnn</depend>
   <depend>mono_depth_2</depend>
 
+  <depend>midas_ros</depend>
 
   <depend>sensor_msgs</depend>
   <depend>rosbag</depend>

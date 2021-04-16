@@ -34,12 +34,12 @@
 #include <map>
 #include <random>
 
-#include "Tracking.h"
-#include "System.h"
-#include "Macros.h"
-#include "Converter.h"
-#include "utils/VdoUtils.h"
-#include "utils/Types.h"
+#include "vdo_slam/Tracking.h"
+#include "vdo_slam/System.h"
+#include "vdo_slam/Macros.h"
+#include "vdo_slam/Converter.h"
+#include "vdo_slam/utils/VdoUtils.h"
+#include "vdo_slam/utils/Types.h"
 
 #include "vdo_slam.hpp" //only need for cvplot module so weill eventually move
 

@@ -10,8 +10,8 @@ MidasDepthInterface::MidasDepthInterface(ros::NodeHandle& n) :
         ServiceStarterInterface(n)
     {
     
-    service_started = false;
     start_client = nh.serviceClient<python_service_starter::StartMidasDepth>("start_midas_depth");
+    ROS_INFO_STREAM("Made start midas depth client");
 
     }
 

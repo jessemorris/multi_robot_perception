@@ -1,7 +1,7 @@
 #ifndef CVPLOT_WINDOW_H
 #define CVPLOT_WINDOW_H
 
-#include "color.h"
+#include "cvplot/color.h"
 
 #include <map>
 #include <string>

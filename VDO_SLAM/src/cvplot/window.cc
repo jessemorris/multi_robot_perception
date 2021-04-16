@@ -1,5 +1,5 @@
-#include "vdo_slam/cvplot/window.h"
-#include "vdo_slam/cvplot/internal.h"
+#include "cvplot/window.h"
+#include "cvplot/internal.h"
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>

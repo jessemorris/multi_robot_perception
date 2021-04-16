@@ -5,7 +5,7 @@
 #include <vector>
 #include <opencv2/core.hpp>
 
-#include "window.h"
+#include "cvplot/window.h"
 
 namespace cvplot {
 

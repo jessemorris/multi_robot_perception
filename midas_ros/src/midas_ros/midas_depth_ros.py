@@ -33,7 +33,7 @@ class MidasRos(RosCppCommunicator):
         self.download_model()
 
 
-        # load model
+        #load model
         self.interpreter = tf.lite.Interpreter(model_path=self.model_path)
         self.interpreter.allocate_tensors()
         self.input_details = self.interpreter.get_input_details()
@@ -95,8 +95,9 @@ class MidasRos(RosCppCommunicator):
         #image normal is usual depth style imaage where closer objects are white
         image_normal =  (2**16 * (prediction - depth_min) / (depth_max - depth_min)).astype("uint16")
 
-        # inverted_image = cv2.bitwise_not(image_normal)
+        image_normal = cv2.bitwise_not(image_normal)
         return image_normal
+
 
     def _normalize_input(self, input_image):
         """[Normalizes and preprocesses an input image, ready for inference]
@@ -127,21 +128,21 @@ class MidasRos(RosCppCommunicator):
         
 
 
-def main():
+# def main():
     
-    midas = MidasRos()
+#     midas = MidasRos()
 
-    cam = cv2.VideoCapture(0)
-    while True:
-        start_time = time.time()
-        ret_val, img = cam.read()
-        composite = midas.analyse_image(img)
-        print("Time: {:.2f} s / img".format(time.time() - start_time))
-        cv2.imshow("Depth detections", composite)
-        if cv2.waitKey(1) == 27:
-            break  # esc to quit
-    cv2.destroyAllWindows()
+#     cam = cv2.VideoCapture(0)
+#     while True:
+#         start_time = time.time()
+#         ret_val, img = cam.read()
+#         composite = midas.analyse_image(img)
+#         print("Time: {:.2f} s / img".format(time.time() - start_time))
+#         cv2.imshow("Depth detections", composite)
+#         if cv2.waitKey(1) == 27:
+#             break  # esc to quit
+#     cv2.destroyAllWindows()
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

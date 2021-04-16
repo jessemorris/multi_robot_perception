@@ -1,4 +1,4 @@
-#include "vdo_slam/cvplot/highgui.h"
+#include "cvplot/highgui.h"
 
 // #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/highgui.hpp>

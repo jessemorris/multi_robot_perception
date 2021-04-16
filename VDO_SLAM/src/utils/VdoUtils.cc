@@ -1,11 +1,12 @@
 #include "utils/VdoUtils.h"
+
 #include <opencv2/opencv.hpp>
 
 
 namespace VDO_SLAM {
     namespace utils {
 
-        eSensor param_to_sensor(const int sensor) {
+        eSensor param_to_sensor(int sensor) {
             if (sensor == 0) {
                 VDO_INFO_MSG("Using MONOCULAR sensor.");
                 return VDO_SLAM::eSensor::MONOCULAR;

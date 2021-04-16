@@ -7,11 +7,13 @@
 #include <sensor_msgs/NavSatFix.h>
 #include <realtime_vdo_slam/VdoInput.h>
 #include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/PointCloud2.h>
 
 #include <tf2_msgs/TFMessage.h>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <vdo_slam/vdo_slam.hpp>
 
 
 #include <rosbag/bag.h>
@@ -25,6 +27,8 @@
 #include <algorithm>
 #include <map>
 
+using namespace VDO_SLAM;
+
 typedef const sensor_msgs::ImageConstPtr& ImageConst;
 
 class VdoBagPlayback {
@@ -36,7 +40,8 @@ class VdoBagPlayback {
             bag.open(out_file, rosbag::bagmode::Write);
             ROS_INFO_STREAM("Making output bag file: " << out_file);
 
-            std::vector<std::string> topics{"/map", "/odom", "/tf", "/ublox_gps/fix", "/tf_static", "/camera/camera_info", "/camera/sync"};
+            std::vector<std::string> topics{"/map", "/odom", "/tf", "/ublox_gps/fix", 
+                "/tf_static", "/camera/camera_info", "/camera/sync", "velodyne/points", };
 
             ros::Time time = ros::Time::now();
 
@@ -224,6 +229,7 @@ int main(int argc, char **argv)
     std::string tf_static_topic = "/tf_static";
     std::string tf_topic = "/tf";
     std::string gps_topic = "/ublox_gps/fix";
+    std::string point_cloud_topic = "/velodyne/front/corrected";
 
     //TODO: add gps - not needed for paper (we just need odom)
 

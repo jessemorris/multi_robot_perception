@@ -8,12 +8,12 @@
 
 // #include "System.h"
 // #include "Converter.h"
-#include "Scene.h"
-#include "System.h"
-#include "Tracking.h"
-#include "Macros.h"
-#include "utils/Types.h"
-#include "utils/VdoUtils.h"
+#include "vdo_slam/Scene.h"
+#include "vdo_slam/System.h"
+#include "vdo_slam/Tracking.h"
+#include "vdo_slam/Macros.h"
+#include "vdo_slam/utils/Types.h"
+#include "vdo_slam/utils/VdoUtils.h"
 
 #include <thread>
 #include <iomanip>

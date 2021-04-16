@@ -1,9 +1,9 @@
 #ifndef CVPLOT_H
 #define CVPLOT_H
 
-#include "color.h"
-#include "figure.h"
-#include "highgui.h"
-#include "window.h"
+#include "cvplot/color.h"
+#include "cvplot/figure.h"
+#include "cvplot/highgui.h"
+#include "cvplot/window.h"
 
 #endif  // CVPLOT_H

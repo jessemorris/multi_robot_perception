@@ -39,8 +39,8 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(OpenCV)
 find_package(vdo_slam REQUIRED)
 # find_package(GTSAM REQUIRED)
-find_package(minisam REQUIRED)
-set(minisam_INCLUDE_DIR /usr/local/include/minisam/)
+# find_package(minisam REQUIRED)
+# set(minisam_INCLUDE_DIR /usr/local/include/minisam/)
 
 
 
@@ -145,7 +145,6 @@ generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs std_msgs sensor_msgs
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 
-message(${minisam_INCLUDE_DIR})
 
 set(PROJECT_INCLUDE_DIRS
 	include
@@ -154,7 +153,7 @@ set(PROJECT_INCLUDE_DIRS
 	${vdo_slam_INCLUDE_DIRS}
 	# ${CMAKE_CURRENT_SOURCE_DIR}
 	# ${GTSAM_INCLUDE_DIR})
-	${minisam_INCLUDE_DIR}
+	# ${minisam_INCLUDE_DIR}
 )
 
 include_directories(
@@ -173,9 +172,9 @@ add_library(${PROJECT_NAME} STATIC
 	src/visualizer/RosAsyncManager.cpp
 	src/data_provider/DataProviderInterface.cpp
 	src/data_provider/RosBagDataProvider.cpp
-	src/scene_graph/SceneGraphBuilder.cpp
-	src/scene_graph/SceneGraph.cpp
-	src/scene_graph/SceneGraphOptimizer.cpp
+	# src/scene_graph/SceneGraphBuilder.cpp
+	# src/scene_graph/SceneGraph.cpp
+	# src/scene_graph/SceneGraphOptimizer.cpp
 	)
 
 catkin_package(
@@ -201,8 +200,8 @@ catkin_package(
 	mono_depth_2
 	midas_ros
 	message_runtime
-	DEPENDS
-	minisam
+	# DEPENDS
+	# minisam
 )
 
 ###########
@@ -222,7 +221,7 @@ target_link_libraries(${PROJECT_NAME}
 		${vdo_slam_LIB_DIRS}
 		# gtsam
     	# gtsam_unstable
-		minisam
+		# minisam
 		)
 
 
@@ -264,29 +263,29 @@ endif()
 
 
 #### Vdo Slam Scene Graph Node
-add_executable(vdo_slam_scene_graph_node
-		src/VdoSlamSceneGraphNode.cpp
+# add_executable(vdo_slam_scene_graph_node
+# 		src/VdoSlamSceneGraphNode.cpp
 		
-		)
+# 		)
 
-# target_include_directories(vdo_slam_scene_graph_node PUBLIC
-# 	${PROJECT_INCLUDE_DIRS}
-# 	${minisam_INCLUDE_DIR})
+# # target_include_directories(vdo_slam_scene_graph_node PUBLIC
+# # 	${PROJECT_INCLUDE_DIRS}
+# # 	${minisam_INCLUDE_DIR})
 
 
-target_link_libraries(vdo_slam_scene_graph_node 
-		${catkin_LIBRARIES}
-		${OpenCV_LIBS}
-		${PROJECT_NAME}
-		)
+# target_link_libraries(vdo_slam_scene_graph_node 
+# 		${catkin_LIBRARIES}
+# 		${OpenCV_LIBS}
+# 		${PROJECT_NAME}
+# 		)
 
-if(catkin_EXPORTED_LIBRARIES)
-  add_dependencies(vdo_slam_scene_graph_node
-  		  ${PROJECT_NAME}
-		  ${catkin_EXPORTED_LIBRARIES}
-		  ${catkin_LIBRARIES}
-		  ${OpenCV_LIBS})
-endif()
+# if(catkin_EXPORTED_LIBRARIES)
+#   add_dependencies(vdo_slam_scene_graph_node
+#   		  ${PROJECT_NAME}
+# 		  ${catkin_EXPORTED_LIBRARIES}
+# 		  ${catkin_LIBRARIES}
+# 		  ${OpenCV_LIBS})
+# endif()
 
 
 

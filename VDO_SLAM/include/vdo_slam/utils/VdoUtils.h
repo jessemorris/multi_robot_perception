@@ -21,7 +21,7 @@ namespace VDO_SLAM {
          * @param sensor 
          * @return eSensor 
          */
-        eSensor param_to_sensor(const int sensor);
+        eSensor param_to_sensor(int sensor);
 
         /**
          * @brief Constructs a 4x4 matrix in the homogenous form (R|t) where R

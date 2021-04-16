@@ -1,8 +1,8 @@
 #ifndef CVPLOT_FIGURE_H
 #define CVPLOT_FIGURE_H
 
-#include "color.h"
-#include "window.h"
+#include "cvplot/color.h"
+#include "cvplot/window.h"
 
 #include <map>
 #include <string>

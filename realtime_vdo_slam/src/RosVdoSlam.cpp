@@ -63,7 +63,7 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         int sensor_mode;
         nh.getParam("/ros_vdo_slam/sensor_mode", sensor_mode);
 
-        VDO_SLAM::eSensor sensor = utils::param_to_sensor(sensor_mode);
+        VDO_SLAM::eSensor sensor = VDO_SLAM::utils::param_to_sensor(sensor_mode);
 
         std::string calibration_file;
         nh.getParam("/ros_vdo_slam/calibration_file", calibration_file);
@@ -141,7 +141,7 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
         int sensor_mode;
         nh.getParam("/ros_vdo_slam/sensor_mode", sensor_mode);
 
-        params.sensor_type = utils::param_to_sensor(sensor_mode);
+        params.sensor_type = VDO_SLAM::utils::param_to_sensor(sensor_mode);
 
         nh.getParam("/ros_vdo_slam/depth_map_factor", params.depth_map_factor);
 
