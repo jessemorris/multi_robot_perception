@@ -88,6 +88,7 @@ class MaskRcnnRos(RosCppCommunicator):
 
             output_image_msg = ros_numpy.msgify(Image, response_image, encoding='mono8')
             display_image_msg = ros_numpy.msgify(Image, display_image, encoding='rgb8')
+            
 
             response.success = True
             # response.output_image = output_image_msg
@@ -128,7 +129,7 @@ class MaskRcnnRos(RosCppCommunicator):
         return self.coco_demo.run_on_opencv_image(image)
 
     @torch.no_grad()
-    # @profile(precision=4)
+    @profile(precision=4)
     def analyse_image(self, image):
         """[Analyses an image using mask rcnn. Creates a semantic instance labelled greyscale image
         and a list of mask_rcnn.SemanticObjects which represent each detected object in the frame]

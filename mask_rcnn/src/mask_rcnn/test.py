@@ -53,7 +53,7 @@ while not rospy.is_shutdown():
 
     response = analyse(srv)
     # rospy.sleep(1)
-    # mask_img = response.output_viz
-    # mask_img = ros_numpy.msgify(Image, mask_img, encoding='rgb8')
-    # cv2.imshow("Mask", mask_img)
-    # cv2.waitKey(1)
+    mask_img = response.output_viz
+    mask_img = ros_numpy.numpify(mask_img)
+    cv2.imshow("Mask", mask_img)
+    cv2.waitKey(1)

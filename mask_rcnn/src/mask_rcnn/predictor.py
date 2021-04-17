@@ -265,6 +265,7 @@ class COCODemo(object):
 
 
     @torch.no_grad()
+    @profile(precision=4)
     def compute_prediction(self, original_image):
         """
         Arguments:
@@ -283,6 +284,7 @@ class COCODemo(object):
         # print(image.shape)
         # original_height, original_width, _ = original_image.shape
         image_tensor = torch.FloatTensor(np.ascontiguousarray(np.array(image)[:, :, ::-1].transpose(2, 0, 1).astype(np.float32)))
+        # image_tensor = torch.from_numpy(np.array(image)[:, :, ::-1].transpose(2, 0, 1).astype(np.float32))
         image_tensor = image_tensor.unsqueeze(0)
         # image_tensor.cpu().detach()
 
@@ -293,11 +295,11 @@ class COCODemo(object):
 
         # image_list = to_image_list(image_tensor, self.cfg.DATALOADER.SIZE_DIVISIBILITY)
         image_list = to_image_list(image_tensor, 0)
-        image_tensor.cpu().detach()
+        # image_tensor.cpu().detach()
         image_list = image_list.to(self.device)
         # # compute predictions
         predictions = self.model(image_list)
-        image_list = image_list.to(self.cpu_device)
+        # image_list = image_list.to(self.cpu_device)
         
         # print(predictions)
         predictions = [o.to(self.cpu_device) for o in predictions]
@@ -314,9 +316,12 @@ class COCODemo(object):
             # if we have masks, paste the masks in the right position
             # in the image, as defined by the bounding boxes
             masks = prediction.get_field("mask")
+            # masks.cpu().detach()
             # always single image is passed at a time
             masks = self.masker([masks], [prediction])[0]
+            print(type(masks))
             prediction.add_field("mask", masks)
+            del masks
         del image_tensor
         del predictions
         del image_list

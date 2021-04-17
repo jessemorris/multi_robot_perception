@@ -174,6 +174,7 @@ class Masker(object):
         self.threshold = threshold
         self.padding = padding
 
+    # @profile(precision=3)
     def forward_single_image(self, masks, boxes):
         boxes = boxes.convert("xyxy")
         im_w, im_h = boxes.size
@@ -186,9 +187,6 @@ class Masker(object):
             #size was torch.Size([19, 1, 480, 640])
             # result = torch.stack(res, dim=0)[:, None]
             result = np.stack(res, axis=0)[:, None]
-
-            #we implement our own np.stack becuase memory leak!?
-            # result = res
         else:
             result = []
 
