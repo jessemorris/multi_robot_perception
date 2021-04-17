@@ -25,8 +25,6 @@
 #include <nav_msgs/Odometry.h>
 
 
-#include <vdo_slam/vdo_slam.hpp>
-
 
 #include "RosScene.hpp"
 #include "VdoSlamInput.hpp"
@@ -36,6 +34,7 @@
 #include  <realtime_vdo_slam/VdoInput.h>
 #include <realtime_vdo_slam/VdoSlamScene.h>
 #include <vdo_slam/Scene.h>
+#include <vdo_slam/System.h>
 
 #include <string>
 #include <vector>

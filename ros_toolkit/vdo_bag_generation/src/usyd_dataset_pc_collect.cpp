@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+#include <image_transport/image_transport.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <nav_msgs/Odometry.h>
@@ -17,13 +18,14 @@
 
 #include <midas_ros/MidasDepth.h>
 #include <midas_ros/MidasDepthInterface.hpp>
-
 #include <minisam/core/LossFunction.h>
 #include <minisam/core/Eigen.h>
 #include <minisam/core/Factor.h>
 #include <minisam/core/FactorGraph.h>
 #include <minisam/core/Variables.h>
 #include <minisam/nonlinear/LevenbergMarquardtOptimizer.h>
+
+// #include <Eigen/Core>
 
 
 #include <rosbag/bag.h>
@@ -87,7 +89,7 @@ std::shared_ptr<minisam::Factor> ExpCurveFittingFactor::copy() const {
 
 Eigen::VectorXd ExpCurveFittingFactor::error(const minisam::Variables& values) const {
     const Eigen::Vector2d& params = values.at<Eigen::Vector2d>(keys()[0]);
-    return (Eigen::VectorXd(1) << params(0) * p_(0) + params(1) - p_(1))
+    return (Eigen::VectorXd(1) <<  p_(1) - params(0) * p_(0) + params(1))
         .finished();
 }
 
@@ -95,7 +97,7 @@ std::vector<Eigen::MatrixXd> ExpCurveFittingFactor::jacobians(const minisam::Var
     const Eigen::Vector2d& params = values.at<Eigen::Vector2d>(keys()[0]);
     return std::vector<Eigen::MatrixXd>{
         (Eigen::MatrixXd(1, 2) <<
-            1,
+            -params(0),
             1)
         .finished()};
 }
@@ -105,13 +107,14 @@ class UsydDataPCCollectPlayBack {
 
     public:
         UsydDataPCCollectPlayBack(std::string& _out_file):
-            out_file(_out_file)
+            out_file(_out_file),
+            it(nh)
         {
-            // bag.open(out_file, rosbag::bagmode::Write);
+            bag.open(out_file, rosbag::bagmode::Write);
             ROS_INFO_STREAM("Making output bag file: " << out_file);
 
             std::vector<std::string> topics{"/map", "/odom", "/tf", "/ublox_gps/fix", 
-                "/tf_static", "/camera/camera_info", "/camera/sync", "velodyne/points"};
+                "/tf_static", "/camera/camera_info", "/camera/rgb", "/camera/depth", "/velodyne/points"};
 
             ros::Time time = ros::Time::now();
 
@@ -122,8 +125,15 @@ class UsydDataPCCollectPlayBack {
                 topic_timing_map.emplace(topic, timing_info);
             }
 
+            undistorted_image_pub = it.advertise("usyd_dataset_pc/undistorted", 20);
+            distorted_image_pub = it.advertise("usyd_dataset_pc/distorted", 20);
+
             midas_depth  = std::make_shared<midas_ros::MidasDepthInterface>(nh);
+            // sceneflow = std::make_shared<flow_net::FlowNetInterface>(nh);
+            // mask_rcnn_interface = std::make_shared<mask_rcnn::MaskRcnnInterface>(nh);
             midas_depth->start_service();
+            // sceneflow->start_service();
+            // mask_rcnn_interface->start_service();
             init_distortion_params();
             loss = minisam::CauchyLoss::Cauchy(1.0);
 
@@ -137,7 +147,7 @@ class UsydDataPCCollectPlayBack {
         
 
         void close() {
-            // bag.close();
+            bag.close();
             ROS_INFO_STREAM("Closing bag file");
         }
 
@@ -202,11 +212,13 @@ class UsydDataPCCollectPlayBack {
             bag.write("/gps",save_time, *msg);
         }
 
-        void pc_projected_image_callback(ImageConst& image_projected_msg) {
-
+        void pc_callback(const sensor_msgs::PointCloud2ConstPtr& pc_msg) {
+            ros::Time save_time = get_timing("/velodyne/points", pc_msg->header.stamp);
+            bag.write("/velodyne/points", save_time, *pc_msg);
         }
 
         void image_projected_points_callback(ImageConst& rgb_msg, const lidar_camera_projection::ImagePixelDepthConstPtr& projected_pts) {
+            ros::Time save_time = get_timing("/camera/rgb", rgb_msg->header.stamp);
             cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(rgb_msg, sensor_msgs::image_encodings::BGR8);
             cv::Mat rgb_image = cv_ptr->image;
             std::vector<cv::Point2f> distorted_lidar_points;
@@ -217,6 +229,10 @@ class UsydDataPCCollectPlayBack {
             for(const lidar_camera_projection::PixelDepth& pixel_depth : projected_pts->data) {
                 double dis = pow(pixel_depth.x * pixel_depth.x + pixel_depth.y * pixel_depth.y + pixel_depth.z * pixel_depth.z, 0.5);
                 int range = std::min(float(round((dis / 50) * 149)), (float) 149.0);
+                
+                if (range < 5) {
+                    continue;
+                }
 
                 cv::Point p;
                 p.x = static_cast<float>(pixel_depth.pixel_x);
@@ -235,10 +251,10 @@ class UsydDataPCCollectPlayBack {
             bool mono_depth_success = midas_depth->analyse(rgb_image, disp);
 
             // disp.convertTo(disp, CV_16SC1);
-            ROS_INFO_STREAM("No points " << correct_lidar_points.size());
+            // ROS_INFO_STREAM("No points " << correct_lidar_points.size());
             minisam::FactorGraph factor_graph;
             for(int i = 0; i < correct_lidar_points.size(); i++) {
-                if (i%2 == 0) {
+                if (i%25 != 0) {
                     continue;
                 }
                 cv::Point p = correct_lidar_points[i];
@@ -247,6 +263,8 @@ class UsydDataPCCollectPlayBack {
                 double dis = pow(pixel_depth.x * pixel_depth.x + pixel_depth.y * pixel_depth.y + pixel_depth.z * pixel_depth.z, 0.5);
                 int range= std::min(float(round((dis / 50) * 149)), (float) 149.0);
                 double range_d = static_cast<double>(range);
+
+    
 
                 lidar_camera_projection::PixelDepth correct_pixel;
                 correct_pixel.pixel_x = p.x;
@@ -263,58 +281,45 @@ class UsydDataPCCollectPlayBack {
                        CV_RGB(255 * colmap[range][0], 255 * colmap[range][1], 255 * colmap[range][2]), -1);
 
                 double disp_map_range = (double)disp.at<uint16_t>(correct_pixel.pixel_y, correct_pixel.pixel_x)/1000.0;
-                ROS_INFO_STREAM(range << " " << disp_map_range);
+                // pred_idepth << disp_map_range, 1;
+                // pred_idepth_gt << range_d;
                 factor_graph.add(ExpCurveFittingFactor(minisam::key('p', 0), Eigen::Vector2d(disp_map_range,
                                                 range_d), loss));
             }
 
-
             minisam::Variables init_values;
 
-            init_values.add(minisam::key('p', 0), Eigen::Vector2d(0, 0));
+            init_values.add(minisam::key('p', 0), Eigen::Vector2d(previous_s_param, previous_t_param));
 
             // optimize!
             minisam::LevenbergMarquardtOptimizerParams opt_param;
             opt_param.verbosity_level = minisam::NonlinearOptimizerVerbosityLevel::ITERATION;
-            opt_param.lambda_max = 1e10; //idk what this should be
+            opt_param.lambda_max = 5e10; //idk what this should be
             minisam::LevenbergMarquardtOptimizer opt(opt_param);
 
             minisam::Variables values;
             auto status = opt.optimize(factor_graph, init_values, values);
             if(status == minisam::NonlinearOptimizationStatus::SUCCESS) {
                 Eigen::Vector2d result = values.at<Eigen::Vector2d>(minisam::key('p', 0));
-                double s = result[0];
-                double t = result[1];
-                ROS_INFO_STREAM("s: " << s << " t: " << t);
+                previous_s_param = result[0];
+                previous_t_param = result[1];
+                ROS_INFO_STREAM("s: " << previous_s_param << " t: " << previous_t_param);
+
 
             }
 
+            disp = previous_s_param * disp + previous_t_param;
+            bag.write("/camera/rgb/image_raw",save_time, rgb_msg);
+            // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(rgb_msg->header, "rgb8", rgb_image).toImageMsg();
+            // // undistorted_image_pub.publish(img_msg);
             cv::imshow("Projection", rgb_image);
             cv::waitKey(1);
-
-            cv::imshow("Disp", disp);
-            cv::waitKey(1);
+            sensor_msgs::ImagePtr  img_msg = cv_bridge::CvImage(rgb_msg->header, "mono16", disp).toImageMsg();
+            bag.write("/camera/depth/image_raw",save_time, *img_msg);
+            // distorted_image_pub.publish(img_msg);
+            // cv::imshow("Disp", disp);
+            // cv::waitKey(1);
         }
-
-        // void vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& input) {
-        //     ros::Time save_time = get_timing("/camera/sync", input->header.stamp);
-        //     ROS_INFO_STREAM("Synch callback time now " << save_time);
-
-
-        //     bag.write("/camera/rgb/image_raw",save_time, input->rgb);
-
-        //     bag.write("/camera/mask/image_raw",save_time, input->mask);
-        //     // bag.write("/camera/mask/colour_mask",save_time, *mask_viz);
-
-        //     bag.write("/camera/flow/image_raw",save_time, input->flow);
-        //     // bag.write("/camera/flow/colour_map",save_time, *flow_viz);
-
-        //     bag.write("/camera/depth/image_raw",save_time, input->depth);
-
-        //     bag.write("/camera/all", save_time, *input);
-
-
-        // }
 
     private:
 
@@ -342,10 +347,16 @@ class UsydDataPCCollectPlayBack {
         typedef std::shared_ptr<UsydDataPCCollectPlayBack::TimingInfo> TimingInfoPtr;
 
         midas_ros::MidasDepthInterfacePtr midas_depth;
+
+
         std::string out_file;
         rosbag::Bag bag;
         ros::NodeHandle nh;
         CameraInformation camera_info;
+
+        image_transport::ImageTransport it;
+        image_transport::Publisher undistorted_image_pub;
+        image_transport::Publisher distorted_image_pub;
 
         std::shared_ptr<minisam::LossFunction> loss;
         
@@ -358,6 +369,8 @@ class UsydDataPCCollectPlayBack {
         std::map<std::string, UsydDataPCCollectPlayBack::TimingInfoPtr> topic_timing_map;
 
         ros::Time update_timing(const std::string& topic, const ros::Time& msg_time);
+        double previous_t_param = 5;
+        double previous_s_param = 2;
 
 };
 
@@ -443,16 +456,16 @@ int main(int argc, char **argv)
     n.param<std::string>("/out_file", out_file_name, "vdo_out.bag");
     n.param<std::string>("/video_stream_namespace", video_stream_namespace, "/gmsl/A1/");
 
-    std::string input_video_topic = "/vdoslam/input/camera/rgb/image_raw";
-    std::string camera_info_topic = video_stream_namespace + "camera_info";
-    std::string mask_rcnn_topic = "/vdoslam/input/camera/mask/image_raw";
-    std::string flow_net_topic = "/vdoslam/input/camera/flow/image_raw";
-    std::string monodepth_topic = "/vdoslam/input/camera/depth/image_raw";
+    // std::string input_video_topic = "/vdoslam/input/camera/rgb/image_raw";
+    // std::string camera_info_topic = video_stream_namespace + "camera_info";
+    // std::string mask_rcnn_topic = "/vdoslam/input/camera/mask/image_raw";
+    // std::string flow_net_topic = "/vdoslam/input/camera/flow/image_raw";
+    // std::string monodepth_topic = "/vdoslam/input/camera/depth/image_raw";
 
 
-    //topics for viz
-    std::string mask_rcnn_viz_topic = "/vdoslam/input/camera/mask/colour_mask";
-    std::string flow_net_viz_topic = "/vdoslam/input/camera/flow/colour_map";
+    // //topics for viz
+    // std::string mask_rcnn_viz_topic = "/vdoslam/input/camera/mask/colour_mask";
+    // std::string flow_net_viz_topic = "/vdoslam/input/camera/flow/colour_map";
 
     //we get these from the localiser node not the original /odom in the bag file. 
     std::string odom_topic = "/localiser/odometry";
@@ -466,14 +479,14 @@ int main(int argc, char **argv)
 
     UsydDataPCCollectPlayBack playback(out_file_name);
     //these messages can can come in at anytime
-    // ros::Subscriber sub_odom = n.subscribe(odom_topic, 100, &UsydDataPCCollectPlayBack::odom_callback, &playback);
-    // ros::Subscriber sub_map = n.subscribe(map_topic, 100, &UsydDataPCCollectPlayBack::map_callback, &playback);
-    // ros::Subscriber sub_tf_static = n.subscribe(tf_static_topic, 100, &UsydDataPCCollectPlayBack::tf_static_callback, &playback);
-    // ros::Subscriber sub_tf = n.subscribe(tf_topic, 100, &UsydDataPCCollectPlayBack::tf_callback, &playback);
-    // ros::Subscriber sub_camera_info = n.subscribe(camera_info_topic, 100, &UsydDataPCCollectPlayBack::camera_info_callback, &playback);
-    // ros::Subscriber gps_sub_info = n.subscribe(gps_topic, 100, &UsydDataPCCollectPlayBack::gps_info_callback, &playback);
+    ros::Subscriber sub_odom = n.subscribe(odom_topic, 100, &UsydDataPCCollectPlayBack::odom_callback, &playback);
+    ros::Subscriber sub_map = n.subscribe(map_topic, 100, &UsydDataPCCollectPlayBack::map_callback, &playback);
+    ros::Subscriber sub_tf_static = n.subscribe(tf_static_topic, 100, &UsydDataPCCollectPlayBack::tf_static_callback, &playback);
+    ros::Subscriber sub_tf = n.subscribe(tf_topic, 100, &UsydDataPCCollectPlayBack::tf_callback, &playback);
+    ros::Subscriber sub_camera_info = n.subscribe("/gmsl/A0/camera_info", 100, &UsydDataPCCollectPlayBack::camera_info_callback, &playback);
+    ros::Subscriber gps_sub_info = n.subscribe(gps_topic, 100, &UsydDataPCCollectPlayBack::gps_info_callback, &playback);
 
-    ros::Subscriber sub_lidar_camera_projection = n.subscribe("/gmsl/A0/image_color/lidar_projected", 100, &UsydDataPCCollectPlayBack::pc_projected_image_callback, &playback);
+    ros::Subscriber sub_lidar_camera_projection = n.subscribe("/velodyne/front/corrected", 100, &UsydDataPCCollectPlayBack::pc_callback, &playback);
 
     // //these ones we must synchronize to a single time
     message_filters::Subscriber<sensor_msgs::Image> image_raw_sub(n, "/gmsl/A0/image_color", 10);

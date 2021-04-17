@@ -4,7 +4,6 @@
 #include <ros/ros.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <nav_msgs/Odometry.h>
-#include <vdo_slam/vdo_slam.hpp>
 #include <tf2/transform_datatypes.h>
 #include <tf2/convert.h>
 #include <memory>

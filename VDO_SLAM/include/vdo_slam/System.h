@@ -15,11 +15,11 @@
 #include <memory>
 #include <opencv2/core/core.hpp>
 
-#include "Scene.h"
-#include "Params.h"
-#include "map/Map.h"
-#include "Tracking.h"
-#include "utils/Types.h"
+#include "vdo_slam/Scene.h"
+#include "vdo_slam/Params.h"
+#include "vdo_slam/map/Map.h"
+#include "vdo_slam/Tracking.h"
+#include "vdo_slam/utils/Types.h"
 
 
 

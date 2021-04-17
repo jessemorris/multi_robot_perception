@@ -160,7 +160,7 @@ include_directories(
 	${PROJECT_INCLUDE_DIRS}
 )
 
-add_library(${PROJECT_NAME} STATIC
+add_library(${PROJECT_NAME} SHARED
 	src/preprocessing/ImagePreprocessing.cpp
 	src/RosVdoSlam.cpp
 	src/RosScene.cpp

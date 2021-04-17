@@ -1,4 +1,4 @@
-#include "utils/VdoUtils.h"
+#include "vdo_slam/utils/VdoUtils.h"
 
 #include <opencv2/opencv.hpp>
 

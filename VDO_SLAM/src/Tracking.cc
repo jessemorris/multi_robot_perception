@@ -40,8 +40,9 @@
 #include "vdo_slam/Converter.h"
 #include "vdo_slam/utils/VdoUtils.h"
 #include "vdo_slam/utils/Types.h"
+#include "vdo_slam/Optimizer.h"
 
-#include "vdo_slam.hpp" //only need for cvplot module so weill eventually move
+// #include "vdo_slam.hpp" //only need for cvplot module so weill eventually move
 
 
 using namespace std;
@@ -2156,355 +2157,355 @@ cv::Mat Tracking::GetInitModelObj(const std::vector<int> &ObjId, std::vector<int
     return output;
 }
 
-void Tracking::DrawLine(cv::KeyPoint &keys, cv::Point2f &flow, cv::Mat &ref_image, const cv::Scalar &color, int thickness, int line_type, const cv::Point2i &offset)
-{
-
-    auto cv_p1 = cv::Point2i(keys.pt.x,keys.pt.y);
-    auto cv_p2 = cv::Point2i(keys.pt.x+flow.x,keys.pt.y+flow.y);
-    //cout << "p1: " << cv_p1 << endl;
-    //cout << "p2: " << cv_p2 << endl;
-
-    bool p1_in_bounds = true;
-    bool p2_in_bounds = true;
-    if ((cv_p1.x < 0) && (cv_p1.y < 0) && (cv_p1.x > ref_image.cols) && (cv_p1.y > ref_image.rows) )
-        p1_in_bounds = false;
-
-    if ((cv_p2.x < 0) && (cv_p2.y < 0) && (cv_p2.x > ref_image.cols) && (cv_p2.y > ref_image.rows) )
-        p2_in_bounds = false;
-
-    // Draw line, but only if both end-points project into the image!
-    if (p1_in_bounds || p2_in_bounds) { // This is correct. Won't draw only if both lines are out of bounds.
-        // Draw line
-        auto p1_offs = offset+cv_p1;
-        auto p2_offs = offset+cv_p2;
-        if (cv::clipLine(cv::Size(ref_image.cols, ref_image.rows), p1_offs, p2_offs)) {
-            //cv::line(ref_image, p1_offs, p2_offs, color, thickness, line_type);
-            cv::arrowedLine(ref_image, p1_offs, p2_offs, color, thickness, line_type);
-        }
-    }
-}
-
-void Tracking::DrawTransparentSquare(cv::Point center, cv::Vec3b color, int radius, double alpha, cv::Mat &ref_image)
-{
-    for (int i=-radius; i<radius; i++) {
-        for (int j=-radius; j<radius; j++) {
-            int coord_y = center.y + i;
-            int coord_x = center.x + j;
-
-            if (coord_x>0 && coord_y>0 && coord_x<ref_image.cols && coord_y < ref_image.rows) {
-                ref_image.at<cv::Vec3b>(cv::Point(coord_x,coord_y)) = (1.0-alpha)*ref_image.at<cv::Vec3b>(cv::Point(coord_x,coord_y)) + alpha*color;
-            }
-        }
-    }
-}
-
-void Tracking::DrawGridBirdeye(double res_x, double res_z, const BirdEyeVizProperties &viz_props, cv::Mat &ref_image)
-{
-
-    auto color = cv::Scalar(0.0, 0.0, 0.0);
-    // Draw horizontal lines
-    for (double i=0; i<viz_props.birdeye_far_plane_; i+=res_z) {
-        double x_1 = viz_props.birdeye_left_plane_;
-        double y_1 = i;
-        double x_2 = viz_props.birdeye_right_plane_;
-        double y_2 = i;
-        TransformPointToScaledFrustum(x_1, y_1, viz_props);
-        TransformPointToScaledFrustum(x_2, y_2, viz_props);
-        auto p1 = cv::Point(x_1, y_1), p2=cv::Point(x_2,y_2);
-        cv::line(ref_image, p1, p2, color);
-    }
-
-    // Draw vertical lines
-    for (double i=viz_props.birdeye_left_plane_; i<viz_props.birdeye_right_plane_; i+=res_x) {
-        double x_1 = i;
-        double y_1 = 0;
-        double x_2 = i;
-        double y_2 = viz_props.birdeye_far_plane_;
-        TransformPointToScaledFrustum(x_1, y_1, viz_props);
-        TransformPointToScaledFrustum(x_2, y_2, viz_props);
-        auto p1 = cv::Point(x_1, y_1), p2=cv::Point(x_2,y_2);
-        cv::line(ref_image, p1, p2, color);
-    }
-}
-
-void Tracking::DrawSparseFlowBirdeye(
-        const std::vector<Eigen::Vector3d> &pts, const std::vector<Eigen::Vector3d> &vel,
-        const cv::Mat &camera, const BirdEyeVizProperties &viz_props, cv::Mat &ref_image)
-{
-
-    // For scaling / flipping cov. matrices
-    Eigen::Matrix2d flip_mat;
-    flip_mat << viz_props.birdeye_scale_factor_*1.0, 0, 0, viz_props.birdeye_scale_factor_*1.0;
-    Eigen::Matrix2d world_to_cam_mat;
-    const Eigen::Matrix4d &ref_to_rt_inv = Converter::toMatrix4d(camera);
-    world_to_cam_mat << ref_to_rt_inv(0,0), ref_to_rt_inv(2,0), ref_to_rt_inv(0,2), ref_to_rt_inv(2,2);
-    flip_mat = flip_mat*world_to_cam_mat;
-
-    // Parameters
-    // const int line_width = 2;
-
-    ref_image = cv::Mat(viz_props.birdeye_scale_factor_*viz_props.birdeye_far_plane_,
-                        (-viz_props.birdeye_left_plane_+viz_props.birdeye_right_plane_)*viz_props.birdeye_scale_factor_, CV_32FC3);
-    ref_image.setTo(cv::Scalar(1.0, 1.0, 1.0));
-    Tracking::DrawGridBirdeye(1.0, 1.0, viz_props, ref_image);
-
-
-    for (int i=0; i<pts.size(); i++) {
-
-        Eigen::Vector3d p_3d = pts[i];
-        Eigen::Vector3d p_vel = vel[i];
-
-        if (p_3d[0]==-1 || p_3d[1]==-1 || p_3d[2]<0)
-            continue;
-        if (p_vel[0]>0.1 || p_vel[2]>0.1)
-            continue;
-
-        // float xc = p_3d[0];
-        // float yc = p_3d[1];
-        // float invzc = 1.0/p_3d[2];
-        // float u = mCurrentFrame.fx*xc*invzc+mCurrentFrame.cx;
-        // float v = mCurrentFrame.fy*yc*invzc+mCurrentFrame.cy;
-        // Eigen::Vector3i p_proj = Eigen::Vector3i(round(u), round(v), 1);
-        const Eigen::Vector2d velocity = Eigen::Vector2d(p_vel[0], p_vel[2]); // !!!
-        Eigen::Vector3d dir(velocity[0], 0.0, velocity[1]);
-
-        double x_1 = p_3d[0];
-        double z_1 = p_3d[2];
-
-        double x_2 = x_1 + dir[0];
-        double z_2 = z_1 + dir[2];
-
-        // cout << dir[0] << " " << dir[2] << endl;
-
-        if (x_1 > viz_props.birdeye_left_plane_ && x_2 > viz_props.birdeye_left_plane_ &&
-            x_1 < viz_props.birdeye_right_plane_ && x_2 < viz_props.birdeye_right_plane_ &&
-            z_1 > 0 && z_2 > 0 &&
-            z_1 < viz_props.birdeye_far_plane_ && z_2 < viz_props.birdeye_far_plane_) {
-
-            TransformPointToScaledFrustum(x_1, z_1, viz_props); //velocity[0], velocity[1]);
-            TransformPointToScaledFrustum(x_2, z_2, viz_props); //velocity[0], velocity[1]);
-
-            cv::arrowedLine(ref_image, cv::Point(x_1, z_1), cv::Point(x_2, z_2), cv::Scalar(1.0, 0.0, 0.0), 1);
-            cv::circle(ref_image, cv::Point(x_1, z_1), 3.0, cv::Scalar(0.0, 0.0, 1.0), -1.0);
-        }
-    }
-
-    // Coord. sys.
-    int arrow_len = 60;
-    int offset_y = 10;
-    cv::arrowedLine(ref_image, cv::Point(ref_image.cols/2, offset_y),
-                    cv::Point(ref_image.cols/2+arrow_len, offset_y),
-                    cv::Scalar(1.0, 0, 0), 2);
-    cv::arrowedLine(ref_image, cv::Point(ref_image.cols/2, offset_y),
-                    cv::Point(ref_image.cols/2, offset_y+arrow_len),
-                    cv::Scalar(0.0, 1.0, 0), 2);
-
-    //cv::putText(ref_image, "X", cv::Point(ref_image.cols/2+arrow_len+10, offset_y+10), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.8, cv::Scalar(1.0, 0, 0));
-    //cv::putText(ref_image, "Z", cv::Point(ref_image.cols/2+10, offset_y+arrow_len), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.8, cv::Scalar(0.0, 1.0, 0));
-
-    // Flip image, because it is more intuitive to have ref. point at the bottom of the image
-    cv::Mat dst;
-    cv::flip(ref_image, dst, 0);
-    ref_image = dst;
-}
-
-void Tracking::TransformPointToScaledFrustum(double &pose_x, double &pose_z, const BirdEyeVizProperties &viz_props)
-{
-    pose_x += (-viz_props.birdeye_left_plane_);
-    pose_x *= viz_props.birdeye_scale_factor_;
-    pose_z *= viz_props.birdeye_scale_factor_;
-}
-
-cv::Mat Tracking::ObjPoseParsingKT(const std::vector<float> &vObjPose_gt)
-{
-    // assign t vector
-    cv::Mat t(3, 1, CV_32FC1);
-    t.at<float>(0) = vObjPose_gt[6];
-    t.at<float>(1) = vObjPose_gt[7];
-    t.at<float>(2) = vObjPose_gt[8];
-
-    // from Euler to Rotation Matrix
-    cv::Mat R(3, 3, CV_32FC1);
-
-    // assign r vector
-    float y = vObjPose_gt[9]+(3.1415926/2); // +(3.1415926/2)
-    float x = 0.0;
-    float z = 0.0;
-
-    // the angles are in radians.
-    float cy = cos(y);
-    float sy = sin(y);
-    float cx = cos(x);
-    float sx = sin(x);
-    float cz = cos(z);
-    float sz = sin(z);
-
-    float m00, m01, m02, m10, m11, m12, m20, m21, m22;
-
-    // ====== R = Ry*Rx*Rz =======
-
-    // m00 = cy;
-    // m01 = -sy;
-    // m02 = 0;
-    // m10 = sy;
-    // m11 = cy;
-    // m12 = 0;
-    // m20 = 0;
-    // m21 = 0;
-    // m22 = 1;
-
-    m00 = cy*cz+sy*sx*sz;
-    m01 = -cy*sz+sy*sx*cz;
-    m02 = sy*cx;
-    m10 = cx*sz;
-    m11 = cx*cz;
-    m12 = -sx;
-    m20 = -sy*cz+cy*sx*sz;
-    m21 = sy*sz+cy*sx*cz;
-    m22 = cy*cx;
-
-    // ***************** old **************************
-
-    // float alpha = vObjPose_gt[7]; // 7
-    // float beta = vObjPose_gt[5]+(3.1415926/2);  // 5
-    // float gamma = vObjPose_gt[6]; // 6
-
-    // the angles are in radians.
-    // float ca = cos(alpha);
-    // float sa = sin(alpha);
-    // float cb = cos(beta);
-    // float sb = sin(beta);
-    // float cg = cos(gamma);
-    // float sg = sin(gamma);
-
-    // float m00, m01, m02, m10, m11, m12, m20, m21, m22;
-
-    // default
-    // m00 = cb*ca;
-    // m01 = cb*sa;
-    // m02 = -sb;
-    // m10 = sb*sg*ca-sa*cg;
-    // m11 = sb*sg*sa+ca*cg;
-    // m12 = cb*sg;
-    // m20 = sb*cg*ca+sa*sg;
-    // m21 = sb*cg*sa-ca*sg;
-    // m22 = cb*cg;
-
-    // m00 = ca*cb;
-    // m01 = ca*sb*sg - sa*cg;
-    // m02 = ca*sb*cg + sa*sg;
-    // m10 = sa*cb;
-    // m11 = sa*sb*sg + ca*cg;
-    // m12 = sa*sb*cg - ca*sg;
-    // m20 = -sb;
-    // m21 = cb*sg;
-    // m22 = cb*cg;
-
-    // **************************************************
-
-    R.at<float>(0,0) = m00;
-    R.at<float>(0,1) = m01;
-    R.at<float>(0,2) = m02;
-    R.at<float>(1,0) = m10;
-    R.at<float>(1,1) = m11;
-    R.at<float>(1,2) = m12;
-    R.at<float>(2,0) = m20;
-    R.at<float>(2,1) = m21;
-    R.at<float>(2,2) = m22;
-
-    // construct 4x4 transformation matrix
-    cv::Mat Pose = cv::Mat::eye(4,4,CV_32F);
-    Pose.at<float>(0,0) = R.at<float>(0,0); Pose.at<float>(0,1) = R.at<float>(0,1); Pose.at<float>(0,2) = R.at<float>(0,2); Pose.at<float>(0,3) = t.at<float>(0);
-    Pose.at<float>(1,0) = R.at<float>(1,0); Pose.at<float>(1,1) = R.at<float>(1,1); Pose.at<float>(1,2) = R.at<float>(1,2); Pose.at<float>(1,3) = t.at<float>(1);
-    Pose.at<float>(2,0) = R.at<float>(2,0); Pose.at<float>(2,1) = R.at<float>(2,1); Pose.at<float>(2,2) = R.at<float>(2,2); Pose.at<float>(2,3) = t.at<float>(2);
-
-    // cout << "OBJ Pose: " << endl << Pose << endl;
-
-    return Pose;
-
-}
-
-cv::Mat Tracking::ObjPoseParsingOX(const std::vector<float> &vObjPose_gt)
-{
-    // assign t vector
-    cv::Mat t(3, 1, CV_32FC1);
-    t.at<float>(0) = vObjPose_gt[2];
-    t.at<float>(1) = vObjPose_gt[3];
-    t.at<float>(2) = vObjPose_gt[4];
-
-    // from axis-angle to Rotation Matrix
-    cv::Mat R(3, 3, CV_32FC1);
-    cv::Mat Rvec(3, 1, CV_32FC1);
-
-    // assign r vector
-    Rvec.at<float>(0,0) = vObjPose_gt[5];
-    Rvec.at<float>(0,1) = vObjPose_gt[6];
-    Rvec.at<float>(0,2) = vObjPose_gt[7];
-
-    // *******************************************************************
-
-    const float angle = std::sqrt(vObjPose_gt[5]*vObjPose_gt[5] + vObjPose_gt[6]*vObjPose_gt[6] + vObjPose_gt[7]*vObjPose_gt[7]);
-
-    if (angle>0)
-    {
-        Rvec.at<float>(0,0) = Rvec.at<float>(0,0)/angle;
-        Rvec.at<float>(0,1) = Rvec.at<float>(0,1)/angle;
-        Rvec.at<float>(0,2) = Rvec.at<float>(0,2)/angle;
-    }
-
-    const float s = std::sin(angle);
-    const float c = std::cos(angle);
-
-    const float v = 1 - c;
-    const float x = Rvec.at<float>(0,0);
-    const float y = Rvec.at<float>(0,1);
-    const float z = Rvec.at<float>(0,2);
-    const float xyv = x*y*v;
-    const float yzv = y*z*v;
-    const float xzv = x*z*v;
-
-    R.at<float>(0,0) = x*x*v + c;
-    R.at<float>(0,1) = xyv - z*s;
-    R.at<float>(0,2) = xzv + y*s;
-    R.at<float>(1,0) = xyv + z*s;
-    R.at<float>(1,1) = y*y*v + c;
-    R.at<float>(1,2) = yzv - x*s;
-    R.at<float>(2,0) = xzv - y*s;
-    R.at<float>(2,1) = yzv + x*s;
-    R.at<float>(2,2) = z*z*v + c;
-
-    // ********************************************************************
-
-    // cv::Rodrigues(Rvec, R);
-
-    // construct 4x4 transformation matrix
-    cv::Mat Pose = cv::Mat::eye(4,4,CV_32F);
-    Pose.at<float>(0,0) = R.at<float>(0,0); Pose.at<float>(0,1) = R.at<float>(0,1); Pose.at<float>(0,2) = R.at<float>(0,2); Pose.at<float>(0,3) = t.at<float>(0);
-    Pose.at<float>(1,0) = R.at<float>(1,0); Pose.at<float>(1,1) = R.at<float>(1,1); Pose.at<float>(1,2) = R.at<float>(1,2); Pose.at<float>(1,3) = t.at<float>(1);
-    Pose.at<float>(2,0) = R.at<float>(2,0); Pose.at<float>(2,1) = R.at<float>(2,1); Pose.at<float>(2,2) = R.at<float>(2,2); Pose.at<float>(2,3) = t.at<float>(2);
-
-    // cout << "OBJ Pose: " << endl << Pose << endl;
-
-    return Converter::toInvMatrix(mOriginInv)*Pose;
-
-}
-
-
-void Tracking::StackObjInfo(std::vector<cv::KeyPoint> &FeatDynObj, std::vector<float> &DepDynObj,
-                  std::vector<int> &FeatLabObj)
-{
-    for (int i = 0; i < mCurrentFrame.vnObjID.size(); ++i)
-    {
-        for (int j = 0; j < mCurrentFrame.vnObjID[i].size(); ++j)
-        {
-            FeatDynObj.push_back(mLastFrame.mvObjKeys[mCurrentFrame.vnObjID[i][j]]);
-            FeatDynObj.push_back(mCurrentFrame.mvObjKeys[mCurrentFrame.vnObjID[i][j]]);
-            DepDynObj.push_back(mLastFrame.mvObjDepth[mCurrentFrame.vnObjID[i][j]]);
-            DepDynObj.push_back(mCurrentFrame.mvObjDepth[mCurrentFrame.vnObjID[i][j]]);
-            FeatLabObj.push_back(mCurrentFrame.vObjLabel[mCurrentFrame.vnObjID[i][j]]);
-        }
-    }
-}
+// void Tracking::DrawLine(cv::KeyPoint &keys, cv::Point2f &flow, cv::Mat &ref_image, const cv::Scalar &color, int thickness, int line_type, const cv::Point2i &offset)
+// {
+
+//     auto cv_p1 = cv::Point2i(keys.pt.x,keys.pt.y);
+//     auto cv_p2 = cv::Point2i(keys.pt.x+flow.x,keys.pt.y+flow.y);
+//     //cout << "p1: " << cv_p1 << endl;
+//     //cout << "p2: " << cv_p2 << endl;
+
+//     bool p1_in_bounds = true;
+//     bool p2_in_bounds = true;
+//     if ((cv_p1.x < 0) && (cv_p1.y < 0) && (cv_p1.x > ref_image.cols) && (cv_p1.y > ref_image.rows) )
+//         p1_in_bounds = false;
+
+//     if ((cv_p2.x < 0) && (cv_p2.y < 0) && (cv_p2.x > ref_image.cols) && (cv_p2.y > ref_image.rows) )
+//         p2_in_bounds = false;
+
+//     // Draw line, but only if both end-points project into the image!
+//     if (p1_in_bounds || p2_in_bounds) { // This is correct. Won't draw only if both lines are out of bounds.
+//         // Draw line
+//         auto p1_offs = offset+cv_p1;
+//         auto p2_offs = offset+cv_p2;
+//         if (cv::clipLine(cv::Size(ref_image.cols, ref_image.rows), p1_offs, p2_offs)) {
+//             //cv::line(ref_image, p1_offs, p2_offs, color, thickness, line_type);
+//             cv::arrowedLine(ref_image, p1_offs, p2_offs, color, thickness, line_type);
+//         }
+//     }
+// }
+
+// void Tracking::DrawTransparentSquare(cv::Point center, cv::Vec3b color, int radius, double alpha, cv::Mat &ref_image)
+// {
+//     for (int i=-radius; i<radius; i++) {
+//         for (int j=-radius; j<radius; j++) {
+//             int coord_y = center.y + i;
+//             int coord_x = center.x + j;
+
+//             if (coord_x>0 && coord_y>0 && coord_x<ref_image.cols && coord_y < ref_image.rows) {
+//                 ref_image.at<cv::Vec3b>(cv::Point(coord_x,coord_y)) = (1.0-alpha)*ref_image.at<cv::Vec3b>(cv::Point(coord_x,coord_y)) + alpha*color;
+//             }
+//         }
+//     }
+// }
+
+// void Tracking::DrawGridBirdeye(double res_x, double res_z, const BirdEyeVizProperties &viz_props, cv::Mat &ref_image)
+// {
+
+//     auto color = cv::Scalar(0.0, 0.0, 0.0);
+//     // Draw horizontal lines
+//     for (double i=0; i<viz_props.birdeye_far_plane_; i+=res_z) {
+//         double x_1 = viz_props.birdeye_left_plane_;
+//         double y_1 = i;
+//         double x_2 = viz_props.birdeye_right_plane_;
+//         double y_2 = i;
+//         TransformPointToScaledFrustum(x_1, y_1, viz_props);
+//         TransformPointToScaledFrustum(x_2, y_2, viz_props);
+//         auto p1 = cv::Point(x_1, y_1), p2=cv::Point(x_2,y_2);
+//         cv::line(ref_image, p1, p2, color);
+//     }
+
+//     // Draw vertical lines
+//     for (double i=viz_props.birdeye_left_plane_; i<viz_props.birdeye_right_plane_; i+=res_x) {
+//         double x_1 = i;
+//         double y_1 = 0;
+//         double x_2 = i;
+//         double y_2 = viz_props.birdeye_far_plane_;
+//         TransformPointToScaledFrustum(x_1, y_1, viz_props);
+//         TransformPointToScaledFrustum(x_2, y_2, viz_props);
+//         auto p1 = cv::Point(x_1, y_1), p2=cv::Point(x_2,y_2);
+//         cv::line(ref_image, p1, p2, color);
+//     }
+// }
+
+// void Tracking::DrawSparseFlowBirdeye(
+//         const std::vector<Eigen::Vector3d> &pts, const std::vector<Eigen::Vector3d> &vel,
+//         const cv::Mat &camera, const BirdEyeVizProperties &viz_props, cv::Mat &ref_image)
+// {
+
+//     // For scaling / flipping cov. matrices
+//     Eigen::Matrix2d flip_mat;
+//     flip_mat << viz_props.birdeye_scale_factor_*1.0, 0, 0, viz_props.birdeye_scale_factor_*1.0;
+//     Eigen::Matrix2d world_to_cam_mat;
+//     const Eigen::Matrix4d &ref_to_rt_inv = Converter::toMatrix4d(camera);
+//     world_to_cam_mat << ref_to_rt_inv(0,0), ref_to_rt_inv(2,0), ref_to_rt_inv(0,2), ref_to_rt_inv(2,2);
+//     flip_mat = flip_mat*world_to_cam_mat;
+
+//     // Parameters
+//     // const int line_width = 2;
+
+//     ref_image = cv::Mat(viz_props.birdeye_scale_factor_*viz_props.birdeye_far_plane_,
+//                         (-viz_props.birdeye_left_plane_+viz_props.birdeye_right_plane_)*viz_props.birdeye_scale_factor_, CV_32FC3);
+//     ref_image.setTo(cv::Scalar(1.0, 1.0, 1.0));
+//     Tracking::DrawGridBirdeye(1.0, 1.0, viz_props, ref_image);
+
+
+//     for (int i=0; i<pts.size(); i++) {
+
+//         Eigen::Vector3d p_3d = pts[i];
+//         Eigen::Vector3d p_vel = vel[i];
+
+//         if (p_3d[0]==-1 || p_3d[1]==-1 || p_3d[2]<0)
+//             continue;
+//         if (p_vel[0]>0.1 || p_vel[2]>0.1)
+//             continue;
+
+//         // float xc = p_3d[0];
+//         // float yc = p_3d[1];
+//         // float invzc = 1.0/p_3d[2];
+//         // float u = mCurrentFrame.fx*xc*invzc+mCurrentFrame.cx;
+//         // float v = mCurrentFrame.fy*yc*invzc+mCurrentFrame.cy;
+//         // Eigen::Vector3i p_proj = Eigen::Vector3i(round(u), round(v), 1);
+//         const Eigen::Vector2d velocity = Eigen::Vector2d(p_vel[0], p_vel[2]); // !!!
+//         Eigen::Vector3d dir(velocity[0], 0.0, velocity[1]);
+
+//         double x_1 = p_3d[0];
+//         double z_1 = p_3d[2];
+
+//         double x_2 = x_1 + dir[0];
+//         double z_2 = z_1 + dir[2];
+
+//         // cout << dir[0] << " " << dir[2] << endl;
+
+//         if (x_1 > viz_props.birdeye_left_plane_ && x_2 > viz_props.birdeye_left_plane_ &&
+//             x_1 < viz_props.birdeye_right_plane_ && x_2 < viz_props.birdeye_right_plane_ &&
+//             z_1 > 0 && z_2 > 0 &&
+//             z_1 < viz_props.birdeye_far_plane_ && z_2 < viz_props.birdeye_far_plane_) {
+
+//             TransformPointToScaledFrustum(x_1, z_1, viz_props); //velocity[0], velocity[1]);
+//             TransformPointToScaledFrustum(x_2, z_2, viz_props); //velocity[0], velocity[1]);
+
+//             cv::arrowedLine(ref_image, cv::Point(x_1, z_1), cv::Point(x_2, z_2), cv::Scalar(1.0, 0.0, 0.0), 1);
+//             cv::circle(ref_image, cv::Point(x_1, z_1), 3.0, cv::Scalar(0.0, 0.0, 1.0), -1.0);
+//         }
+//     }
+
+//     // Coord. sys.
+//     int arrow_len = 60;
+//     int offset_y = 10;
+//     cv::arrowedLine(ref_image, cv::Point(ref_image.cols/2, offset_y),
+//                     cv::Point(ref_image.cols/2+arrow_len, offset_y),
+//                     cv::Scalar(1.0, 0, 0), 2);
+//     cv::arrowedLine(ref_image, cv::Point(ref_image.cols/2, offset_y),
+//                     cv::Point(ref_image.cols/2, offset_y+arrow_len),
+//                     cv::Scalar(0.0, 1.0, 0), 2);
+
+//     //cv::putText(ref_image, "X", cv::Point(ref_image.cols/2+arrow_len+10, offset_y+10), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.8, cv::Scalar(1.0, 0, 0));
+//     //cv::putText(ref_image, "Z", cv::Point(ref_image.cols/2+10, offset_y+arrow_len), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.8, cv::Scalar(0.0, 1.0, 0));
+
+//     // Flip image, because it is more intuitive to have ref. point at the bottom of the image
+//     cv::Mat dst;
+//     cv::flip(ref_image, dst, 0);
+//     ref_image = dst;
+// }
+
+// void Tracking::TransformPointToScaledFrustum(double &pose_x, double &pose_z, const BirdEyeVizProperties &viz_props)
+// {
+//     pose_x += (-viz_props.birdeye_left_plane_);
+//     pose_x *= viz_props.birdeye_scale_factor_;
+//     pose_z *= viz_props.birdeye_scale_factor_;
+// }
+
+// cv::Mat Tracking::ObjPoseParsingKT(const std::vector<float> &vObjPose_gt)
+// {
+//     // assign t vector
+//     cv::Mat t(3, 1, CV_32FC1);
+//     t.at<float>(0) = vObjPose_gt[6];
+//     t.at<float>(1) = vObjPose_gt[7];
+//     t.at<float>(2) = vObjPose_gt[8];
+
+//     // from Euler to Rotation Matrix
+//     cv::Mat R(3, 3, CV_32FC1);
+
+//     // assign r vector
+//     float y = vObjPose_gt[9]+(3.1415926/2); // +(3.1415926/2)
+//     float x = 0.0;
+//     float z = 0.0;
+
+//     // the angles are in radians.
+//     float cy = cos(y);
+//     float sy = sin(y);
+//     float cx = cos(x);
+//     float sx = sin(x);
+//     float cz = cos(z);
+//     float sz = sin(z);
+
+//     float m00, m01, m02, m10, m11, m12, m20, m21, m22;
+
+//     // ====== R = Ry*Rx*Rz =======
+
+//     // m00 = cy;
+//     // m01 = -sy;
+//     // m02 = 0;
+//     // m10 = sy;
+//     // m11 = cy;
+//     // m12 = 0;
+//     // m20 = 0;
+//     // m21 = 0;
+//     // m22 = 1;
+
+//     m00 = cy*cz+sy*sx*sz;
+//     m01 = -cy*sz+sy*sx*cz;
+//     m02 = sy*cx;
+//     m10 = cx*sz;
+//     m11 = cx*cz;
+//     m12 = -sx;
+//     m20 = -sy*cz+cy*sx*sz;
+//     m21 = sy*sz+cy*sx*cz;
+//     m22 = cy*cx;
+
+//     // ***************** old **************************
+
+//     // float alpha = vObjPose_gt[7]; // 7
+//     // float beta = vObjPose_gt[5]+(3.1415926/2);  // 5
+//     // float gamma = vObjPose_gt[6]; // 6
+
+//     // the angles are in radians.
+//     // float ca = cos(alpha);
+//     // float sa = sin(alpha);
+//     // float cb = cos(beta);
+//     // float sb = sin(beta);
+//     // float cg = cos(gamma);
+//     // float sg = sin(gamma);
+
+//     // float m00, m01, m02, m10, m11, m12, m20, m21, m22;
+
+//     // default
+//     // m00 = cb*ca;
+//     // m01 = cb*sa;
+//     // m02 = -sb;
+//     // m10 = sb*sg*ca-sa*cg;
+//     // m11 = sb*sg*sa+ca*cg;
+//     // m12 = cb*sg;
+//     // m20 = sb*cg*ca+sa*sg;
+//     // m21 = sb*cg*sa-ca*sg;
+//     // m22 = cb*cg;
+
+//     // m00 = ca*cb;
+//     // m01 = ca*sb*sg - sa*cg;
+//     // m02 = ca*sb*cg + sa*sg;
+//     // m10 = sa*cb;
+//     // m11 = sa*sb*sg + ca*cg;
+//     // m12 = sa*sb*cg - ca*sg;
+//     // m20 = -sb;
+//     // m21 = cb*sg;
+//     // m22 = cb*cg;
+
+//     // **************************************************
+
+//     R.at<float>(0,0) = m00;
+//     R.at<float>(0,1) = m01;
+//     R.at<float>(0,2) = m02;
+//     R.at<float>(1,0) = m10;
+//     R.at<float>(1,1) = m11;
+//     R.at<float>(1,2) = m12;
+//     R.at<float>(2,0) = m20;
+//     R.at<float>(2,1) = m21;
+//     R.at<float>(2,2) = m22;
+
+//     // construct 4x4 transformation matrix
+//     cv::Mat Pose = cv::Mat::eye(4,4,CV_32F);
+//     Pose.at<float>(0,0) = R.at<float>(0,0); Pose.at<float>(0,1) = R.at<float>(0,1); Pose.at<float>(0,2) = R.at<float>(0,2); Pose.at<float>(0,3) = t.at<float>(0);
+//     Pose.at<float>(1,0) = R.at<float>(1,0); Pose.at<float>(1,1) = R.at<float>(1,1); Pose.at<float>(1,2) = R.at<float>(1,2); Pose.at<float>(1,3) = t.at<float>(1);
+//     Pose.at<float>(2,0) = R.at<float>(2,0); Pose.at<float>(2,1) = R.at<float>(2,1); Pose.at<float>(2,2) = R.at<float>(2,2); Pose.at<float>(2,3) = t.at<float>(2);
+
+//     // cout << "OBJ Pose: " << endl << Pose << endl;
+
+//     return Pose;
+
+// }
+
+// cv::Mat Tracking::ObjPoseParsingOX(const std::vector<float> &vObjPose_gt)
+// {
+//     // assign t vector
+//     cv::Mat t(3, 1, CV_32FC1);
+//     t.at<float>(0) = vObjPose_gt[2];
+//     t.at<float>(1) = vObjPose_gt[3];
+//     t.at<float>(2) = vObjPose_gt[4];
+
+//     // from axis-angle to Rotation Matrix
+//     cv::Mat R(3, 3, CV_32FC1);
+//     cv::Mat Rvec(3, 1, CV_32FC1);
+
+//     // assign r vector
+//     Rvec.at<float>(0,0) = vObjPose_gt[5];
+//     Rvec.at<float>(0,1) = vObjPose_gt[6];
+//     Rvec.at<float>(0,2) = vObjPose_gt[7];
+
+//     // *******************************************************************
+
+//     const float angle = std::sqrt(vObjPose_gt[5]*vObjPose_gt[5] + vObjPose_gt[6]*vObjPose_gt[6] + vObjPose_gt[7]*vObjPose_gt[7]);
+
+//     if (angle>0)
+//     {
+//         Rvec.at<float>(0,0) = Rvec.at<float>(0,0)/angle;
+//         Rvec.at<float>(0,1) = Rvec.at<float>(0,1)/angle;
+//         Rvec.at<float>(0,2) = Rvec.at<float>(0,2)/angle;
+//     }
+
+//     const float s = std::sin(angle);
+//     const float c = std::cos(angle);
+
+//     const float v = 1 - c;
+//     const float x = Rvec.at<float>(0,0);
+//     const float y = Rvec.at<float>(0,1);
+//     const float z = Rvec.at<float>(0,2);
+//     const float xyv = x*y*v;
+//     const float yzv = y*z*v;
+//     const float xzv = x*z*v;
+
+//     R.at<float>(0,0) = x*x*v + c;
+//     R.at<float>(0,1) = xyv - z*s;
+//     R.at<float>(0,2) = xzv + y*s;
+//     R.at<float>(1,0) = xyv + z*s;
+//     R.at<float>(1,1) = y*y*v + c;
+//     R.at<float>(1,2) = yzv - x*s;
+//     R.at<float>(2,0) = xzv - y*s;
+//     R.at<float>(2,1) = yzv + x*s;
+//     R.at<float>(2,2) = z*z*v + c;
+
+//     // ********************************************************************
+
+//     // cv::Rodrigues(Rvec, R);
+
+//     // construct 4x4 transformation matrix
+//     cv::Mat Pose = cv::Mat::eye(4,4,CV_32F);
+//     Pose.at<float>(0,0) = R.at<float>(0,0); Pose.at<float>(0,1) = R.at<float>(0,1); Pose.at<float>(0,2) = R.at<float>(0,2); Pose.at<float>(0,3) = t.at<float>(0);
+//     Pose.at<float>(1,0) = R.at<float>(1,0); Pose.at<float>(1,1) = R.at<float>(1,1); Pose.at<float>(1,2) = R.at<float>(1,2); Pose.at<float>(1,3) = t.at<float>(1);
+//     Pose.at<float>(2,0) = R.at<float>(2,0); Pose.at<float>(2,1) = R.at<float>(2,1); Pose.at<float>(2,2) = R.at<float>(2,2); Pose.at<float>(2,3) = t.at<float>(2);
+
+//     // cout << "OBJ Pose: " << endl << Pose << endl;
+
+//     return Converter::toInvMatrix(mOriginInv)*Pose;
+
+// }
+
+
+// void Tracking::StackObjInfo(std::vector<cv::KeyPoint> &FeatDynObj, std::vector<float> &DepDynObj,
+//                   std::vector<int> &FeatLabObj)
+// {
+//     for (int i = 0; i < mCurrentFrame.vnObjID.size(); ++i)
+//     {
+//         for (int j = 0; j < mCurrentFrame.vnObjID[i].size(); ++j)
+//         {
+//             FeatDynObj.push_back(mLastFrame.mvObjKeys[mCurrentFrame.vnObjID[i][j]]);
+//             FeatDynObj.push_back(mCurrentFrame.mvObjKeys[mCurrentFrame.vnObjID[i][j]]);
+//             DepDynObj.push_back(mLastFrame.mvObjDepth[mCurrentFrame.vnObjID[i][j]]);
+//             DepDynObj.push_back(mCurrentFrame.mvObjDepth[mCurrentFrame.vnObjID[i][j]]);
+//             FeatLabObj.push_back(mCurrentFrame.vObjLabel[mCurrentFrame.vnObjID[i][j]]);
+//         }
+//     }
+// }
 
 std::vector<std::vector<std::pair<int, int> > > Tracking::GetStaticTrack()
 {
@@ -3693,263 +3694,263 @@ void Tracking::GetMetricError(const std::vector<cv::Mat> &CamPose, const std::ve
 
 }
 
-void Tracking::PlotMetricError(const std::vector<cv::Mat> &CamPose, const std::vector<std::vector<cv::Mat> > &RigMot, const std::vector<std::vector<cv::Mat> > &ObjPosePre,
-                    const std::vector<cv::Mat> &CamPose_gt, const std::vector<std::vector<cv::Mat> > &RigMot_gt,
-                    const std::vector<std::vector<bool> > &ObjStat)
-{
-    // saved evaluated errors
-    std::vector<float> CamRotErr(CamPose.size()-1);
-    std::vector<float> CamTraErr(CamPose.size()-1);
-    std::vector<std::vector<float> > ObjRotErr(max_id-1);
-    std::vector<std::vector<float> > ObjTraErr(max_id-1);
+// void Tracking::PlotMetricError(const std::vector<cv::Mat> &CamPose, const std::vector<std::vector<cv::Mat> > &RigMot, const std::vector<std::vector<cv::Mat> > &ObjPosePre,
+//                     const std::vector<cv::Mat> &CamPose_gt, const std::vector<std::vector<cv::Mat> > &RigMot_gt,
+//                     const std::vector<std::vector<bool> > &ObjStat)
+// {
+//     // saved evaluated errors
+//     std::vector<float> CamRotErr(CamPose.size()-1);
+//     std::vector<float> CamTraErr(CamPose.size()-1);
+//     std::vector<std::vector<float> > ObjRotErr(max_id-1);
+//     std::vector<std::vector<float> > ObjTraErr(max_id-1);
 
-    bool bRMSError = false, bAccumError = true;
-    cout << "=================================================" << endl;
+//     bool bRMSError = false, bAccumError = true;
+//     cout << "=================================================" << endl;
 
-    // absolute trajectory error for CAMERA (RMSE)
-    cout << "CAMERA:" << endl;
-    float t_sum = 0, r_sum = 0;
-    for (int i = 1; i < CamPose.size(); ++i)
-    {
-        cv::Mat T_lc_inv = CamPose[i]*Converter::toInvMatrix(CamPose[i-1]);
-        cv::Mat T_lc_gt = CamPose_gt[i-1]*Converter::toInvMatrix(CamPose_gt[i]);
-        cv::Mat ate_cam = T_lc_inv*T_lc_gt;
-        // cv::Mat ate_cam = CamPose[i]*Converter::toInvMatrix(CamPose_gt[i]);
+//     // absolute trajectory error for CAMERA (RMSE)
+//     cout << "CAMERA:" << endl;
+//     float t_sum = 0, r_sum = 0;
+//     for (int i = 1; i < CamPose.size(); ++i)
+//     {
+//         cv::Mat T_lc_inv = CamPose[i]*Converter::toInvMatrix(CamPose[i-1]);
+//         cv::Mat T_lc_gt = CamPose_gt[i-1]*Converter::toInvMatrix(CamPose_gt[i]);
+//         cv::Mat ate_cam = T_lc_inv*T_lc_gt;
+//         // cv::Mat ate_cam = CamPose[i]*Converter::toInvMatrix(CamPose_gt[i]);
 
-        // translation
-        float t_ate_cam = std::sqrt(ate_cam.at<float>(0,3)*ate_cam.at<float>(0,3) + ate_cam.at<float>(1,3)*ate_cam.at<float>(1,3) + ate_cam.at<float>(2,3)*ate_cam.at<float>(2,3));
-        if (bRMSError)
-            t_sum = t_sum + t_ate_cam*t_ate_cam;
-        else
-            t_sum = t_sum + t_ate_cam;
+//         // translation
+//         float t_ate_cam = std::sqrt(ate_cam.at<float>(0,3)*ate_cam.at<float>(0,3) + ate_cam.at<float>(1,3)*ate_cam.at<float>(1,3) + ate_cam.at<float>(2,3)*ate_cam.at<float>(2,3));
+//         if (bRMSError)
+//             t_sum = t_sum + t_ate_cam*t_ate_cam;
+//         else
+//             t_sum = t_sum + t_ate_cam;
 
-        // rotation
-        float trace_ate = 0;
-        for (int j = 0; j < 3; ++j)
-        {
-            if (ate_cam.at<float>(j,j)>1.0)
-                trace_ate = trace_ate + 1.0-(ate_cam.at<float>(j,j)-1.0);
-            else
-                trace_ate = trace_ate + ate_cam.at<float>(j,j);
-        }
-        float r_ate_cam = acos( (trace_ate -1.0)/2.0 )*180.0/3.1415926;
-        if (bRMSError)
-            r_sum = r_sum + r_ate_cam*r_ate_cam;
-        else
-            r_sum = r_sum + r_ate_cam;
+//         // rotation
+//         float trace_ate = 0;
+//         for (int j = 0; j < 3; ++j)
+//         {
+//             if (ate_cam.at<float>(j,j)>1.0)
+//                 trace_ate = trace_ate + 1.0-(ate_cam.at<float>(j,j)-1.0);
+//             else
+//                 trace_ate = trace_ate + ate_cam.at<float>(j,j);
+//         }
+//         float r_ate_cam = acos( (trace_ate -1.0)/2.0 )*180.0/3.1415926;
+//         if (bRMSError)
+//             r_sum = r_sum + r_ate_cam*r_ate_cam;
+//         else
+//             r_sum = r_sum + r_ate_cam;
 
-        if (bAccumError)
-        {
-            CamRotErr[i-1] = r_ate_cam/i;
-            CamTraErr[i-1] = t_ate_cam/i;
-        }
-        else
-        {
-            CamRotErr[i-1] = r_ate_cam;
-            CamTraErr[i-1] = t_ate_cam;            
-        }
-
-
+//         if (bAccumError)
+//         {
+//             CamRotErr[i-1] = r_ate_cam/i;
+//             CamTraErr[i-1] = t_ate_cam/i;
+//         }
+//         else
+//         {
+//             CamRotErr[i-1] = r_ate_cam;
+//             CamTraErr[i-1] = t_ate_cam;            
+//         }
 
 
-        // cout << " t: " << t_ate_cam << " R: " << r_ate_cam << endl;
-    }
-    if (bRMSError)
-    {
-        t_sum = std::sqrt(t_sum/(CamPose.size()-1));
-        r_sum = std::sqrt(r_sum/(CamPose.size()-1));
-    }
-    else
-    {
-        t_sum = t_sum/(CamPose.size()-1);
-        r_sum = r_sum/(CamPose.size()-1);
-    }
-
-    cout << "average error (Camera):" << " t: " << t_sum << " R: " << r_sum << endl;
-
-    std::vector<float> each_obj_t(max_id-1,0);
-    std::vector<float> each_obj_r(max_id-1,0);
-    std::vector<int> each_obj_count(max_id-1,0);
-
-    // all motion error for OBJECTS (mean error)
-    cout << "OBJECTS:" << endl;
-    float r_rpe_sum = 0, t_rpe_sum = 0, obj_count = 0;
-    for (int i = 0; i < RigMot.size(); ++i)
-    {
-        if (RigMot[i].size()>1)
-        {
-            for (int j = 1; j < RigMot[i].size(); ++j)
-            {
-                if (!ObjStat[i][j])
-                {
-                    cout << "(" << mpMap->vnRMLabel[i][j] << ")" << " is a failure case." << endl;
-                    continue;
-                }
-
-                cv::Mat RigMotBody = Converter::toInvMatrix(ObjPosePre[i][j])*RigMot[i][j]*ObjPosePre[i][j];
-                cv::Mat rpe_obj = Converter::toInvMatrix(RigMotBody)*RigMot_gt[i][j];
-
-                // translation error
-                float t_rpe_obj = std::sqrt( rpe_obj.at<float>(0,3)*rpe_obj.at<float>(0,3) + rpe_obj.at<float>(1,3)*rpe_obj.at<float>(1,3) + rpe_obj.at<float>(2,3)*rpe_obj.at<float>(2,3) );
-                if (bRMSError){
-                    each_obj_t[mpMap->vnRMLabel[i][j]-1] = each_obj_t[mpMap->vnRMLabel[i][j]-1] + t_rpe_obj*t_rpe_obj;
-                    t_rpe_sum = t_rpe_sum + t_rpe_obj*t_rpe_obj;
-                }
-                else{
-                    each_obj_t[mpMap->vnRMLabel[i][j]-1] = each_obj_t[mpMap->vnRMLabel[i][j]-1] + t_rpe_obj;
-                    t_rpe_sum = t_rpe_sum + t_rpe_obj;
-                }
-
-                // rotation error
-                float trace_rpe = 0;
-                for (int k = 0; k < 3; ++k)
-                {
-                    if (rpe_obj.at<float>(k,k)>1.0)
-                        trace_rpe = trace_rpe + 1.0-(rpe_obj.at<float>(k,k)-1.0);
-                    else
-                        trace_rpe = trace_rpe + rpe_obj.at<float>(k,k);
-                }
-                float r_rpe_obj = acos( ( trace_rpe -1.0 )/2.0 )*180.0/3.1415926; 
-                if (bRMSError){
-                    each_obj_r[mpMap->vnRMLabel[i][j]-1] = each_obj_r[mpMap->vnRMLabel[i][j]-1] + r_rpe_obj*r_rpe_obj;
-                    r_rpe_sum = r_rpe_sum + r_rpe_obj*r_rpe_obj;
-                }
-                else{
-                    each_obj_r[mpMap->vnRMLabel[i][j]-1] = each_obj_r[mpMap->vnRMLabel[i][j]-1] + r_rpe_obj;
-                    r_rpe_sum = r_rpe_sum + r_rpe_obj;
-                }
-
-                // cout << "(" << mpMap->vnRMLabel[i][j] << ")" << " t: " << t_rpe_obj << " R: " << r_rpe_obj << endl;
-                obj_count++;
-                each_obj_count[mpMap->vnRMLabel[i][j]-1] = each_obj_count[mpMap->vnRMLabel[i][j]-1] + 1;
-                if (bAccumError)
-                {
-                    ObjTraErr[mpMap->vnRMLabel[i][j]-1].push_back(each_obj_t[mpMap->vnRMLabel[i][j]-1]/each_obj_count[mpMap->vnRMLabel[i][j]-1]);
-                    ObjRotErr[mpMap->vnRMLabel[i][j]-1].push_back(each_obj_r[mpMap->vnRMLabel[i][j]-1]/each_obj_count[mpMap->vnRMLabel[i][j]-1]);
-                }
-                else
-                {
-                    ObjTraErr[mpMap->vnRMLabel[i][j]-1].push_back(t_rpe_obj);
-                    ObjRotErr[mpMap->vnRMLabel[i][j]-1].push_back(r_rpe_obj);           
-                }
-
-            }
-        }
-    }
-    if (bRMSError)
-    {
-        t_rpe_sum = std::sqrt(t_rpe_sum/obj_count);
-        r_rpe_sum = std::sqrt(r_rpe_sum/obj_count);
-    }
-    else
-    {
-        t_rpe_sum = t_rpe_sum/obj_count;
-        r_rpe_sum = r_rpe_sum/obj_count;
-    }
-    cout << "average error (Over All Objects):" << " t: " << t_rpe_sum << " R: " << r_rpe_sum << endl;
-
-    // show each object
-    for (int i = 0; i < each_obj_count.size(); ++i)
-    {
-        if (bRMSError)
-        {
-            each_obj_t[i] = std::sqrt(each_obj_t[i]/each_obj_count[i]);
-            each_obj_r[i] = std::sqrt(each_obj_r[i]/each_obj_count[i]);
-        }
-        else
-        {
-            each_obj_t[i] = each_obj_t[i]/each_obj_count[i];
-            each_obj_r[i] = each_obj_r[i]/each_obj_count[i];
-        }
-        if (each_obj_count[i]>=3)
-            cout << endl << "average error of Object " << i+1 << ": " << " t: " << each_obj_t[i] << " R: " << each_obj_r[i] << endl;
-    }
-
-    cout << "=================================================" << endl;
 
 
-    auto name1 = "Translation";
-    cvplot::setWindowTitle(name1, "Translation Error (Meter)");
-    cvplot::moveWindow(name1, 0, 240);
-    cvplot::resizeWindow(name1, 800, 240);
-    auto &figure1 = cvplot::figure(name1);
+//         // cout << " t: " << t_ate_cam << " R: " << r_ate_cam << endl;
+//     }
+//     if (bRMSError)
+//     {
+//         t_sum = std::sqrt(t_sum/(CamPose.size()-1));
+//         r_sum = std::sqrt(r_sum/(CamPose.size()-1));
+//     }
+//     else
+//     {
+//         t_sum = t_sum/(CamPose.size()-1);
+//         r_sum = r_sum/(CamPose.size()-1);
+//     }
 
-    auto name2 = "Rotation";
-    cvplot::setWindowTitle(name2, "Rotation Error (Degree)");
-    cvplot::resizeWindow(name2, 800, 240);
-    auto &figure2 = cvplot::figure(name2);
+//     cout << "average error (Camera):" << " t: " << t_sum << " R: " << r_sum << endl;
 
-    figure1.series("Camera")
-        .setValue(CamTraErr)
-        .type(cvplot::DotLine)
-        .color(cvplot::Red);
+//     std::vector<float> each_obj_t(max_id-1,0);
+//     std::vector<float> each_obj_r(max_id-1,0);
+//     std::vector<int> each_obj_count(max_id-1,0);
 
-    figure2.series("Camera")
-        .setValue(CamRotErr)
-        .type(cvplot::DotLine)
-        .color(cvplot::Red);
+//     // all motion error for OBJECTS (mean error)
+//     cout << "OBJECTS:" << endl;
+//     float r_rpe_sum = 0, t_rpe_sum = 0, obj_count = 0;
+//     for (int i = 0; i < RigMot.size(); ++i)
+//     {
+//         if (RigMot[i].size()>1)
+//         {
+//             for (int j = 1; j < RigMot[i].size(); ++j)
+//             {
+//                 if (!ObjStat[i][j])
+//                 {
+//                     cout << "(" << mpMap->vnRMLabel[i][j] << ")" << " is a failure case." << endl;
+//                     continue;
+//                 }
 
-    for (int i = 0; i < max_id-1; ++i)
-    {
-        switch (i)
-        {
-            case 0:
-                figure1.series("Object "+std::to_string(i+1))
-                    .setValue(ObjTraErr[i])
-                    .type(cvplot::DotLine)
-                    .color(cvplot::Purple);
-                figure2.series("Object "+std::to_string(i+1))
-                    .setValue(ObjRotErr[i])
-                    .type(cvplot::DotLine)
-                    .color(cvplot::Purple);
-                break;
-            case 1:
-                figure1.series("Object "+std::to_string(i+1))
-                    .setValue(ObjTraErr[i])
-                    .type(cvplot::DotLine)
-                    .color(cvplot::Green);
-                figure2.series("Object "+std::to_string(i+1))
-                    .setValue(ObjRotErr[i])
-                    .type(cvplot::DotLine)
-                    .color(cvplot::Green);
-                break;
-            case 2:
-                figure1.series("Object "+std::to_string(i+1))
-                    .setValue(ObjTraErr[i])
-                    .type(cvplot::DotLine)
-                    .color(cvplot::Cyan);
-                figure2.series("Object "+std::to_string(i+1))
-                    .setValue(ObjRotErr[i])
-                    .type(cvplot::DotLine)
-                    .color(cvplot::Cyan);
-                break;
-            case 3:
-                figure1.series("Object "+std::to_string(i+1))
-                    .setValue(ObjTraErr[i])
-                    .type(cvplot::DotLine)
-                    .color(cvplot::Blue);
-                figure2.series("Object "+std::to_string(i+1))
-                    .setValue(ObjRotErr[i])
-                    .type(cvplot::DotLine)
-                    .color(cvplot::Blue);
-                break;
-            case 4:
-                figure1.series("Object "+std::to_string(i+1))
-                    .setValue(ObjTraErr[i])
-                    .type(cvplot::DotLine)
-                    .color(cvplot::Pink);
-                figure2.series("Object "+std::to_string(i+1))
-                    .setValue(ObjRotErr[i])
-                    .type(cvplot::DotLine)
-                    .color(cvplot::Pink);
-                break;
-        }
-    }
+//                 cv::Mat RigMotBody = Converter::toInvMatrix(ObjPosePre[i][j])*RigMot[i][j]*ObjPosePre[i][j];
+//                 cv::Mat rpe_obj = Converter::toInvMatrix(RigMotBody)*RigMot_gt[i][j];
 
-    figure1.show(true);
-    figure2.show(true);
+//                 // translation error
+//                 float t_rpe_obj = std::sqrt( rpe_obj.at<float>(0,3)*rpe_obj.at<float>(0,3) + rpe_obj.at<float>(1,3)*rpe_obj.at<float>(1,3) + rpe_obj.at<float>(2,3)*rpe_obj.at<float>(2,3) );
+//                 if (bRMSError){
+//                     each_obj_t[mpMap->vnRMLabel[i][j]-1] = each_obj_t[mpMap->vnRMLabel[i][j]-1] + t_rpe_obj*t_rpe_obj;
+//                     t_rpe_sum = t_rpe_sum + t_rpe_obj*t_rpe_obj;
+//                 }
+//                 else{
+//                     each_obj_t[mpMap->vnRMLabel[i][j]-1] = each_obj_t[mpMap->vnRMLabel[i][j]-1] + t_rpe_obj;
+//                     t_rpe_sum = t_rpe_sum + t_rpe_obj;
+//                 }
 
-}
+//                 // rotation error
+//                 float trace_rpe = 0;
+//                 for (int k = 0; k < 3; ++k)
+//                 {
+//                     if (rpe_obj.at<float>(k,k)>1.0)
+//                         trace_rpe = trace_rpe + 1.0-(rpe_obj.at<float>(k,k)-1.0);
+//                     else
+//                         trace_rpe = trace_rpe + rpe_obj.at<float>(k,k);
+//                 }
+//                 float r_rpe_obj = acos( ( trace_rpe -1.0 )/2.0 )*180.0/3.1415926; 
+//                 if (bRMSError){
+//                     each_obj_r[mpMap->vnRMLabel[i][j]-1] = each_obj_r[mpMap->vnRMLabel[i][j]-1] + r_rpe_obj*r_rpe_obj;
+//                     r_rpe_sum = r_rpe_sum + r_rpe_obj*r_rpe_obj;
+//                 }
+//                 else{
+//                     each_obj_r[mpMap->vnRMLabel[i][j]-1] = each_obj_r[mpMap->vnRMLabel[i][j]-1] + r_rpe_obj;
+//                     r_rpe_sum = r_rpe_sum + r_rpe_obj;
+//                 }
+
+//                 // cout << "(" << mpMap->vnRMLabel[i][j] << ")" << " t: " << t_rpe_obj << " R: " << r_rpe_obj << endl;
+//                 obj_count++;
+//                 each_obj_count[mpMap->vnRMLabel[i][j]-1] = each_obj_count[mpMap->vnRMLabel[i][j]-1] + 1;
+//                 if (bAccumError)
+//                 {
+//                     ObjTraErr[mpMap->vnRMLabel[i][j]-1].push_back(each_obj_t[mpMap->vnRMLabel[i][j]-1]/each_obj_count[mpMap->vnRMLabel[i][j]-1]);
+//                     ObjRotErr[mpMap->vnRMLabel[i][j]-1].push_back(each_obj_r[mpMap->vnRMLabel[i][j]-1]/each_obj_count[mpMap->vnRMLabel[i][j]-1]);
+//                 }
+//                 else
+//                 {
+//                     ObjTraErr[mpMap->vnRMLabel[i][j]-1].push_back(t_rpe_obj);
+//                     ObjRotErr[mpMap->vnRMLabel[i][j]-1].push_back(r_rpe_obj);           
+//                 }
+
+//             }
+//         }
+//     }
+//     if (bRMSError)
+//     {
+//         t_rpe_sum = std::sqrt(t_rpe_sum/obj_count);
+//         r_rpe_sum = std::sqrt(r_rpe_sum/obj_count);
+//     }
+//     else
+//     {
+//         t_rpe_sum = t_rpe_sum/obj_count;
+//         r_rpe_sum = r_rpe_sum/obj_count;
+//     }
+//     cout << "average error (Over All Objects):" << " t: " << t_rpe_sum << " R: " << r_rpe_sum << endl;
+
+//     // show each object
+//     for (int i = 0; i < each_obj_count.size(); ++i)
+//     {
+//         if (bRMSError)
+//         {
+//             each_obj_t[i] = std::sqrt(each_obj_t[i]/each_obj_count[i]);
+//             each_obj_r[i] = std::sqrt(each_obj_r[i]/each_obj_count[i]);
+//         }
+//         else
+//         {
+//             each_obj_t[i] = each_obj_t[i]/each_obj_count[i];
+//             each_obj_r[i] = each_obj_r[i]/each_obj_count[i];
+//         }
+//         if (each_obj_count[i]>=3)
+//             cout << endl << "average error of Object " << i+1 << ": " << " t: " << each_obj_t[i] << " R: " << each_obj_r[i] << endl;
+//     }
+
+//     cout << "=================================================" << endl;
+
+
+//     auto name1 = "Translation";
+//     cvplot::setWindowTitle(name1, "Translation Error (Meter)");
+//     cvplot::moveWindow(name1, 0, 240);
+//     cvplot::resizeWindow(name1, 800, 240);
+//     auto &figure1 = cvplot::figure(name1);
+
+//     auto name2 = "Rotation";
+//     cvplot::setWindowTitle(name2, "Rotation Error (Degree)");
+//     cvplot::resizeWindow(name2, 800, 240);
+//     auto &figure2 = cvplot::figure(name2);
+
+//     figure1.series("Camera")
+//         .setValue(CamTraErr)
+//         .type(cvplot::DotLine)
+//         .color(cvplot::Red);
+
+//     figure2.series("Camera")
+//         .setValue(CamRotErr)
+//         .type(cvplot::DotLine)
+//         .color(cvplot::Red);
+
+//     for (int i = 0; i < max_id-1; ++i)
+//     {
+//         switch (i)
+//         {
+//             case 0:
+//                 figure1.series("Object "+std::to_string(i+1))
+//                     .setValue(ObjTraErr[i])
+//                     .type(cvplot::DotLine)
+//                     .color(cvplot::Purple);
+//                 figure2.series("Object "+std::to_string(i+1))
+//                     .setValue(ObjRotErr[i])
+//                     .type(cvplot::DotLine)
+//                     .color(cvplot::Purple);
+//                 break;
+//             case 1:
+//                 figure1.series("Object "+std::to_string(i+1))
+//                     .setValue(ObjTraErr[i])
+//                     .type(cvplot::DotLine)
+//                     .color(cvplot::Green);
+//                 figure2.series("Object "+std::to_string(i+1))
+//                     .setValue(ObjRotErr[i])
+//                     .type(cvplot::DotLine)
+//                     .color(cvplot::Green);
+//                 break;
+//             case 2:
+//                 figure1.series("Object "+std::to_string(i+1))
+//                     .setValue(ObjTraErr[i])
+//                     .type(cvplot::DotLine)
+//                     .color(cvplot::Cyan);
+//                 figure2.series("Object "+std::to_string(i+1))
+//                     .setValue(ObjRotErr[i])
+//                     .type(cvplot::DotLine)
+//                     .color(cvplot::Cyan);
+//                 break;
+//             case 3:
+//                 figure1.series("Object "+std::to_string(i+1))
+//                     .setValue(ObjTraErr[i])
+//                     .type(cvplot::DotLine)
+//                     .color(cvplot::Blue);
+//                 figure2.series("Object "+std::to_string(i+1))
+//                     .setValue(ObjRotErr[i])
+//                     .type(cvplot::DotLine)
+//                     .color(cvplot::Blue);
+//                 break;
+//             case 4:
+//                 figure1.series("Object "+std::to_string(i+1))
+//                     .setValue(ObjTraErr[i])
+//                     .type(cvplot::DotLine)
+//                     .color(cvplot::Pink);
+//                 figure2.series("Object "+std::to_string(i+1))
+//                     .setValue(ObjRotErr[i])
+//                     .type(cvplot::DotLine)
+//                     .color(cvplot::Pink);
+//                 break;
+//         }
+//     }
+
+//     figure1.show(true);
+//     figure2.show(true);
+
+// }
 
 void Tracking::GetVelocityError(const std::vector<std::vector<cv::Mat> > &RigMot, const std::vector<std::vector<cv::Mat> > &PointDyn,
                                 const std::vector<std::vector<int> > &FeaLab, const std::vector<std::vector<int> > &RMLab,

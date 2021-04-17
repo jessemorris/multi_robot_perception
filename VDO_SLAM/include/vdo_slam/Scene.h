@@ -12,8 +12,8 @@
 #include <eigen3/Eigen/Dense>
 #include  <vdo_slam_g2o/types/types_seven_dof_expmap.h>
 
-#include "utils/Types.h"
-#include "map/MapObject.h"
+#include "vdo_slam/utils/Types.h"
+#include "vdo_slam/map/MapObject.h"
 
 namespace VDO_SLAM
 {

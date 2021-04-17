@@ -13,7 +13,7 @@
 
 #include <set>
 
-#include "map/MapObject.h"
+#include "vdo_slam/map/MapObject.h"
 
 
 namespace VDO_SLAM

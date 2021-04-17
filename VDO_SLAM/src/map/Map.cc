@@ -8,8 +8,8 @@
 
 #include <iostream>
 
-#include "map/Map.h"
-#include "map/MapObject.h"
+#include "vdo_slam/map/Map.h"
+#include "vdo_slam/map/MapObject.h"
 
 namespace VDO_SLAM
 {
