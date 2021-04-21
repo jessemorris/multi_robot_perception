@@ -162,6 +162,8 @@ include_directories(
 
 add_library(${PROJECT_NAME} SHARED
 	src/preprocessing/ImagePreprocessing.cpp
+	src/preprocessing/ImagePreprocessingRGB.cpp
+	src/preprocessing/ImagePreprocessingRGBD.cpp
 	src/RosVdoSlam.cpp
 	src/RosScene.cpp
 	src/CameraInformation.cpp

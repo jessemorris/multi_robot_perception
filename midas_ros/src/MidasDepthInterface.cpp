@@ -18,6 +18,7 @@ MidasDepthInterface::MidasDepthInterface(ros::NodeHandle& n) :
 bool MidasDepthInterface::start_service(bool wait_for_services) {
 
     if (ros::service::exists("midasdepth/analyse_image", true)) {
+        service_started = true;
         return true;
     }
 

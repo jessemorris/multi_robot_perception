@@ -31,6 +31,7 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>python_service_starter</exec_depend>
   <exec_depend>message_runtime</exec_depend>
+  <depend>cv_bridge</depend>
 
   <export>
   </export>

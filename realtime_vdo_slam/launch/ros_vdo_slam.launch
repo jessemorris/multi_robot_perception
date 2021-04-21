@@ -26,7 +26,7 @@
   <arg name="sensor_mode" default="0"/>
 
   <!--If tru the ros visualizer will be created-->
-  <arg name="use_viz" default="true"/>
+  <arg name="use_viz" default="false"/>
 
   <!-- the rate (Hz) the viz should run at -->
   <arg name="viz_rate" default="20"/>
@@ -48,21 +48,22 @@
 
   <arg name="width" default="640"/>
   <arg name="height" default="480"/>
-  <arg name="fps" default="14"/>
+  <arg name="fps" default="12"/>
 
-  <arg name="bf" default="387.5744"/>
+  <!-- <arg name="bf" default="387.5744"/> -->
+  <arg name="bf" default="200"/>
 
-  <arg name="RGB" default="1"/>
+  <arg name="RGB" default="0"/>
   <arg name="data_code" default="2"/>
 
-  <arg name="depth_map_factor" default="10000"/>
+  <arg name="depth_map_factor" default="3000"/>
   <!-- <arg name="depth_map_factor" default="800.0"/> -->
    <!--Should habve a decimal, ie 10.0 not 10 becuase otherwise the param
   server rounds it to 0-->
 
 
-  <arg name="thdepth_bg" default="70"/>
-  <arg name="thdepth_obj" default="45"/>
+  <arg name="thdepth_bg" default="40"/>
+  <arg name="thdepth_obj" default="25"/>
   <arg name="max_track_points_bg" default="1700"/>
   <arg name="max_track_points_obj" default="800"/>
 
@@ -106,7 +107,7 @@
     <remap from="/vdoslam/input/all" to="/camera/all" unless="$(arg online)"/>
 
 
-    <remap to="/camera/color/camera_info" from="/camera/camera_info" if="$(arg online)"/>
+    <remap to="/camera/camera_info" from="/camera/camera_info" if="$(arg online)"/>
 
     <param name="use_calibration_file" value="$(arg use_calibration_file)"/>
 

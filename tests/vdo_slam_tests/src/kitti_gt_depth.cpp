@@ -23,7 +23,8 @@
 #include <mask_rcnn/MaskRcnnInterface.hpp>
 #include <flow_net/FlowNetInterface.hpp>
 
-#include <vdo_slam/vdo_slam.hpp>
+#include <vdo_slam/System.h>
+#include <vdo_slam/utils/Types.h>
 
 using namespace std;
 

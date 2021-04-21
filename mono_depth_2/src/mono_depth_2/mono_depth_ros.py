@@ -151,9 +151,9 @@ class MonoDepth2Ros(RosCppCommunicator):
         #apparently float16 is super slow becuase most intel processors dont support FP16 ops so we're going with np.uint16
         # depth_image_float = disp_resized.squeeze().cpu().numpy()
         depth_image_float = disp_resized.squeeze().cpu().detach().numpy()
+
         depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=65536, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
 
-        
         del tensor_image
         del image 
         del features
@@ -222,15 +222,17 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--topic', default="0")
+    parser.add_argument('--image', default="0")
     args = parser.parse_args()
     
     topic = args.topic
+    image_path = args.image
 
     input_device = "camera"
     mono_depth = MonoDepth2Ros()
 
 
-    if topic == "0":
+    if topic == "0" and image_path == "0":
         rospy.loginfo("Using video camera as input")
 
 
@@ -251,7 +253,16 @@ def main():
 
 
 
-        
+    elif image_path != "0" and topic == "0":
+        rospy.loginfo("Loading image from: {}".format(image_path))
+        image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+
+        image_file_array = image_path.split(".")
+        output_image = image_file_array[0] + "_prediction." + image_file_array[1]
+        print("Writing output to: {}".format(output_image))
+        composite = mono_depth.analyse_depth(image)
+        cv2.imwrite(output_image, composite)
+
 
     else:
         input_device = "ros_topic"

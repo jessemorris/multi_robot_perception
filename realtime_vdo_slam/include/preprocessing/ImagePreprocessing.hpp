@@ -49,15 +49,15 @@
 #include <mutex>
 #include <thread>
 
-#define PROCESSING_INTERFACES_HPP mono_depth_2::MonoDepthInterfacePtr& mono_ptr, \
-            mask_rcnn::MaskRcnnInterfacePtr& mask_ptr, \
-            flow_net::FlowNetInterfacePtr& flow_ptr
+// #define PROCESSING_INTERFACES_HPP mono_depth_2::MonoDepthInterfacePtr& mono_ptr, \
+//             mask_rcnn::MaskRcnnInterfacePtr& mask_ptr, \
+//             flow_net::FlowNetInterfacePtr& flow_ptr
 
-#define PROCESSING_INTERFACES mono_depth_2::MonoDepthInterfacePtr& mono_ptr, \
-    mask_rcnn::MaskRcnnInterfacePtr& mask_ptr, \
-    flow_net::FlowNetInterfacePtr& flow_ptr
+// #define PROCESSING_INTERFACES mono_depth_2::MonoDepthInterfacePtr& mono_ptr, \
+//     mask_rcnn::MaskRcnnInterfacePtr& mask_ptr, \
+//     flow_net::FlowNetInterfacePtr& flow_ptr
 
-#define INIT_INTERFACES mono_ptr, mask_ptr, flow_ptr
+// #define INIT_INTERFACES mono_ptr, mask_ptr, flow_ptr
 
 
 namespace VDO_SLAM {
@@ -120,7 +120,7 @@ namespace VDO_SLAM {
             
 
         protected:
-            BaseProcessing(ros::NodeHandle& n, PROCESSING_INTERFACES_HPP);
+            BaseProcessing(ros::NodeHandle& n);
             ~BaseProcessing();
 
             inline bool using_rgb_topic();
@@ -195,84 +195,91 @@ namespace VDO_SLAM {
 
         };
 
-        class ImageRgb : public BaseProcessing {
-
-            public:
-                ImageRgb(ros::NodeHandle& nh_, PROCESSING_INTERFACES_HPP);
-
-                void image_callback(ImageConstPtr& rgb);
-                void start_services() override;
-
-            protected:
-                MessageFilterSubscriberPtr rgb_subscriber_synch;
-
-
-        };
-
-        class ImageRgbDepth : public ImageRgb {
-
-            public:
-                ImageRgbDepth(ros::NodeHandle& nh_, PROCESSING_INTERFACES_HPP);
-
-                void image_callback(ImageConstPtr& rgb, ImageConstPtr& depth);
-                void start_services() override;
-
-            protected:
-                MessageFilterSubscriberPtr depth_subscriber_synch;
-            private:
-                // RgbDepthSynchPtr rgb_depth_synch;
-                ApproxRgbDepthSynchPtr rgb_depth_synch_ptr;
-
-        };
-
-        class ImageRgbDepthSeg : public ImageRgbDepth {
-
-            public:
-                ImageRgbDepthSeg(ros::NodeHandle& nh_, PROCESSING_INTERFACES_HPP);
-
-                void image_callback(ImageConstPtr& rgb, ImageConstPtr& depth, ImageConstPtr& seg);
-                void start_services() override;
-
-            protected:
-                MessageFilterSubscriberPtr seg_subscriber_synch;
-            private:
-                RgbDepthSegSynchPtr rgb_depth_seg_synch;
-
-
-        };
-
-        class ImageAll : public ImageRgbDepthSeg {
-
-            public:
-                ImageAll(ros::NodeHandle& nh_, PROCESSING_INTERFACES_HPP);
-
-                void image_callback(ImageConstPtr& rgb, ImageConstPtr& depth, ImageConstPtr& seg, ImageConstPtr& flow);
-                void start_services() override;
-
-            protected:
-                MessageFilterSubscriberPtr flow_subscriber_synch;
-            private:
-                AllSynchPtr all_synch;
-
-        };
         typedef std::shared_ptr<BaseProcessing> BaseProcessingPtr;
         typedef std::unique_ptr<BaseProcessing> BaseProcessingUniquePtr;
 
-        typedef std::shared_ptr<ImageRgb> ImageRgbPtr;
-        typedef std::unique_ptr<ImageRgb> ImageRgbUniquePtr;
+    }
 
-        typedef std::shared_ptr<ImageRgbDepth> ImageRgbDepthPtr;
-        typedef std::unique_ptr<ImageRgbDepth> ImageRgbDepthUniquePtr;
+}
 
-        typedef std::shared_ptr<ImageRgbDepthSeg> ImageRgbDepthSegPtr;
-        typedef std::unique_ptr<ImageRgbDepthSeg> ImageRgbDepthSegUniquePtr;
+    //     class ImageRgb : public BaseProcessing {
 
-        typedef std::shared_ptr<ImageAll> ImageAllPtr;
-        typedef std::unique_ptr<ImageAll> ImageAllUniquePtr;
+    //         public:
+    //             ImageRgb(ros::NodeHandle& nh_, PROCESSING_INTERFACES_HPP);
 
-    };
+    //             void image_callback(ImageConstPtr& rgb);
+    //             void start_services() override;
 
-};
+    //         protected:
+    //             MessageFilterSubscriberPtr rgb_subscriber_synch;
+
+
+    //     };
+
+    //     class ImageRgbDepth : public ImageRgb {
+
+    //         public:
+    //             ImageRgbDepth(ros::NodeHandle& nh_, PROCESSING_INTERFACES_HPP);
+
+    //             void image_callback(ImageConstPtr& rgb, ImageConstPtr& depth);
+    //             void start_services() override;
+
+    //         protected:
+    //             MessageFilterSubscriberPtr depth_subscriber_synch;
+    //         private:
+    //             // RgbDepthSynchPtr rgb_depth_synch;
+    //             ApproxRgbDepthSynchPtr rgb_depth_synch_ptr;
+
+    //     };
+
+    //     class ImageRgbDepthSeg : public ImageRgbDepth {
+
+    //         public:
+    //             ImageRgbDepthSeg(ros::NodeHandle& nh_, PROCESSING_INTERFACES_HPP);
+
+    //             void image_callback(ImageConstPtr& rgb, ImageConstPtr& depth, ImageConstPtr& seg);
+    //             void start_services() override;
+
+    //         protected:
+    //             MessageFilterSubscriberPtr seg_subscriber_synch;
+    //         private:
+    //             RgbDepthSegSynchPtr rgb_depth_seg_synch;
+
+
+    //     };
+
+    //     class ImageAll : public ImageRgbDepthSeg {
+
+    //         public:
+    //             ImageAll(ros::NodeHandle& nh_, PROCESSING_INTERFACES_HPP);
+
+    //             void image_callback(ImageConstPtr& rgb, ImageConstPtr& depth, ImageConstPtr& seg, ImageConstPtr& flow);
+    //             void start_services() override;
+
+    //         protected:
+    //             MessageFilterSubscriberPtr flow_subscriber_synch;
+    //         private:
+    //             AllSynchPtr all_synch;
+
+    //     };
+    //     typedef std::shared_ptr<BaseProcessing> BaseProcessingPtr;
+    //     typedef std::unique_ptr<BaseProcessing> BaseProcessingUniquePtr;
+
+    //     typedef std::shared_ptr<ImageRgb> ImageRgbPtr;
+    //     typedef std::unique_ptr<ImageRgb> ImageRgbUniquePtr;
+
+    //     typedef std::shared_ptr<ImageRgbDepth> ImageRgbDepthPtr;
+    //     typedef std::unique_ptr<ImageRgbDepth> ImageRgbDepthUniquePtr;
+
+    //     typedef std::shared_ptr<ImageRgbDepthSeg> ImageRgbDepthSegPtr;
+    //     typedef std::unique_ptr<ImageRgbDepthSeg> ImageRgbDepthSegUniquePtr;
+
+    //     typedef std::shared_ptr<ImageAll> ImageAllPtr;
+    //     typedef std::unique_ptr<ImageAll> ImageAllUniquePtr;
+
+    // };
+
+// };
 
 
 #endif

@@ -125,24 +125,89 @@ class MidasRos(RosCppCommunicator):
             url = "https://github.com/intel-isl/MiDaS/releases/download/v2_1/model_opt.tflite"
             urllib.request.urlretrieve(url, self.model_path)
             self.log_to_ros("Done")
-        
 
 
-# def main():
+class MidasDepthTopic():
+
+    def __init__(self, midas_ros, topic):
+        self.midas_ros = midas_ros
+        self.image = None
+        self.sub = rospy.Subscriber(topic, Image, self.image_callback, queue_size=30)
+
+    def image_callback(self, data):
+        input_image = ros_numpy.numpify(data)
+        composite = self.midas_ros.analyse_image(input_image)
+        cv2.imshow("Depth", composite)
+        cv2.waitKey(1)
+
+        cv2.imshow("Input image", input_image)
+        cv2.waitKey(1)
+
+
+
+def shutdown_hook():
+    cv2.destroyAllWindows()
+
+
+#TODO: options for type of output
+def main():
+    rospy.init_node("midas_depth_ros_node")
+    rospy.on_shutdown(shutdown_hook)
+    import argparse
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--topic', default="0")
+    parser.add_argument('--image', default="0")
+    args = parser.parse_args()
     
-#     midas = MidasRos()
+    topic = args.topic
+    image_path = args.image
 
-#     cam = cv2.VideoCapture(0)
-#     while True:
-#         start_time = time.time()
-#         ret_val, img = cam.read()
-#         composite = midas.analyse_image(img)
-#         print("Time: {:.2f} s / img".format(time.time() - start_time))
-#         cv2.imshow("Depth detections", composite)
-#         if cv2.waitKey(1) == 27:
-#             break  # esc to quit
-#     cv2.destroyAllWindows()
+    input_device = "camera"
+    midas_ros = MidasRos()
 
 
-# if __name__ == "__main__":
-#     main()
+    if topic == "0" and image_path == "0":
+        rospy.loginfo("Using video camera as input")
+
+
+        cam = cv2.VideoCapture(0)
+        while not rospy.is_shutdown():
+            start_time = time.time()
+            ret_val, img = cam.read()
+
+            composite = midas_ros.analyse_image(img)
+
+            end_time = time.time()
+            print("Time per frame: {}s".format(end_time-start_time))
+            cv2.imshow("Depth", composite)
+            cv2.waitKey(1)
+
+            cv2.imshow("Input image", img)
+            cv2.waitKey(1)
+
+
+
+
+    elif image_path != "0" and topic == "0":
+        rospy.loginfo("Loading image from: {}".format(image_path))
+        image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+
+        image_file_array = image_path.split(".")
+        output_image = image_file_array[0] + "_prediction." + image_file_array[1]
+        print("Writing output to: {}".format(output_image))
+        composite = midas_ros.analyse_image(image)
+        cv2.imwrite(output_image, composite)
+
+
+    else:
+        input_device = "ros_topic"
+        rospy.loginfo("Attempting to subscribe to rostopic {}".format(topic))
+        topic_midas_ros = MidasDepthTopic(midas_ros, topic)
+        rospy.spin()
+
+    
+
+
+if __name__ == "__main__":
+    main()

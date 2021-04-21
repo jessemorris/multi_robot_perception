@@ -47,7 +47,7 @@ sys.path.insert(0, package_path)
 #e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml
 class MaskRcnnRos(RosCppCommunicator):
 
-    def __init__(self, config_path = package_path + "/src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_101_FPN_1x_caffe2.yaml"):
+    def __init__(self, config_path = package_path + "/src/mask_rcnn/configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"):
         RosCppCommunicator.__init__(self)
         self.model_config_path = config_path
         cfg.merge_from_file(self.model_config_path)
@@ -101,7 +101,7 @@ class MaskRcnnRos(RosCppCommunicator):
             del semantic_objects
             del display_image
 
-            gc.collect()
+            # gc.collect()
 
             return response
 
@@ -128,8 +128,6 @@ class MaskRcnnRos(RosCppCommunicator):
         #note: due to changes in predictions.py this will no longer work
         return self.coco_demo.run_on_opencv_image(image)
 
-    @torch.no_grad()
-    @profile(precision=4)
     def analyse_image(self, image):
         """[Analyses an image using mask rcnn. Creates a semantic instance labelled greyscale image
         and a list of mask_rcnn.SemanticObjects which represent each detected object in the frame]
@@ -140,6 +138,7 @@ class MaskRcnnRos(RosCppCommunicator):
         Returns:
             [np.ndarry, List[SemanticObjects]]: [Semantic instance image, list of detected objects in the scene]
         """
+        torch.cuda.empty_cache()
         predictions = self.coco_demo.compute_prediction(image)
         top_predictions = self.coco_demo.select_top_predictions(predictions)
 
@@ -177,6 +176,8 @@ class MaskRcnnRos(RosCppCommunicator):
 
         semantic_objects = []
 
+        index = 1
+
         for mask, semantic_index, semantic_label, bounding_box in zip(masks, label_indexs, labels, boxes):
             instance_label = instance_track[semantic_index]
 
@@ -201,11 +202,13 @@ class MaskRcnnRos(RosCppCommunicator):
             semantic_object.bounding_box = bounding_box_msg
             semantic_object.label = semantic_label 
             semantic_object.label_index = semantic_index
+            # semantic_object.label_index = index
             semantic_object.semantic_instance = instance_label
 
             semantic_objects.append(semantic_object)
 
             instance_track[semantic_index] += 1
+            # index += 1
 
 
         composite = blank_mask

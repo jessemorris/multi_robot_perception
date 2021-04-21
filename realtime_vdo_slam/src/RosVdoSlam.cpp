@@ -179,7 +179,6 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
 // void RosVdoSlam::vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth) {
 void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& vdo_input) {
     //the actual time the image was craeted
-    ROS_INFO_STREAM("got input");
     if(vdo_input->header.stamp.is_zero()) {
         ROS_ERROR_STREAM("VDO SLAM input time is zero");
     }
@@ -202,6 +201,9 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
 
     cv_ptr = cv_bridge::toCvCopy(vdo_input->depth, sensor_msgs::image_encodings::MONO16);
     mono_depth_mat = cv_ptr->image;
+
+    //only for midas for now
+    cv::bitwise_not(mono_depth_mat, mono_depth_mat);
 
     SemanticObjectVector semantic_objects = vdo_input->semantic_objects;
 
@@ -312,7 +314,6 @@ void RosVdoSlam::vdo_worker() {
 
             cv::Mat original_rgb;
             input->raw.copyTo(original_rgb);
-            ROS_INFO_STREAM("here1");
 
             std::pair<SceneType, std::shared_ptr<Scene>> track_result = slam_system->TrackRGBD(input->raw,input->depth,
                 input->flow,
@@ -333,20 +334,19 @@ void RosVdoSlam::vdo_worker() {
             vdo_scene_vector.push_back(vdo_scene);
 
 
-            if (scene_type == SceneType::OPTIMIZED) {
-                ROS_INFO_STREAM("Reconstructing scene!!!!");
-                slam_system->construct_scenes(vdo_scene_vector);
-                realtime_vdo_slam::VdoSlamMapPtr map_ptr = RosScene::make_map(vdo_scene_vector);
+            // if (scene_type == SceneType::OPTIMIZED) {
+            //     ROS_INFO_STREAM("Reconstructing scene!!!!");
+            //     slam_system->construct_scenes(vdo_scene_vector);
+            //     realtime_vdo_slam::VdoSlamMapPtr map_ptr = RosScene::make_map(vdo_scene_vector);
 
-                if (map_ptr != nullptr) {
-                    map_pub.publish(map_ptr);
-                }
-            }
+            //     if (map_ptr != nullptr) {
+            //         map_pub.publish(map_ptr);
+            //     }
+            // }
             
             merge_scene_semantics(vdo_scene, semantic_objects);
             ros_scene = std::make_shared<VDO_SLAM::RosScene>(*vdo_scene, input->image_time);
             realtime_vdo_slam::VdoSlamScenePtr summary_msg = ros_scene->to_msg();
-            ROS_INFO_STREAM("here");
             if(summary_msg != nullptr) {
                 sensor_msgs::Image image_msg;
                 utils::mat_to_image_msg(image_msg, input->raw, sensor_msgs::image_encodings::RGB8, summary_msg->header);

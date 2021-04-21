@@ -13,7 +13,6 @@
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <vdo_slam/vdo_slam.hpp>
 
 
 #include <rosbag/bag.h>
@@ -27,7 +26,6 @@
 #include <algorithm>
 #include <map>
 
-using namespace VDO_SLAM;
 
 typedef const sensor_msgs::ImageConstPtr& ImageConst;
 

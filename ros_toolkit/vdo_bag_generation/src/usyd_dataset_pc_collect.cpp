@@ -114,7 +114,7 @@ class UsydDataPCCollectPlayBack {
             ROS_INFO_STREAM("Making output bag file: " << out_file);
 
             std::vector<std::string> topics{"/map", "/odom", "/tf", "/ublox_gps/fix", 
-                "/tf_static", "/camera/camera_info", "/camera/rgb", "/camera/depth", "/velodyne/points"};
+                "/tf_static", "/camera/camera_info", "/camera/rgb", "/velodyne/points"};
 
             ros::Time time = ros::Time::now();
 
@@ -126,7 +126,10 @@ class UsydDataPCCollectPlayBack {
             }
 
             undistorted_image_pub = it.advertise("usyd_dataset_pc/undistorted", 20);
+            undistorted_image_lidar_pub = it.advertise("usyd_dataset_pc/undistorted_lidar", 20);
             distorted_image_pub = it.advertise("usyd_dataset_pc/distorted", 20);
+            mono_before = it.advertise("usyd_dataset_pc/mono_before", 20);
+            mono_after = it.advertise("usyd_dataset_pc/mono_after", 20);
 
             midas_depth  = std::make_shared<midas_ros::MidasDepthInterface>(nh);
             // sceneflow = std::make_shared<flow_net::FlowNetInterface>(nh);
@@ -155,7 +158,7 @@ class UsydDataPCCollectPlayBack {
             TimingInfoPtr timing_info = topic_timing_map[topic];
             ros::Duration dt;
 
-            //the frist time is actually when we start so dt should be 0 and video timing becomes now
+             //the frist time is actually when we start so dt should be 0 and video timing becomes now
             // everything else is relative to this
             if (!timing_info->data_recieved) {
                 dt = ros::Duration(0.01);
@@ -208,7 +211,7 @@ class UsydDataPCCollectPlayBack {
         }
 
         void gps_info_callback(const sensor_msgs::NavSatFixConstPtr& msg) {
-            ros::Time save_time = get_timing("/camera/camera_info", msg->header.stamp);
+            ros::Time save_time = get_timing("/ublox_gps/fix", msg->header.stamp);
             bag.write("/gps",save_time, *msg);
         }
 
@@ -218,19 +221,28 @@ class UsydDataPCCollectPlayBack {
         }
 
         void image_projected_points_callback(ImageConst& rgb_msg, const lidar_camera_projection::ImagePixelDepthConstPtr& projected_pts) {
+            ROS_INFO_STREAM(rgb_msg->header.stamp);
             ros::Time save_time = get_timing("/camera/rgb", rgb_msg->header.stamp);
             cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(rgb_msg, sensor_msgs::image_encodings::BGR8);
             cv::Mat rgb_image = cv_ptr->image;
             std::vector<cv::Point2f> distorted_lidar_points;
 
+
+            std_msgs::Header header = std_msgs::Header();
+            header.stamp = save_time;
+
+            sensor_msgs::ImagePtr  img_rgb_copy_msg = cv_bridge::CvImage(header, "rgb8", rgb_image).toImageMsg();
+            distorted_image_pub.publish(img_rgb_copy_msg);
+
+
             undistort_depth_image(rgb_image, rgb_image);
 
-
+        
             for(const lidar_camera_projection::PixelDepth& pixel_depth : projected_pts->data) {
                 double dis = pow(pixel_depth.x * pixel_depth.x + pixel_depth.y * pixel_depth.y + pixel_depth.z * pixel_depth.z, 0.5);
                 int range = std::min(float(round((dis / 50) * 149)), (float) 149.0);
                 
-                if (range < 5) {
+                if (range < 8) {
                     continue;
                 }
 
@@ -243,12 +255,21 @@ class UsydDataPCCollectPlayBack {
 
             }
             std::vector<cv::Point2f> correct_lidar_points;
+            ROS_INFO_STREAM("before undistort");
             undistort_points(distorted_lidar_points,correct_lidar_points);
 
             std::vector<lidar_camera_projection::PixelDepth> corrected_projections;
 
             cv::Mat disp;
             bool mono_depth_success = midas_depth->analyse(rgb_image, disp);
+
+            if (!mono_depth_success) {
+                return;
+            }
+
+            cv::Mat rgb_lidar;
+            rgb_image.copyTo(rgb_lidar);
+
 
             // disp.convertTo(disp, CV_16SC1);
             // ROS_INFO_STREAM("No points " << correct_lidar_points.size());
@@ -264,11 +285,14 @@ class UsydDataPCCollectPlayBack {
                 int range= std::min(float(round((dis / 50) * 149)), (float) 149.0);
                 double range_d = static_cast<double>(range);
 
-    
 
                 lidar_camera_projection::PixelDepth correct_pixel;
                 correct_pixel.pixel_x = p.x;
                 correct_pixel.pixel_y = p.y;
+
+                // if (correct_pixel.pixel_y > rgb_image.rows || correct_pixel.pixel_x > rgb_image.cols || correct_pixel.pixel_x < 0 || correct_pixel.pixel_y < 0) {
+                //     continue;
+                // }
 
                 correct_pixel.x = pixel_depth.x;
                 correct_pixel.y = pixel_depth.y;
@@ -276,16 +300,18 @@ class UsydDataPCCollectPlayBack {
 
                 corrected_projections.push_back(correct_pixel);
 
-                cv::circle(rgb_image,
+                cv::circle(rgb_lidar,
                        cv::Point(correct_pixel.pixel_x, correct_pixel.pixel_y), 3,
                        CV_RGB(255 * colmap[range][0], 255 * colmap[range][1], 255 * colmap[range][2]), -1);
-
+                ROS_INFO_STREAM("before disp");
                 double disp_map_range = (double)disp.at<uint16_t>(correct_pixel.pixel_y, correct_pixel.pixel_x)/1000.0;
+                ROS_INFO_STREAM("after disp");
                 // pred_idepth << disp_map_range, 1;
                 // pred_idepth_gt << range_d;
                 factor_graph.add(ExpCurveFittingFactor(minisam::key('p', 0), Eigen::Vector2d(disp_map_range,
                                                 range_d), loss));
             }
+            ROS_INFO_STREAM("here");
 
             minisam::Variables init_values;
 
@@ -308,15 +334,25 @@ class UsydDataPCCollectPlayBack {
 
             }
 
+
+            sensor_msgs::ImagePtr  mono_before_msg = cv_bridge::CvImage(header, "mono16", disp).toImageMsg();
+            mono_before.publish(mono_before_msg);
+
+            sensor_msgs::ImagePtr rectified_rgb_msg = cv_bridge::CvImage(header, "bgr8", rgb_image).toImageMsg();
             disp = previous_s_param * disp + previous_t_param;
-            bag.write("/camera/rgb/image_raw",save_time, rgb_msg);
-            // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(rgb_msg->header, "rgb8", rgb_image).toImageMsg();
-            // // undistorted_image_pub.publish(img_msg);
+            bag.write("/camera/rgb/image_raw",save_time, rectified_rgb_msg);
+            undistorted_image_pub.publish(rectified_rgb_msg);
+
+            sensor_msgs::ImagePtr rectified_rgb_lidar_msg = cv_bridge::CvImage(header, "bgr8", rgb_lidar).toImageMsg();
+            undistorted_image_lidar_pub.publish(rectified_rgb_lidar_msg);
+
+            ROS_INFO_STREAM("her1");
+
             cv::imshow("Projection", rgb_image);
             cv::waitKey(1);
-            sensor_msgs::ImagePtr  img_msg = cv_bridge::CvImage(rgb_msg->header, "mono16", disp).toImageMsg();
+            sensor_msgs::ImagePtr  img_msg = cv_bridge::CvImage(header, "mono16", disp).toImageMsg();
             bag.write("/camera/depth/image_raw",save_time, *img_msg);
-            // distorted_image_pub.publish(img_msg);
+            mono_after.publish(img_msg);
             // cv::imshow("Disp", disp);
             // cv::waitKey(1);
         }
@@ -356,7 +392,10 @@ class UsydDataPCCollectPlayBack {
 
         image_transport::ImageTransport it;
         image_transport::Publisher undistorted_image_pub;
+        image_transport::Publisher undistorted_image_lidar_pub;
         image_transport::Publisher distorted_image_pub;
+        image_transport::Publisher mono_before;
+        image_transport::Publisher mono_after;
 
         std::shared_ptr<minisam::LossFunction> loss;
         
@@ -375,7 +414,7 @@ class UsydDataPCCollectPlayBack {
 };
 
 void UsydDataPCCollectPlayBack::init_distortion_params() {
-    std::string input_camera_info_topic = "gmsl/A0/camera_info";
+    std::string input_camera_info_topic = "/gmsl/A0/camera_info";
     ROS_INFO_STREAM("Waiting for camera info topic: " << input_camera_info_topic);
     sensor_msgs::CameraInfoConstPtr info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(input_camera_info_topic);
 
@@ -498,7 +537,7 @@ int main(int argc, char **argv)
     // message_filters::Subscriber<sensor_msgs::Image> depth_sub(n, monodepth_topic, 10);
 
     message_filters::TimeSynchronizer<sensor_msgs::Image, lidar_camera_projection::ImagePixelDepth> sync(image_raw_sub,
-                                                                                                       pixel_depth,  20);
+                                                                                                       pixel_depth,  1000);
 
 
     ///velodyne/front/corrected
