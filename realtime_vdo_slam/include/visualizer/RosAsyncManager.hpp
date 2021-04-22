@@ -149,9 +149,11 @@ namespace VDO_SLAM {
                 ros::VoidPtr());
 
     }
+
+	typedef std::shared_ptr<RosAsyncManager> RosAsyncPublisherPtr;
+	typedef std::unique_ptr<RosAsyncManager> RosAsyncPublisherUniquePtr;
+
 }
 
-typedef std::shared_ptr<VDO_SLAM::RosAsyncManager> RosAsyncPublisherPtr;
-typedef std::unique_ptr<VDO_SLAM::RosAsyncManager> RosAsyncPublisherUniquePtr;
 
 #endif

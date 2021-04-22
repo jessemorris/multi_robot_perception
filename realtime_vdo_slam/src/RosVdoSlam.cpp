@@ -29,7 +29,7 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
 
         if (use_viz) {
-            ros_viz = std::make_shared<VDO_SLAM::RosVisualizer>();
+            ros_viz = std::make_shared<RosVisualizer>();
             ros_viz->connect_handler(ros_viz_handler);
         }
         //TODO: should get proper previous time
@@ -203,7 +203,7 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
     mono_depth_mat = cv_ptr->image;
 
     //only for midas for now
-    cv::bitwise_not(mono_depth_mat, mono_depth_mat);
+    // cv::bitwise_not(mono_depth_mat, mono_depth_mat);
 
     SemanticObjectVector semantic_objects = vdo_input->semantic_objects;
 

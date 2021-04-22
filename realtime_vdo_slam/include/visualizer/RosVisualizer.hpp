@@ -190,7 +190,7 @@ namespace VDO_SLAM {
             ros::NodeHandle nh;
             int spin_rate;
 
-            VDO_SLAM::RosAsyncManager async_manager;
+            VDO_SLAM::RosAsyncPublisherPtr async_manager;
 
 
             RosCallbackQueuePtr vdo_scene_queue_ptr;

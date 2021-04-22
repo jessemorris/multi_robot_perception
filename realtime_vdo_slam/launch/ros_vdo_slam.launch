@@ -3,7 +3,7 @@
   <include file="$(find realtime_vdo_slam)/launch/vdo_pipeline.launch" />
 
   <!-- If True expects topics directly from the vdo_slam_preprocessing node. This results in a remapping -->
-  <arg name="online" default="true" />
+  <arg name="online" default="false" />
 
    <!-- If True VDO will load the System parameters from the calibtration file in the config folder
    If False, will use the calibration params defined here and the specified camera info topic  -->
@@ -26,7 +26,7 @@
   <arg name="sensor_mode" default="0"/>
 
   <!--If tru the ros visualizer will be created-->
-  <arg name="use_viz" default="false"/>
+  <arg name="use_viz" default="true"/>
 
   <!-- the rate (Hz) the viz should run at -->
   <arg name="viz_rate" default="20"/>
@@ -56,8 +56,8 @@
   <arg name="RGB" default="0"/>
   <arg name="data_code" default="2"/>
 
-  <arg name="depth_map_factor" default="3000"/>
-  <!-- <arg name="depth_map_factor" default="800.0"/> -->
+  <!-- <arg name="depth_map_factor" default="2200"/> -->
+  <arg name="depth_map_factor" default="800.0"/>
    <!--Should habve a decimal, ie 10.0 not 10 becuase otherwise the param
   server rounds it to 0-->
 
@@ -107,7 +107,7 @@
     <remap from="/vdoslam/input/all" to="/camera/all" unless="$(arg online)"/>
 
 
-    <remap to="/camera/camera_info" from="/camera/camera_info" if="$(arg online)"/>
+    <!-- <remap to="/camera/camera_info" from="/camera/camera_info" if="$(arg online)"/> -->
 
     <param name="use_calibration_file" value="$(arg use_calibration_file)"/>
 

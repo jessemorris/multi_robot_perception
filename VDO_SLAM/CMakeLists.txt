@@ -136,6 +136,9 @@ add_subdirectory(src/map)
 add_subdirectory(include/vdo_slam/utils)
 add_subdirectory(src/utils)
 
+add_subdirectory(include/vdo_slam/visualizer)
+add_subdirectory(src/visualizer)
+
 add_subdirectory(include/vdo_slam)
 add_subdirectory(src)
 
