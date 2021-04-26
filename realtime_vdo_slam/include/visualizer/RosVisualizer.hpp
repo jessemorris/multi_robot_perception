@@ -34,15 +34,15 @@
 
 namespace VDO_SLAM {
 
-    /**
-     * @brief Overlays an image with all information from a Slam Scene message.
-     * This includes bounding box, class, tracking ID, pose and velocity
-     * 
-     * @param image rgb image to overlay
-     * @param slam_scene slam scene to details
-     * @return cv::Mat overlayed image
-     */
-    cv::Mat overlay_scene_image(const cv::Mat& image, const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
+    // /**
+    //  * @brief Overlays an image with all information from a Slam Scene message.
+    //  * This includes bounding box, class, tracking ID, pose and velocity
+    //  * 
+    //  * @param image rgb image to overlay
+    //  * @param slam_scene slam scene to details
+    //  * @return cv::Mat overlayed image
+    //  */
+    // cv::Mat overlay_scene_image(const cv::Mat& image, const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
     typedef std::future<bool> RosVizualizerSpinHandler;
 
@@ -132,15 +132,6 @@ namespace VDO_SLAM {
 
 
         private:
-            //TODO: make all publish functions take a pointer to a visuzlizer output
-
-            // /**
-            //  * @brief Updates all display and topic messages. Called by spin viz
-            //  * 
-            //  * @param slam_scene realtime_vdo_slam::VdoSlamScenePtr&
-            //  * @param bool if success
-            //  */
-            // bool update_spin(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
             /**
              * @brief Publishes the latest odometry from the VDO slam algorithm. If tf transforms are available,
@@ -151,37 +142,19 @@ namespace VDO_SLAM {
             void publish_odom(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
 
-            // /**
-            //  * @brief Publishes a slam scene as a visualization marker array to be displayed in RVIZ
-            //  * 
-            //  * @param slam_scene realtime_vdo_slam::VdoSlamScenePtr&
-            //  */
-            // void publish_3D_viz(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
-
-
             /**
              * @brief Publishes and visualises the birdseye view of the scene. Uses update_display_mat() to update the 
              * display mat
              * 
-             * @param scene const realtime_vdo_slam::VdoSlamScenePtr&
+             * @param scene const VisualizerOutputPtr&
              */
             void publish_display_mat(const VisualizerOutputPtr& viz_output);
-
-            // /**
-            //  * @brief Updates the camera pos as a red square and all tracked
-            //  * 3D objects as coloured dots (currently coloured by classification). If gt odom is present it will also plot this as a green 
-            //  * squares.
-            //  * 
-            //  * 
-            //  * @param scene const realtime_vdo_slam::VdoSlamScenePtr&
-            //  */
-            // void update_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene);
 
             /**
              * @brief Publishes the slam image with bounding box, class and velocity information draw
              * over the image. Makes a call to overlay_scene_image
              * 
-             * @param scene const realtime_vdo_slam::VdoSlamScenePtr
+             * @param scene const VisualizerOutputPtr&
              */
             void publish_bounding_box_mat(const VisualizerOutputPtr& viz_output);
 
@@ -251,12 +224,6 @@ namespace VDO_SLAM {
             tf2_ros::Buffer tf_buffer;
             tf2_ros::TransformListener listener;
 
-
-
-            // //used for display mat
-            // const int x_offset = 150;
-            // const int y_offset = 150;
-            // const int scale = 6;
             
             //frames for tf tree to publish on
             std::string map_frame;

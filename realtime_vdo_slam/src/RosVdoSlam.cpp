@@ -36,7 +36,8 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         if (use_viz) {
             VisualizerParamsPtr viz_params = std::make_shared<VisualizerParams>();
             viz_params->classes_filepath = "/home/jesse/Code/src/ros/src/multi_robot_perception/VDO_SLAM/include/vdo_slam/visualizer/classes.csv";
-            viz_params->display_window = true;
+            handle.getParam("/vdo_pipeline/visualizer/display_window", viz_params->display_window);
+
 
             ros_viz = std::make_shared<RosVisualizer>(viz_params);
             ros_viz->connect_handler(ros_viz_handler);

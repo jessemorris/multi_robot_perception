@@ -58,8 +58,6 @@
 
   <!-- <arg name="depth_map_factor" default="2200"/> -->
   <arg name="depth_map_factor" default="800.0"/>
-   <!--Should habve a decimal, ie 10.0 not 10 becuase otherwise the param
-  server rounds it to 0-->
 
 
   <arg name="thdepth_bg" default="40"/>
@@ -70,7 +68,8 @@
   <!-- <arg name="sf_mg_thresh" default="0.05"/>
   <arg name="sf_ds_thresh" default="0.99"/> -->
 
-  <arg name="sf_mg_thresh" default="0.12"/>
+  <!-- <arg name="sf_mg_thresh" default="0.12"/> -->
+   <arg name="sf_mg_thresh" default="0.12"/>
   <arg name="sf_ds_thresh" default="0.5"/>
 
 

@@ -84,9 +84,7 @@ class RosVdoSlam {
 
     private:
         ros::NodeHandle handle;
-        
-        // //we need this to request labels TODO: take out dependancy
-        // mask_rcnn::MaskRcnnInterface mask_rcnn_interface;
+    
 
         /**
          * @brief Updates the objects within the scene using the aquired semantic objects from mask rcnn. 

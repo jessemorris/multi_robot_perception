@@ -80,9 +80,6 @@ namespace VDO_SLAM {
     template<>
     inline SceneObjectPtr SceneObject::create<realtime_vdo_slam::VdoSceneObject>(realtime_vdo_slam::VdoSceneObject& _msg) {
         SceneObjectPtr scene_object = std::make_shared<SceneObject>();
-
-        // *(scene_object->pose) = utils::g2o_converter::from_pose_msg(_msg.pose);
-        // *(scene_object->twist) = utils::g2o_converter::from_twist_msg(_msg.twist);
         g2o::SE3Quat pose_quat = utils::g2o_converter::from_pose_msg(_msg.pose);
         g2o::SE3Quat twist_quat = utils::g2o_converter::from_twist_msg(_msg.twist);
 
@@ -107,8 +104,6 @@ namespace VDO_SLAM {
         msg->pose = utils::g2o_converter::to_pose_msg(*pose);
         msg->twist = utils::g2o_converter::to_twist_msg(*twist);
 
-        // msg->twist.linear.x = velocity.x;
-        // msg->twist.linear.y = velocity.y;
         msg->semantic_label = semantic_instance_index;
         msg->label = label;
 
@@ -162,7 +157,6 @@ namespace VDO_SLAM {
         msg->id = frame_id;
         msg->header.stamp = scene_time.convert<ros::Time>();
         for (SceneObjectPtr& object : scene_objects) {
-            // RosSceneObjectPtr ros_object = std::dynamic_pointer_cast<RosSceneObject>(object);
             realtime_vdo_slam::VdoSceneObject object_msg = *object->convert<realtime_vdo_slam::VdoSceneObjectPtr>();
             msg->objects.push_back(object_msg);
 

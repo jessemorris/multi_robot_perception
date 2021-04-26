@@ -44,9 +44,6 @@ namespace VDO_SLAM {
             double x = scene_object->poseT()[0];
             double y = scene_object->poseT()[1];
 
-            // ros::Time t = scene->header.stamp;
-
-
             int x_display =  static_cast<int>(x*params->scale) + params->x_offset;
             int y_display =  static_cast<int>(y*params->scale) + params->y_offset;
             int track = scene_object->tracking_id;
