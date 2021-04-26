@@ -10,6 +10,7 @@
 #include <vdo_slam/utils/Types.h>
 #include <vdo_slam/utils/VdoUtils.h>
 #include <vdo_slam/System.h>
+#include <vdo_slam/Scene.h>
 #include <vdo_slam/visualizer/visualizer_params.h>
 
 #include <ros/package.h>
@@ -34,6 +35,8 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
 
         if (use_viz) {
             VisualizerParamsPtr viz_params = std::make_shared<VisualizerParams>();
+            viz_params->classes_filepath = "/home/jesse/Code/src/ros/src/multi_robot_perception/VDO_SLAM/include/vdo_slam/visualizer/classes.csv";
+            viz_params->display_window = true;
 
             ros_viz = std::make_shared<RosVisualizer>(viz_params);
             ros_viz->connect_handler(ros_viz_handler);
@@ -43,7 +46,7 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         image_trajectory = cv::Mat::zeros(800, 600, CV_8UC3);
 
         vdo_input_sub = handle.subscribe("/vdoslam/input/all", 100, &RosVdoSlam::vdo_input_callback, this);
-        // scene_pub = handle.advertise<realtime_vdo_slam::VdoSlamScene>("/vdoslam/output/scene", 20);
+
         scene_pub = RosVisualizer::create_viz_pub(handle);
         map_pub = RosVisualizer::create_map_update_pub(handle);
 
@@ -310,7 +313,7 @@ void RosVdoSlam::merge_scene_semantics(SlamScenePtr& scene, const std::vector<ma
 void RosVdoSlam::vdo_worker() {
 
     std::unique_ptr<VDO_SLAM::Scene> scene;
-    RosScenePtr ros_scene;
+    // RosScenePtr ros_scene;
     VdoSlamInputPtr input;
     while (ros::ok() && !vdo_input_queue.isShutdown()) {
 
@@ -319,6 +322,7 @@ void RosVdoSlam::vdo_worker() {
             vdo_input_queue.pop(input);
             ros::Time image_time = input->image_time;
             VDO_SLAM::Time slam_time = VDO_SLAM::Time::create<ros::Time>(image_time);
+            ROS_INFO_STREAM(slam_time);
             cv::Mat original_rgb;
             input->raw.copyTo(original_rgb);
 
@@ -351,12 +355,13 @@ void RosVdoSlam::vdo_worker() {
             // }
             
             merge_scene_semantics(vdo_scene, semantic_objects);
-            ros_scene = std::make_shared<VDO_SLAM::RosScene>(*vdo_scene, input->image_time);
-            realtime_vdo_slam::VdoSlamScenePtr summary_msg = ros_scene->to_msg();
+            // ros_scene = std::make_shared<VDO_SLAM::RosScene>(*vdo_scene, input->image_time);
+            // realtime_vdo_slam::VdoSlamScenePtr summary_msg = ros_scene->to_msg();
+            realtime_vdo_slam::VdoSlamScenePtr summary_msg = vdo_scene->convert<realtime_vdo_slam::VdoSlamScenePtr>();
             if(summary_msg != nullptr) {
-                sensor_msgs::Image image_msg;
-                utils::mat_to_image_msg(image_msg, input->raw, sensor_msgs::image_encodings::RGB8, summary_msg->header);
-                summary_msg->original_frame = image_msg;
+                // sensor_msgs::Image image_msg;
+                // utils::mat_to_image_msg(image_msg, input->raw, sensor_msgs::image_encodings::RGB8, summary_msg->header);
+                // summary_msg->original_frame = image_msg;
 
                 //we send a std::shared ptr as the visualizer is in the same node so we maximise sending speed
                 //see ros interprocess comms: http://wiki.ros.org/roscpp/Overview/Publishers%20and%20Subscribers#Intraprocess_Publishing

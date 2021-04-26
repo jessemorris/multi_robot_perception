@@ -151,12 +151,12 @@ namespace VDO_SLAM {
             void publish_odom(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
 
-            /**
-             * @brief Publishes a slam scene as a visualization marker array to be displayed in RVIZ
-             * 
-             * @param slam_scene realtime_vdo_slam::VdoSlamScenePtr&
-             */
-            void publish_3D_viz(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
+            // /**
+            //  * @brief Publishes a slam scene as a visualization marker array to be displayed in RVIZ
+            //  * 
+            //  * @param slam_scene realtime_vdo_slam::VdoSlamScenePtr&
+            //  */
+            // void publish_3D_viz(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
 
             /**
@@ -165,7 +165,7 @@ namespace VDO_SLAM {
              * 
              * @param scene const realtime_vdo_slam::VdoSlamScenePtr&
              */
-            void publish_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene);
+            void publish_display_mat(const VisualizerOutputPtr& viz_output);
 
             // /**
             //  * @brief Updates the camera pos as a red square and all tracked
@@ -183,7 +183,7 @@ namespace VDO_SLAM {
              * 
              * @param scene const realtime_vdo_slam::VdoSlamScenePtr
              */
-            void publish_bounding_box_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene);
+            void publish_bounding_box_mat(const VisualizerOutputPtr& viz_output);
 
             inline bool gt_odom_in_use() {return !odom_gt_topic.empty();}
 

@@ -30,7 +30,7 @@ namespace VDO_SLAM {
         public:
             Visualizer2D(VisualizerParamsPtr& params_);
 
-            VisualizerOutputUniquePtr spinOnce(SlamScenePtr& slam_scene_) override;
+            VisualizerOutputPtr spinOnce(SlamScenePtr& slam_scene_) override;
 
             void update_gt_odom(g2o::SE3Quat& odom_gt_);
 

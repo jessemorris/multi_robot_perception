@@ -10,12 +10,12 @@ namespace VDO_SLAM {
             output_viz_->object_point_display_ = cv::Mat::zeros(800, 800, CV_8UC3);
         }
 
-    VisualizerOutputUniquePtr Visualizer2D::spinOnce(SlamScenePtr& slam_scene_) {
+    VisualizerOutputPtr Visualizer2D::spinOnce(SlamScenePtr& slam_scene_) {
         update_object_points_display(slam_scene_);
         update_projected_box_display(slam_scene_);
 
-        VisualizerOutputUniquePtr result = make_unique<VisualizerOutput2D>(*output_viz_);
-        return std::move(result);
+        VisualizerOutput2DPtr result = std::make_shared<VisualizerOutput2D>(*output_viz_);
+        return result;
 
 
     }
@@ -23,7 +23,6 @@ namespace VDO_SLAM {
     void Visualizer2D::update_object_points_display(SlamScenePtr& slam_scene_) {
         display_lock.lock();
         
-
         double x = slam_scene_->poseT()[0];
         double y = slam_scene_->poseT()[1];
         double z = slam_scene_->poseT()[2];
@@ -35,6 +34,7 @@ namespace VDO_SLAM {
         cv::rectangle(output_viz_->object_point_display_, cv::Point(x_display, y_display), cv::Point(x_display+10, y_display+10), cv::Scalar(0,0,255),1);
         cv::rectangle(output_viz_->object_point_display_, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
         cv::putText(output_viz_->object_point_display_, "Camera Trajectory (RED SQUARE)", cv::Point(10, 30), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
+
         char text[100];
         sprintf(text, "x = %02fm y = %02fm z = %02fm", x, y, z);
         cv::putText(output_viz_->object_point_display_, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
@@ -95,7 +95,7 @@ namespace VDO_SLAM {
         }
 
         cv::Mat overlayed;
-        slam_scene_->rgb_frame(overlayed);
+        slam_scene_->rgb_frame.copyTo(overlayed);
 
 
         for(SceneObjectPtr& object : slam_scene_->get_scene_objects()) {

@@ -320,16 +320,16 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
     bJoint = true;
     cv::RNG rng((unsigned)time(NULL));
 
-    VDO_INFO_MSG("Starting M state");
+    // VDO_INFO_MSG("Starting M state");
 
     // Initialize Global ID
     if (mState==NO_IMAGES_YET) {
         f_id = 0;
         global_f_id = 1;
     }
-
     mImGray = imRGB;
     mDepthMap = cv::Mat::zeros(imD.size(), CV_32F);
+
     // preprocess depth  !!! important for kitti and oxford dataset
     for (int i = 0; i < imD.rows; i++)
     {
@@ -372,6 +372,7 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
         }
         // std::cout << std::endl;
     }
+
 
     cv::Mat imDepth = mDepthMap;
     // cv::Mat imDepth = imD;
@@ -417,7 +418,6 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
     // cv::imshow("Input seg mask", maskSEM);
     // cv::waitKey(0);
     mCurrentFrame = Frame(mImGray,imDepth,imFlow,maskSEM,timestamp,mpORBextractorLeft,mK,mDistCoef,mbf,mThDepth,mThDepthObj,nUseSampleFea);
-
 
     scene = std::make_shared<Scene>(global_f_id, time_);
     scene->rgb_frame = imRGB;

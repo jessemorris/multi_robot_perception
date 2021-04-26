@@ -165,7 +165,7 @@ add_library(${PROJECT_NAME} SHARED
 	src/preprocessing/ImagePreprocessingRGB.cpp
 	src/preprocessing/ImagePreprocessingRGBD.cpp
 	src/RosVdoSlam.cpp
-	src/RosScene.cpp
+	#src/RosScene.cpp
 	src/CameraInformation.cpp
 	src/utils/RosUtils.cpp
 	src/tracking/HungarianSolver.cpp

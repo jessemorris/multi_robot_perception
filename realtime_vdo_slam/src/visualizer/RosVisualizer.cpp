@@ -4,13 +4,14 @@
 #include <opencv2/opencv.hpp>
 #include <realtime_vdo_slam/VdoSlamScene.h>
 #include <realtime_vdo_slam/VdoSceneObject.h>
+#include <vdo_slam/visualizer/visualizer_2D.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
 #include <nav_msgs/Odometry.h>
 #include <string>
 
 #include "utils/RosUtils.hpp"
-#include "VdoSlamMsgInterface.hpp"
+// #include "VdoSlamMsgInterface.hpp"
 
 
 using namespace VDO_SLAM;
@@ -184,10 +185,11 @@ namespace VDO_SLAM {
 
     void RosVisualizer::slam_scene_callback(const realtime_vdo_slam::VdoSlamSceneConstPtr& slam_scene) {
         realtime_vdo_slam::VdoSlamSceneConstPtr slam_scene_ptr = slam_scene;
-        // boost::shared_ptr<realtime_vdo_slam::VdoSlamScene> slam_scene_ptr(boost::const_pointer_cast<realtime_vdo_slam::VdoSlamScene>(slam_scene));
-        // update_spin(slam_scene_ptr);
         SlamScenePtr scene = Scene::create<realtime_vdo_slam::VdoSlamSceneConstPtr>(slam_scene_ptr);
-        VisualizerOutputUniquePtr viz_output =  spinOnce(scene);
+        VisualizerOutputPtr viz_output = spinOnce(scene);
+
+        publish_bounding_box_mat(viz_output);
+        publish_display_mat(viz_output);
     }
 
     void RosVisualizer::reconstruct_scenes_callback(const realtime_vdo_slam::VdoSlamMapConstPtr& map) {
@@ -269,55 +271,55 @@ namespace VDO_SLAM {
 
     }
 
-    void RosVisualizer::publish_3D_viz(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
-        visualization_msgs::MarkerArray marker_array;
-        int i = 0;
-        for (realtime_vdo_slam::VdoSceneObject& scene_object : slam_scene->objects) {
-            visualization_msgs::Marker marker;
-            marker.header.frame_id = odom_frame;
-            marker.header.stamp = slam_scene->header.stamp;
-            marker.text = scene_object.label;
-            marker.ns = "vdoslam";
-            marker.id = i;
-            // marker.type = visualization_msgs::Marker::SPHERE;
-            marker.type = visualization_msgs::Marker::CUBE;
-            marker.action = visualization_msgs::Marker::ADD;
-            marker.pose.position.x = scene_object.pose.position.x;
-            marker.pose.position.y = scene_object.pose.position.y;
-            marker.pose.position.z = 0;
+    // void RosVisualizer::publish_3D_viz(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
+    //     visualization_msgs::MarkerArray marker_array;
+    //     int i = 0;
+    //     for (realtime_vdo_slam::VdoSceneObject& scene_object : slam_scene->objects) {
+    //         visualization_msgs::Marker marker;
+    //         marker.header.frame_id = odom_frame;
+    //         marker.header.stamp = slam_scene->header.stamp;
+    //         marker.text = scene_object.label;
+    //         marker.ns = "vdoslam";
+    //         marker.id = i;
+    //         // marker.type = visualization_msgs::Marker::SPHERE;
+    //         marker.type = visualization_msgs::Marker::CUBE;
+    //         marker.action = visualization_msgs::Marker::ADD;
+    //         marker.pose.position.x = scene_object.pose.position.x;
+    //         marker.pose.position.y = scene_object.pose.position.y;
+    //         marker.pose.position.z = 0;
 
-            marker.pose.orientation.x = 0.0;
-            marker.pose.orientation.y = 0.0;
-            marker.pose.orientation.z = 0.0;
-            marker.pose.orientation.w = 1.0;
-            marker.scale.x = 0.5;
-            marker.scale.y = 0.5;
-            marker.scale.z = 2;
-            marker.color.a = 1.0; // Don't forget to set the alpha!
-            marker.color.r = 0.0;
-            marker.color.g = 1.0;
-            marker.color.b = 0.0;
-            marker.lifetime = ros::Duration(2.0);
-            // marker.text = scene_object.label;
-            marker.text = scene_object.tracking_id;
-            marker_array.markers.push_back(marker);
-            i++;
-        }
+    //         marker.pose.orientation.x = 0.0;
+    //         marker.pose.orientation.y = 0.0;
+    //         marker.pose.orientation.z = 0.0;
+    //         marker.pose.orientation.w = 1.0;
+    //         marker.scale.x = 0.5;
+    //         marker.scale.y = 0.5;
+    //         marker.scale.z = 2;
+    //         marker.color.a = 1.0; // Don't forget to set the alpha!
+    //         marker.color.r = 0.0;
+    //         marker.color.g = 1.0;
+    //         marker.color.b = 0.0;
+    //         marker.lifetime = ros::Duration(2.0);
+    //         // marker.text = scene_object.label;
+    //         marker.text = scene_object.tracking_id;
+    //         marker_array.markers.push_back(marker);
+    //         i++;
+    //     }
 
-        slam_scene_3d_pub.publish(marker_array);
+    //     slam_scene_3d_pub.publish(marker_array);
 
-    }
+    // }
 
-    void RosVisualizer::publish_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene) {
-        // update_display_mat(scene);
+    void RosVisualizer::publish_display_mat(const VisualizerOutputPtr& viz_output) {
+        VisualizerOutput2DPtr viz_output_2D = std::dynamic_pointer_cast<VisualizerOutput2D>(viz_output);
 
-        if(display_window) {
-            cv::imshow("Object points and camera trajectory", display);
+        if(params->display_window) {
+            cv::imshow("Object points and camera trajectory", viz_output_2D->object_point_display_);
             cv::waitKey(1);
         }
 
         sensor_msgs::Image img_msg;
-        utils::mat_to_image_msg(img_msg, display, sensor_msgs::image_encodings::BGR8, scene->header);
+        utils::mat_to_image_msg(img_msg, viz_output_2D->object_point_display_, sensor_msgs::image_encodings::BGR8);
         object_track_pub.publish(img_msg);
     }
 
@@ -475,23 +477,18 @@ namespace VDO_SLAM {
 
     // }
 
-    void RosVisualizer::publish_bounding_box_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene) {
-        // cv::Mat raw_img;
-        // utils::image_msg_to_mat(raw_img, scene->original_frame, sensor_msgs::image_encodings::RGB8);
-        // cv::Mat viz = overlay_scene_image(raw_img, scene);
+    void RosVisualizer::publish_bounding_box_mat(const VisualizerOutputPtr& viz_output) {
+        VisualizerOutput2DPtr viz_output_2D = std::dynamic_pointer_cast<VisualizerOutput2D>(viz_output);
 
-        // if(display_window) {
-        //     cv::imshow("Bounding Box and Tracking IDs", viz);
-        //     cv::waitKey(1);
-        // }
+        if (params->display_window) {
+            cv::imshow("Bounding Box and Tracking IDs", viz_output_2D->bounding_box_display_);
+            cv::waitKey(1);
+        }
+        sensor_msgs::Image img_msg;
 
-        // sensor_msgs::Image img_msg;
+        utils::mat_to_image_msg(img_msg, viz_output_2D->bounding_box_display_, sensor_msgs::image_encodings::RGB8);
 
-        // utils::mat_to_image_msg(img_msg, viz, sensor_msgs::image_encodings::RGB8, scene->header);
-
-        // bounding_box_pub.publish(img_msg);
-        // cv::imshow("BB and vel", viz);
-        // cv::waitKey(1);
+        bounding_box_pub.publish(img_msg);
 
     }
 

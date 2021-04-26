@@ -23,7 +23,7 @@ namespace VDO_SLAM {
              * 
              * @param slam_scene_ 
              */
-            virtual VisualizerOutputUniquePtr spinOnce(SlamScenePtr& slam_scene_) = 0;
+            virtual VisualizerOutputPtr spinOnce(SlamScenePtr& slam_scene_) = 0;
 
             void connect_render_func(RenderFunc&& func_);
 

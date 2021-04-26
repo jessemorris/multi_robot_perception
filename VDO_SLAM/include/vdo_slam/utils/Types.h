@@ -55,6 +55,11 @@ namespace VDO_SLAM {
             template<class T>
             inline T convert();
 
+            friend std::ostream &operator << (std::ostream& output, const Time& object) {
+                output << "sec: " << object.sec << " nsec: " << object.nsec << std::endl;
+                return output;
+            }
+
     };
 
     class BoundingBox {

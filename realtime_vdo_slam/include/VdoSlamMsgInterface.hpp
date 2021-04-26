@@ -52,14 +52,18 @@ namespace VDO_SLAM {
         ros::Time t;
         t.sec = sec;
         t.nsec = nsec;
+        return t;
     }
 
     template<>
     inline SceneObjectPtr SceneObject::create<realtime_vdo_slam::VdoSceneObjectConstPtr>(realtime_vdo_slam::VdoSceneObjectConstPtr& _msg) {
         SceneObjectPtr scene_object = std::make_shared<SceneObject>();
 
-        *(scene_object->pose) = utils::g2o_converter::from_pose_msg(_msg->pose);
-        *(scene_object->twist) = utils::g2o_converter::from_twist_msg(_msg->twist);
+        g2o::SE3Quat pose_quat = utils::g2o_converter::from_pose_msg(_msg->pose);
+        g2o::SE3Quat twist_quat = utils::g2o_converter::from_twist_msg(_msg->twist);
+
+        scene_object->pose = std::make_shared<g2o::SE3Quat>(pose_quat);
+        scene_object->twist = std::make_shared<g2o::SE3Quat>(twist_quat);
 
         scene_object->semantic_instance_index = _msg->semantic_label;
         //this one should have lavel
@@ -77,8 +81,13 @@ namespace VDO_SLAM {
     inline SceneObjectPtr SceneObject::create<realtime_vdo_slam::VdoSceneObject>(realtime_vdo_slam::VdoSceneObject& _msg) {
         SceneObjectPtr scene_object = std::make_shared<SceneObject>();
 
-        *(scene_object->pose) = utils::g2o_converter::from_pose_msg(_msg.pose);
-        *(scene_object->twist) = utils::g2o_converter::from_twist_msg(_msg.twist);
+        // *(scene_object->pose) = utils::g2o_converter::from_pose_msg(_msg.pose);
+        // *(scene_object->twist) = utils::g2o_converter::from_twist_msg(_msg.twist);
+        g2o::SE3Quat pose_quat = utils::g2o_converter::from_pose_msg(_msg.pose);
+        g2o::SE3Quat twist_quat = utils::g2o_converter::from_twist_msg(_msg.twist);
+
+        scene_object->pose = std::make_shared<g2o::SE3Quat>(pose_quat);
+        scene_object->twist = std::make_shared<g2o::SE3Quat>(twist_quat);
 
         scene_object->semantic_instance_index = _msg.semantic_label;
         //this one should have lavel
@@ -124,22 +133,23 @@ namespace VDO_SLAM {
         cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(_msg->original_frame, sensor_msgs::image_encodings::RGB8);
         slam_scene->rgb_frame = cv_ptr->image;
 
+        g2o::SE3Quat pose_quat = utils::g2o_converter::from_pose_msg(_msg->camera_pose);
+        g2o::SE3Quat twist_quat = utils::g2o_converter::from_twist_msg(_msg->camera_twist);
 
+        slam_scene->pose = std::make_shared<g2o::SE3Quat>(pose_quat);
+        slam_scene->twist = std::make_shared<g2o::SE3Quat>(twist_quat);
 
-        *(slam_scene->pose) = utils::g2o_converter::from_pose_msg(_msg->camera_pose);
-        *(slam_scene->twist) = utils::g2o_converter::from_twist_msg(_msg->camera_twist);
+        // *(slam_scene->pose) = utils::g2o_converter::from_pose_msg(_msg->camera_pose);
+        // *(slam_scene->twist) = utils::g2o_converter::from_twist_msg(_msg->camera_twist);
         
         for(const realtime_vdo_slam::VdoSceneObject& c_object : _msg->objects) {
             realtime_vdo_slam::VdoSceneObject obj = c_object;
             SceneObjectPtr object = SceneObject::create<realtime_vdo_slam::VdoSceneObject>(obj);
-
-            // realtime_vdo_slam::VdoSceneObject object = c_object;
-            // RosSceneObjectPtr ros_object = std::make_shared<RosSceneObject>(object);
             slam_scene->add_scene_object(object);
 
         }
 
-
+        return slam_scene;
     }
 
     template<>
