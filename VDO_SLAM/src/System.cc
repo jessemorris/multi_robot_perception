@@ -65,17 +65,15 @@ namespace VDO_SLAM {
 
 
 
-    std::pair<SceneType, std::shared_ptr<Scene>> System::TrackRGBD(const cv::Mat &im, cv::Mat &depthmap, const cv::Mat &flowmap, const cv::Mat &masksem,
-                            const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt,
-                            const double &timestamp, cv::Mat &imTraj, const int &nImage)
-    {
+    std::pair<SceneType, std::shared_ptr<Scene>> System::TrackRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow, const cv::Mat &maskSEM,
+                            const Time& time_, const double &timestamp, cv::Mat &imTraj, const int &nImage) {
         // if(mSensor!=RGBD)
         // {
         //     cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD." << endl;
         //     exit(-1);
         // }
 
-        return mpTracker->GrabImageRGBD(im,depthmap,flowmap,masksem,mTcw_gt,vObjPose_gt,timestamp,imTraj,nImage);
+        return mpTracker->GrabImageRGBD(imRGB,imD,imFlow,maskSEM, time_,timestamp,imTraj,nImage);
     }
 
 

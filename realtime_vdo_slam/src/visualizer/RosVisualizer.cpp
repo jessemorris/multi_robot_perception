@@ -1,4 +1,5 @@
 #include "visualizer/RosVisualizer.hpp"
+#include "VdoSlamMsgInterface.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <realtime_vdo_slam/VdoSlamScene.h>
@@ -9,6 +10,7 @@
 #include <string>
 
 #include "utils/RosUtils.hpp"
+#include "VdoSlamMsgInterface.hpp"
 
 
 using namespace VDO_SLAM;
@@ -43,11 +45,13 @@ cv::Mat VDO_SLAM::overlay_scene_image(const cv::Mat& image, const realtime_vdo_s
 namespace VDO_SLAM {
 
 
-    RosVisualizer::RosVisualizer()
-        : nh("ros_visualizer"),
-        //   async_manager(publish_queue_ptr),
-          image_transport(nh),
-          listener(tf_buffer) {
+    RosVisualizer::RosVisualizer(VisualizerParamsPtr& params_)
+        :   Visualizer2D(params_),
+            nh("ros_visualizer"),
+            image_transport(nh),
+            listener(tf_buffer) {
+
+            nh.getParam("/vdo_pipeline/visualizer/display_window", display_window);
 
             //create mems for async callback queues
             vdo_scene_queue_ptr = std::make_shared<ros::CallbackQueue>();
@@ -179,19 +183,22 @@ namespace VDO_SLAM {
     }
 
     void RosVisualizer::slam_scene_callback(const realtime_vdo_slam::VdoSlamSceneConstPtr& slam_scene) {
-        boost::shared_ptr<realtime_vdo_slam::VdoSlamScene> slam_scene_ptr(boost::const_pointer_cast<realtime_vdo_slam::VdoSlamScene>(slam_scene));
-        update_spin(slam_scene_ptr);
+        realtime_vdo_slam::VdoSlamSceneConstPtr slam_scene_ptr = slam_scene;
+        // boost::shared_ptr<realtime_vdo_slam::VdoSlamScene> slam_scene_ptr(boost::const_pointer_cast<realtime_vdo_slam::VdoSlamScene>(slam_scene));
+        // update_spin(slam_scene_ptr);
+        SlamScenePtr scene = Scene::create<realtime_vdo_slam::VdoSlamSceneConstPtr>(slam_scene_ptr);
+        VisualizerOutputUniquePtr viz_output =  spinOnce(scene);
     }
 
     void RosVisualizer::reconstruct_scenes_callback(const realtime_vdo_slam::VdoSlamMapConstPtr& map) {
-        ROS_INFO_STREAM("Recieved slam map updated");
+        // ROS_INFO_STREAM("Recieved slam map updated");
 
-        //reset display
-        display = cv::Mat::zeros(800, 800, CV_8UC3);
-        for(const realtime_vdo_slam::VdoSlamScene& scene: map->scenes) {
-            boost::shared_ptr<realtime_vdo_slam::VdoSlamScene> slam_scene_ptr = boost::make_shared<realtime_vdo_slam::VdoSlamScene>(scene);
-            update_spin(slam_scene_ptr);
-        }
+        // //reset display
+        // display = cv::Mat::zeros(800, 800, CV_8UC3);
+        // for(const realtime_vdo_slam::VdoSlamScene& scene: map->scenes) {
+        //     boost::shared_ptr<realtime_vdo_slam::VdoSlamScene> slam_scene_ptr = boost::make_shared<realtime_vdo_slam::VdoSlamScene>(scene);
+        //     update_spin(slam_scene_ptr);
+        // }
     }
 
 
@@ -243,12 +250,12 @@ namespace VDO_SLAM {
         return nh.advertise<realtime_vdo_slam::VdoSlamMap>("/vdoslam/output/map", 10);
     }
 
-    bool RosVisualizer::update_spin(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
-        publish_odom(slam_scene);
-        publish_3D_viz(slam_scene);
-        publish_display_mat(slam_scene);
-        publish_bounding_box_mat(slam_scene);
-    }
+    // bool RosVisualizer::update_spin(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
+    //     publish_odom(slam_scene);
+    //     publish_3D_viz(slam_scene);
+    //     publish_display_mat(slam_scene);
+    //     publish_bounding_box_mat(slam_scene);
+    // }
 
 
     void RosVisualizer::publish_odom(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
@@ -302,174 +309,187 @@ namespace VDO_SLAM {
     }
 
     void RosVisualizer::publish_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene) {
-        update_display_mat(scene);
+        // update_display_mat(scene);
+
+        if(display_window) {
+            cv::imshow("Object points and camera trajectory", display);
+            cv::waitKey(1);
+        }
 
         sensor_msgs::Image img_msg;
         utils::mat_to_image_msg(img_msg, display, sensor_msgs::image_encodings::BGR8, scene->header);
         object_track_pub.publish(img_msg);
     }
 
-    void RosVisualizer::update_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene) {
-        display_mutex.lock();
-        geometry_msgs::Pose pose = scene->camera_pose;
+    // void RosVisualizer::update_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene) {
+    //     display_mutex.lock();
+    //     geometry_msgs::Pose pose = scene->camera_pose;
 
-        double x = pose.position.x;
-        double y = pose.position.y;
-        double z = pose.position.z;
+    //     double x = pose.position.x;
+    //     double y = pose.position.y;
+    //     double z = pose.position.z;
 
-        int x_display =  static_cast<int>(x*scale) + x_offset;
-        int y_display =  static_cast<int>(y*scale) + y_offset;
+    //     int x_display =  static_cast<int>(x*scale) + x_offset;
+    //     int y_display =  static_cast<int>(y*scale) + y_offset;
 
-        //add odom to cv mat
-        cv::rectangle(display, cv::Point(x_display, y_display), cv::Point(x_display+10, y_display+10), cv::Scalar(0,0,255),1);
-        cv::rectangle(display, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
-        cv::putText(display, "Camera Trajectory (RED SQUARE)", cv::Point(10, 30), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
-        char text[100];
-        sprintf(text, "x = %02fm y = %02fm z = %02fm", x, y, z);
-        cv::putText(display, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
+    //     //add odom to cv mat
+    //     cv::rectangle(display, cv::Point(x_display, y_display), cv::Point(x_display+10, y_display+10), cv::Scalar(0,0,255),1);
+    //     cv::rectangle(display, cv::Point(10, 30), cv::Point(550, 60), CV_RGB(0,0,0), CV_FILLED);
+    //     cv::putText(display, "Camera Trajectory (RED SQUARE)", cv::Point(10, 30), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
+    //     char text[100];
+    //     sprintf(text, "x = %02fm y = %02fm z = %02fm", x, y, z);
+    //     cv::putText(display, text, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
 
-        if (gt_odom_in_use()) {
-            // ROS_INFO_STREAM(gt_odom);
-            x = gt_odom.pose.pose.position.x;
-            y = gt_odom.pose.pose.position.y;
-            z = gt_odom.pose.pose.position.z;
-            //here we update the odom repub to the display mat
-            //we use 10 for scale    
-            x_display = static_cast<int>(x*scale) + x_offset;
-            y_display = static_cast<int>(y*scale) + y_offset;
-            //add odom to cv mat
-            cv::rectangle(display, cv::Point(y_display, x_display), cv::Point(y_display+10, x_display+10), cv::Scalar(0,255,0),1);
-            cv::rectangle(display, cv::Point(10, 100), cv::Point(550, 130), CV_RGB(0,0,0), CV_FILLED);
-            cv::putText(display, "Camera GT Trajectory (GREEN SQUARE)", cv::Point(10, 100), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
-            char text1[100];
-            sprintf(text1, "x = %.2f y = %.2f z = %.2f", x, y, z);
-            cv::putText(display, text1, cv::Point(10, 120), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
-        }
+    //     if (gt_odom_in_use()) {
+    //         // ROS_INFO_STREAM(gt_odom);
+    //         x = gt_odom.pose.pose.position.x;
+    //         y = gt_odom.pose.pose.position.y;
+    //         z = gt_odom.pose.pose.position.z;
+    //         //here we update the odom repub to the display mat
+    //         //we use 10 for scale    
+    //         x_display = static_cast<int>(x*scale) + x_offset;
+    //         y_display = static_cast<int>(y*scale) + y_offset;
+    //         //add odom to cv mat
+    //         cv::rectangle(display, cv::Point(y_display, x_display), cv::Point(y_display+10, x_display+10), cv::Scalar(0,255,0),1);
+    //         cv::rectangle(display, cv::Point(10, 100), cv::Point(550, 130), CV_RGB(0,0,0), CV_FILLED);
+    //         cv::putText(display, "Camera GT Trajectory (GREEN SQUARE)", cv::Point(10, 100), cv::FONT_HERSHEY_COMPLEX, 0.6, CV_RGB(255, 255, 255), 1);
+    //         char text1[100];
+    //         sprintf(text1, "x = %.2f y = %.2f z = %.2f", x, y, z);
+    //         cv::putText(display, text1, cv::Point(10, 120), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar::all(255), 1);
+    //     }
 
-        //draw each object
-        std::vector<realtime_vdo_slam::VdoSceneObject> scene_objects = scene->objects;
-        for(realtime_vdo_slam::VdoSceneObject& scene_object : scene_objects) {
-            double x = scene_object.pose.position.x; 
-            double y = scene_object.pose.position.y;
+    //     //draw each object
+    //     std::vector<realtime_vdo_slam::VdoSceneObject> scene_objects = scene->objects;
+    //     for(realtime_vdo_slam::VdoSceneObject& scene_object : scene_objects) {
+    //         double x = scene_object.pose.position.x; 
+    //         double y = scene_object.pose.position.y;
 
-            ros::Time t = scene->header.stamp;
-
-
-            int x_display =  static_cast<int>(x*scale) + x_offset;
-            int y_display =  static_cast<int>(y*scale) + y_offset;
-            int track = scene_object.tracking_id;
-
-            //hack for viz so colours repeat
-            if (track > 25) {
-                track = track % 25;
-            }
-
-            // TODO: use colour conversion function
-            switch (track) {
-
-                case 1:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5); // orange
-                    break;
-                case 2:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,0,255), 5); // green
-                    break;
-                case 3:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0, 255, 0), 5); // yellow
-                    break;
-                case 4:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,0,255), 5); // pink
-                    break;
-                case 5:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,255,0), 5); // cyan (yellow green 47,255,173)
-                    break;
-                case 6:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5); // purple
-                    break;
-                case 7:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,255,255), 5);  // white
-                    break;
-                case 8:
-                    cv::circle(display,cv::Point(x_display, y_display), 2, CV_RGB(196,228,255), 5); // bisque
-                    break;
-                case 9:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(180, 105, 255), 5);  // blue
-                    break;
-                case 10:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(42,42,165), 5);  // brown
-                    break;
-                case 11:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(35, 142, 107), 5);
-                    break;
-                case 12:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(45, 82, 160), 5);
-                    break;
-                case 13:
-                    cv::circle(display,  cv::Point(x_display, y_display), 2, CV_RGB(0,0,255), 5); // red
-                    break;
-                case 14:
-                    cv::circle(display,cv::Point(x_display, y_display), 2, CV_RGB(255, 165, 0), 5);
-                    break;
-                case 15:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,255,0), 5);
-                    break;
-                case 16:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,255,0), 5);
-                    break;
-                case 17:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,192,203), 5);
-                    break;
-                case 18:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,255,255), 5);
-                    break;
-                case 19:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5);
-                    break;
-                case 20:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,255,255), 5);
-                    break;
-                case 21:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,228,196), 5);
-                    break;
-                case 22:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(180, 105, 255), 5);
-                    break;
-                case 23:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(165,42,42), 5);
-                    break;
-                case 24:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(35, 142, 107), 5);
-                    break;
-                case 25:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(45, 82, 160), 5);
-                    break;
-                case 41:
-                    cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(60, 20, 220), 5);
-                    break;
-                default:
-                    break;
-                // default:
-                //     ROS_WARN_STREAM("No case for this segmentaion index yet");
-                //     break;
-            }
-
-        }
-
-        display_mutex.unlock();
+    //         ros::Time t = scene->header.stamp;
 
 
+    //         int x_display =  static_cast<int>(x*scale) + x_offset;
+    //         int y_display =  static_cast<int>(y*scale) + y_offset;
+    //         int track = scene_object.tracking_id;
 
-    }
+    //         HashableColor color = color_manager.get_colour_for_tracking_id(track);
+    //         cv::circle(display, cv::Point(x_display, y_display), 2, color, 5);
+
+    //         // //hack for viz so colours repeat
+    //         // if (track > 25) {
+    //         //     track = track % 25;
+    //         // }
+
+    //         // // TODO: use colour conversion function
+    //         // switch (track) {
+
+    //         //     case 1:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5); // orange
+    //         //         break;
+    //         //     case 2:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,0,255), 5); // green
+    //         //         break;
+    //         //     case 3:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0, 255, 0), 5); // yellow
+    //         //         break;
+    //         //     case 4:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,0,255), 5); // pink
+    //         //         break;
+    //         //     case 5:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,255,0), 5); // cyan (yellow green 47,255,173)
+    //         //         break;
+    //         //     case 6:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5); // purple
+    //         //         break;
+    //         //     case 7:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,255,255), 5);  // white
+    //         //         break;
+    //         //     case 8:
+    //         //         cv::circle(display,cv::Point(x_display, y_display), 2, CV_RGB(196,228,255), 5); // bisque
+    //         //         break;
+    //         //     case 9:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(180, 105, 255), 5);  // blue
+    //         //         break;
+    //         //     case 10:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(42,42,165), 5);  // brown
+    //         //         break;
+    //         //     case 11:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(35, 142, 107), 5);
+    //         //         break;
+    //         //     case 12:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(45, 82, 160), 5);
+    //         //         break;
+    //         //     case 13:
+    //         //         cv::circle(display,  cv::Point(x_display, y_display), 2, CV_RGB(0,0,255), 5); // red
+    //         //         break;
+    //         //     case 14:
+    //         //         cv::circle(display,cv::Point(x_display, y_display), 2, CV_RGB(255, 165, 0), 5);
+    //         //         break;
+    //         //     case 15:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,255,0), 5);
+    //         //         break;
+    //         //     case 16:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,255,0), 5);
+    //         //         break;
+    //         //     case 17:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,192,203), 5);
+    //         //         break;
+    //         //     case 18:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(0,255,255), 5);
+    //         //         break;
+    //         //     case 19:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(128, 0, 128), 5);
+    //         //         break;
+    //         //     case 20:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,255,255), 5);
+    //         //         break;
+    //         //     case 21:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(255,228,196), 5);
+    //         //         break;
+    //         //     case 22:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(180, 105, 255), 5);
+    //         //         break;
+    //         //     case 23:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(165,42,42), 5);
+    //         //         break;
+    //         //     case 24:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(35, 142, 107), 5);
+    //         //         break;
+    //         //     case 25:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(45, 82, 160), 5);
+    //         //         break;
+    //         //     case 41:
+    //         //         cv::circle(display, cv::Point(x_display, y_display), 2, CV_RGB(60, 20, 220), 5);
+    //         //         break;
+    //         //     default:
+    //         //         break;
+    //         //     // default:
+    //         //     //     ROS_WARN_STREAM("No case for this segmentaion index yet");
+    //         //     //     break;
+    //         // }
+
+    //     }
+
+    //     display_mutex.unlock();
+
+
+
+    // }
 
     void RosVisualizer::publish_bounding_box_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene) {
-        cv::Mat raw_img;
-        utils::image_msg_to_mat(raw_img, scene->original_frame, sensor_msgs::image_encodings::RGB8);
-        cv::Mat viz = overlay_scene_image(raw_img, scene);
+        // cv::Mat raw_img;
+        // utils::image_msg_to_mat(raw_img, scene->original_frame, sensor_msgs::image_encodings::RGB8);
+        // cv::Mat viz = overlay_scene_image(raw_img, scene);
 
-        sensor_msgs::Image img_msg;
+        // if(display_window) {
+        //     cv::imshow("Bounding Box and Tracking IDs", viz);
+        //     cv::waitKey(1);
+        // }
 
-        utils::mat_to_image_msg(img_msg, viz, sensor_msgs::image_encodings::RGB8, scene->header);
+        // sensor_msgs::Image img_msg;
 
-        bounding_box_pub.publish(img_msg);
+        // utils::mat_to_image_msg(img_msg, viz, sensor_msgs::image_encodings::RGB8, scene->header);
+
+        // bounding_box_pub.publish(img_msg);
         // cv::imshow("BB and vel", viz);
         // cv::waitKey(1);
 

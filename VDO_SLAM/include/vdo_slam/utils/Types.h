@@ -6,6 +6,8 @@
 #include <memory>
 #include <iostream>
 
+#include <chrono>
+
 
 
 
@@ -23,6 +25,36 @@ namespace VDO_SLAM {
         SINGLE = 0,
         OPTIMIZED = 1,
         ERROR = 2
+    };
+
+    /**
+     * @brief Represents a time object with seconds and nano seconds. Makes it easy to
+     * convert between this and other representations (eg ROS)
+     * 
+     */
+    class Time {
+
+        public:
+            Time() {
+                // std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+                // auto duration = now.time_since_epoch();
+                
+            }
+
+            Time(uint32_t sec_, uint32_t nsec_)
+                :   sec(sec_), nsec(nsec_) {}
+
+            Time(const Time& t)
+                :   sec(t.sec), nsec(t.nsec) {}
+
+            uint32_t sec, nsec;
+
+            template<class T>
+            inline static Time create(T& t);
+
+            template<class T>
+            inline T convert();
+
     };
 
     class BoundingBox {
@@ -44,7 +76,6 @@ namespace VDO_SLAM {
             template<class T>
             inline T convert();
 
-            //TODO: add an 'is_constructed_ func
 
             cv::Rect2d to_rect();
 

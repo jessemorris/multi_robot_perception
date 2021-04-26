@@ -6,8 +6,16 @@
 
 #include "vdo_slam/utils/Types.h"
 
+#include <memory>
+
+
 
 namespace VDO_SLAM {
+
+    template <typename T, typename... Args>
+    std::unique_ptr<T> make_unique(Args&&... args) {
+        return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+    }
 
     namespace utils {
         /**

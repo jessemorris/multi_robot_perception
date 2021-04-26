@@ -1,12 +1,16 @@
 #include "RosVdoSlam.hpp"
 #include "RosScene.hpp"
+#include "VdoSlamMsgInterface.hpp"
 #include "VdoSlamInput.hpp"
 #include "CameraInformation.hpp"
 #include "utils/RosUtils.hpp"
 #include "visualizer/RosVisualizer.hpp"
 #include <realtime_vdo_slam/VdoInput.h>
+
 #include <vdo_slam/utils/Types.h>
 #include <vdo_slam/utils/VdoUtils.h>
+#include <vdo_slam/System.h>
+#include <vdo_slam/visualizer/visualizer_params.h>
 
 #include <ros/package.h>
 #include <sensor_msgs/CameraInfo.h>
@@ -29,7 +33,9 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
 
         if (use_viz) {
-            ros_viz = std::make_shared<RosVisualizer>();
+            VisualizerParamsPtr viz_params = std::make_shared<VisualizerParams>();
+
+            ros_viz = std::make_shared<RosVisualizer>(viz_params);
             ros_viz->connect_handler(ros_viz_handler);
         }
         //TODO: should get proper previous time
@@ -255,9 +261,10 @@ void RosVdoSlam::merge_scene_semantics(SlamScenePtr& scene, const std::vector<ma
         std::fill(tracked.begin(), tracked.end(), -1);
     }
 
-    for (SceneObjectPtr& object_ptr : scene->get_scene_objects())
+    // for (SceneObjectPtr& object_ptr : scene->get_scene_objects())
     for(int i = 0; i < scene_objects.size(); i++) {
         int association = tracked[i];
+        SceneObjectPtr object_ptr = scene_objects[i];
 
         // VDO_SLAM::RosSceneObject scene_object(*scene_objects[i], scene_time);
         // realtime_vdo_slam::VdoSceneObjectPtr vdo_scene_object_ptr = scene_object.to_msg();
@@ -311,15 +318,14 @@ void RosVdoSlam::vdo_worker() {
 
             vdo_input_queue.pop(input);
             ros::Time image_time = input->image_time;
-
+            VDO_SLAM::Time slam_time = VDO_SLAM::Time::create<ros::Time>(image_time);
             cv::Mat original_rgb;
             input->raw.copyTo(original_rgb);
 
             std::pair<SceneType, std::shared_ptr<Scene>> track_result = slam_system->TrackRGBD(input->raw,input->depth,
                 input->flow,
                 input->mask,
-                input->ground_truth,
-                input->object_pose_gt,
+                slam_time,
                 input->time_diff,
                 image_trajectory,global_optim_trigger);
 

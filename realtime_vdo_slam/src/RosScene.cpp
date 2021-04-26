@@ -199,6 +199,7 @@ realtime_vdo_slam::VdoSlamScenePtr VDO_SLAM::RosScene::to_msg() {
     msg->camera_pose = utils::g2o_converter::to_pose_msg(*pose);
     msg->camera_twist = utils::g2o_converter::to_twist_msg(*twist);
 
+
     msg->id = frame_id;
     for (SceneObjectPtr& object : scene_objects) {
         ROS_INFO_STREAM(object);

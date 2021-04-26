@@ -28,6 +28,8 @@ namespace VDO_SLAM
         int unique_id;
         double timestamp = -1;
         BoundingBox bounding_box;
+        Time scene_time;
+        // std::vector<cv::KeyPoint> keypoints;
 
         virtual ~SceneObject() {}
 
@@ -35,6 +37,13 @@ namespace VDO_SLAM
         bool update_from_map(const Map* map) override;
 
         friend std::ostream &operator << (std::ostream& output, const SceneObject& object);
+
+
+        template<class T>
+        inline static std::shared_ptr<SceneObject> create(T& t);
+
+        template<class T>
+        inline T convert();
         
     };
 
@@ -42,7 +51,7 @@ namespace VDO_SLAM
         
         public:
             Scene();
-            Scene(int frame_id_, double _timestamp);
+            Scene(int frame_id_, const Time& time_);
             virtual ~Scene() {}
 
 
@@ -56,6 +65,13 @@ namespace VDO_SLAM
             double get_timestamp();
 
             cv::Mat rgb_frame;
+            Time scene_time;
+
+            template<class T>
+            inline static std::shared_ptr<Scene> create(T& t);
+
+            template<class T>
+            inline T convert();
 
 
 

@@ -17,6 +17,7 @@
 
     <!--Input gps topic name if available-->
     <arg name="gps_topic"       default=""/>
+    <arg name="display_window" default="true"/>
 
 
 
@@ -30,6 +31,7 @@
         
         <param name="odometry_ground_truth_topic"       value="$(arg odometry_ground_truth_topic)"/>
         <param name="gps_topic" value="$(arg gps_topic)"/>
+        <param name="display_window" value="$(arg display_window)"/>
                 
     </group>
 

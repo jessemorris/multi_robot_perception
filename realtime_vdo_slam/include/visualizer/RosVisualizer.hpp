@@ -25,6 +25,9 @@
 #include <opencv2/opencv.hpp>
 #include <realtime_vdo_slam/VdoSlamScene.h>
 #include <realtime_vdo_slam/VdoSlamMap.h>
+#include <vdo_slam/visualizer/colour.h>
+#include <vdo_slam/visualizer/visualizer_2D.h>
+#include <vdo_slam/visualizer/visualizer_params.h>
 
 #include "utils/ThreadedQueue.hpp"
 #include "RosAsyncManager.hpp"
@@ -44,14 +47,14 @@ namespace VDO_SLAM {
     typedef std::future<bool> RosVizualizerSpinHandler;
 
 
-    class RosVisualizer {
+    class RosVisualizer : public Visualizer2D {
 
         public:
             /**
              * @brief Construct a new Ros Visualizer object
              * 
              */
-            RosVisualizer();
+            RosVisualizer(VisualizerParamsPtr& params_);
             ~RosVisualizer();
 
             /**
@@ -129,14 +132,15 @@ namespace VDO_SLAM {
 
 
         private:
+            //TODO: make all publish functions take a pointer to a visuzlizer output
 
-            /**
-             * @brief Updates all display and topic messages. Called by spin viz
-             * 
-             * @param slam_scene realtime_vdo_slam::VdoSlamScenePtr&
-             * @param bool if success
-             */
-            bool update_spin(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
+            // /**
+            //  * @brief Updates all display and topic messages. Called by spin viz
+            //  * 
+            //  * @param slam_scene realtime_vdo_slam::VdoSlamScenePtr&
+            //  * @param bool if success
+            //  */
+            // bool update_spin(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene);
 
             /**
              * @brief Publishes the latest odometry from the VDO slam algorithm. If tf transforms are available,
@@ -163,15 +167,15 @@ namespace VDO_SLAM {
              */
             void publish_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene);
 
-            /**
-             * @brief Updates the camera pos as a red square and all tracked
-             * 3D objects as coloured dots (currently coloured by classification). If gt odom is present it will also plot this as a green 
-             * squares.
-             * 
-             * 
-             * @param scene const realtime_vdo_slam::VdoSlamScenePtr&
-             */
-            void update_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene);
+            // /**
+            //  * @brief Updates the camera pos as a red square and all tracked
+            //  * 3D objects as coloured dots (currently coloured by classification). If gt odom is present it will also plot this as a green 
+            //  * squares.
+            //  * 
+            //  * 
+            //  * @param scene const realtime_vdo_slam::VdoSlamScenePtr&
+            //  */
+            // void update_display_mat(const realtime_vdo_slam::VdoSlamScenePtr& scene);
 
             /**
              * @brief Publishes the slam image with bounding box, class and velocity information draw
@@ -218,6 +222,7 @@ namespace VDO_SLAM {
             image_transport::ImageTransport image_transport;
             image_transport::Publisher bounding_box_pub;
 
+            bool display_window;
             cv::Mat display; //static and dynamic object track
             image_transport::Publisher object_track_pub;
 
@@ -240,7 +245,7 @@ namespace VDO_SLAM {
             sensor_msgs::NavSatFix gps_msg;
 
 
-            std::mutex display_mutex;
+            // std::mutex display_mutex;
 
             tf2_ros::TransformBroadcaster broadcaster;
             tf2_ros::Buffer tf_buffer;
@@ -248,10 +253,10 @@ namespace VDO_SLAM {
 
 
 
-            //used for display mat
-            const int x_offset = 150;
-            const int y_offset = 150;
-            const int scale = 6;
+            // //used for display mat
+            // const int x_offset = 150;
+            // const int y_offset = 150;
+            // const int scale = 6;
             
             //frames for tf tree to publish on
             std::string map_frame;

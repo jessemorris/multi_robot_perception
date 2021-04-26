@@ -23,6 +23,7 @@
 #include "vdo_slam/Scene.h"
 #include "vdo_slam/utils/Types.h"
 #include "vdo_slam/Params.h"
+#include "vdo_slam/visualizer/colour.h"
 
 #include <memory>
 #include <mutex>
@@ -65,9 +66,12 @@ class Tracking
         Tracking(Map* pMap, const string &strSettingPath, const eSensor sensor);
 
         // Preprocess the input and call Track(). Extract features and performs stereo matching.
+        // std::pair<SceneType, std::shared_ptr<Scene>> GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow, const cv::Mat &maskSEM,
+        //                     const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt, const double &timestamp,
+        //                     cv::Mat &imTraj, const int &nImage);
+
         std::pair<SceneType, std::shared_ptr<Scene>> GrabImageRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow, const cv::Mat &maskSEM,
-                            const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt, const double &timestamp,
-                            cv::Mat &imTraj, const int &nImage);
+                            const Time& time_, const double &timestamp, cv::Mat &imTraj, const int &nImage);
 
         // Sparse Scene Flow Vector
         void GetSceneFlowObj();
@@ -222,6 +226,7 @@ class Tracking
 
         std::shared_ptr<Scene> scene;
 
+        ColourManager color_manager;
 
         //Calibration matrix
         cv::Mat mK;

@@ -47,9 +47,8 @@ namespace VDO_SLAM {
         // Input image: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
         // Input depthmap: Float (CV_32F).
         // Returns the camera pose (empty if tracking fails).
-        std::pair<SceneType, std::shared_ptr<Scene>> TrackRGBD(const cv::Mat &im, cv::Mat &depthmap, const cv::Mat &flowmap, const cv::Mat &masksem,
-                        const cv::Mat &mTcw_gt, const vector<vector<float> > &vObjPose_gt, const double &timestamp,
-                        cv::Mat &imTraj, const int &nImage);
+        std::pair<SceneType, std::shared_ptr<Scene>> TrackRGBD(const cv::Mat &imRGB, cv::Mat &imD, const cv::Mat &imFlow, const cv::Mat &maskSEM,
+                            const Time& time_, const double &timestamp, cv::Mat &imTraj, const int &nImage);
 
 
         /**
