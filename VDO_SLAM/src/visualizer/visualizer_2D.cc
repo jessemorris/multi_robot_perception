@@ -54,6 +54,11 @@ namespace VDO_SLAM {
 
         }
 
+        if(params->display_window) {
+            cv::imshow("Object points and camera trajectory", output_viz_->object_point_display_);
+            cv::waitKey(1);
+        }
+
         display_lock.unlock();
 
     }
@@ -82,6 +87,11 @@ namespace VDO_SLAM {
     void Visualizer2D::update_projected_box_display(SlamScenePtr& slam_scene_) {
         cv::Mat overlayed = overlay_scene_image(slam_scene_);
         output_viz_->bounding_box_display_ = overlayed;
+
+        if (params->display_window) {
+            cv::imshow("Bounding Box and Tracking IDs", output_viz_->bounding_box_display_);
+            cv::waitKey(1);
+        }
 
     }
 

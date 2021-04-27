@@ -24,7 +24,6 @@ namespace VDO_SLAM {
             image_transport(nh),
             listener(tf_buffer) {
 
-
             //create mems for async callback queues
             vdo_scene_queue_ptr = std::make_shared<ros::CallbackQueue>();
             publish_queue_ptr = std::make_shared<ros::CallbackQueue>();
@@ -162,7 +161,6 @@ namespace VDO_SLAM {
         publish_bounding_box_mat(viz_output);
         publish_display_mat(viz_output);
 
-        // publish_odom(slam_scene);
     }
 
     void RosVisualizer::reconstruct_scenes_callback(const realtime_vdo_slam::VdoSlamMapConstPtr& map) {
@@ -286,11 +284,6 @@ namespace VDO_SLAM {
     void RosVisualizer::publish_display_mat(const VisualizerOutputPtr& viz_output) {
         VisualizerOutput2DPtr viz_output_2D = std::dynamic_pointer_cast<VisualizerOutput2D>(viz_output);
 
-        if(params->display_window) {
-            cv::imshow("Object points and camera trajectory", viz_output_2D->object_point_display_);
-            cv::waitKey(1);
-        }
-
         if(object_track_pub.getNumSubscribers() > 0) {
             sensor_msgs::Image img_msg;
             utils::mat_to_image_msg(img_msg, viz_output_2D->object_point_display_, sensor_msgs::image_encodings::BGR8);
@@ -302,11 +295,6 @@ namespace VDO_SLAM {
 
     void RosVisualizer::publish_bounding_box_mat(const VisualizerOutputPtr& viz_output) {
         VisualizerOutput2DPtr viz_output_2D = std::dynamic_pointer_cast<VisualizerOutput2D>(viz_output);
-
-        if (params->display_window) {
-            cv::imshow("Bounding Box and Tracking IDs", viz_output_2D->bounding_box_display_);
-            cv::waitKey(1);
-        }
 
         if (bounding_box_pub.getNumSubscribers() > 0) {
             sensor_msgs::Image img_msg;

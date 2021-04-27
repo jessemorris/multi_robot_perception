@@ -24,7 +24,9 @@
 #include <minisam/core/FactorGraph.h>
 #include <minisam/core/Variables.h>
 #include <minisam/nonlinear/LevenbergMarquardtOptimizer.h>
-
+#include <minisam/linear/SparseCholesky.h>
+#include <minisam/linear/DenseCholesky.h>
+#include <minisam/linear/ConjugateGradient.h>
 // #include <Eigen/Core>
 
 
@@ -89,7 +91,7 @@ std::shared_ptr<minisam::Factor> ExpCurveFittingFactor::copy() const {
 
 Eigen::VectorXd ExpCurveFittingFactor::error(const minisam::Variables& values) const {
     const Eigen::Vector2d& params = values.at<Eigen::Vector2d>(keys()[0]);
-    return (Eigen::VectorXd(1) <<  p_(1) - params(0) * p_(0) + params(1))
+    return (Eigen::VectorXd(1) <<  p_(1) - (params(0) * p_(0) + params(1)))
         .finished();
 }
 
@@ -236,26 +238,27 @@ class UsydDataPCCollectPlayBack {
 
 
             undistort_depth_image(rgb_image, rgb_image);
+            std::vector<lidar_camera_projection::PixelDepth> filtered_pixel_depth;
 
         
             for(const lidar_camera_projection::PixelDepth& pixel_depth : projected_pts->data) {
                 double dis = pow(pixel_depth.x * pixel_depth.x + pixel_depth.y * pixel_depth.y + pixel_depth.z * pixel_depth.z, 0.5);
                 int range = std::min(float(round((dis / 50) * 149)), (float) 149.0);
                 
-                if (range < 8) {
-                    continue;
-                }
+                // if (range > 20) {
+                //     continue;
+                // }
 
                 cv::Point p;
                 p.x = static_cast<float>(pixel_depth.pixel_x);
                 p.y = static_cast<float>(pixel_depth.pixel_y);
 
                 distorted_lidar_points.push_back(p);
+                filtered_pixel_depth.push_back(pixel_depth);
 
 
             }
             std::vector<cv::Point2f> correct_lidar_points;
-            ROS_INFO_STREAM("before undistort");
             undistort_points(distorted_lidar_points,correct_lidar_points);
 
             std::vector<lidar_camera_projection::PixelDepth> corrected_projections;
@@ -273,13 +276,26 @@ class UsydDataPCCollectPlayBack {
 
             // disp.convertTo(disp, CV_16SC1);
             // ROS_INFO_STREAM("No points " << correct_lidar_points.size());
-            minisam::FactorGraph factor_graph;
+            // minisam::FactorGraph factor_graph;
+
+            std::vector<double> A_vector;
+            std::vector<double> b_vector;
+            // typedef Eigen::Matrix<double, Eigen::Dynamic, 2> CoordMatrix;
+            // typedef Eigen::Matrix<double, Eigen::Dynamic, 1> ColMatrix;
+            // CoordMatrix A(correct_lidar_points.size()*2, 2);
+            // ROS_INFO_STREAM(A.rows() << " " << A.cols());
+            // ColMatrix b(correct_lidar_points.size()*2, 1);
+            static constexpr double max_distance = 40;
+            static constexpr double max_disp = 65536;
+            double scaling_factor = max_disp/max_distance;
+
+            int count = 0;
             for(int i = 0; i < correct_lidar_points.size(); i++) {
-                if (i%25 != 0) {
-                    continue;
-                }
+                // if (i%25 != 0) {
+                //     continue;
+                // }
                 cv::Point p = correct_lidar_points[i];
-                lidar_camera_projection::PixelDepth pixel_depth = projected_pts->data[i];
+                lidar_camera_projection::PixelDepth pixel_depth = filtered_pixel_depth[i];
 
                 double dis = pow(pixel_depth.x * pixel_depth.x + pixel_depth.y * pixel_depth.y + pixel_depth.z * pixel_depth.z, 0.5);
                 int range= std::min(float(round((dis / 50) * 149)), (float) 149.0);
@@ -293,7 +309,6 @@ class UsydDataPCCollectPlayBack {
                 // if (correct_pixel.pixel_y > rgb_image.rows || correct_pixel.pixel_x > rgb_image.cols || correct_pixel.pixel_x < 0 || correct_pixel.pixel_y < 0) {
                 //     continue;
                 // }
-
                 correct_pixel.x = pixel_depth.x;
                 correct_pixel.y = pixel_depth.y;
                 correct_pixel.z = pixel_depth.z;
@@ -303,58 +318,147 @@ class UsydDataPCCollectPlayBack {
                 cv::circle(rgb_lidar,
                        cv::Point(correct_pixel.pixel_x, correct_pixel.pixel_y), 3,
                        CV_RGB(255 * colmap[range][0], 255 * colmap[range][1], 255 * colmap[range][2]), -1);
-                ROS_INFO_STREAM("before disp");
-                double disp_map_range = (double)disp.at<uint16_t>(correct_pixel.pixel_y, correct_pixel.pixel_x)/1000.0;
-                ROS_INFO_STREAM("after disp");
+                double disp_map_range = (double)disp.at<uint16_t>(correct_pixel.pixel_y, correct_pixel.pixel_x);
+                A_vector.push_back(disp_map_range);
+                // ROS_INFO_STREAM(disp_map_range);
+                // A_vector.push_back(1.0);
+                b_vector.push_back(static_cast<double>(pixel_depth.z*scaling_factor));
+                // A << disp_map_range, 1;
+                // A(count, 0) = disp_map_range;
+                // A(count, 1) = 1;
+
+
+                // b << static_cast<double>(pixel_depth.x);
+                // b(count) = static_cast<double>(pixel_depth.x);
+                // count++;
+
                 // pred_idepth << disp_map_range, 1;
                 // pred_idepth_gt << range_d;
-                factor_graph.add(ExpCurveFittingFactor(minisam::key('p', 0), Eigen::Vector2d(disp_map_range,
-                                                range_d), loss));
-            }
-            ROS_INFO_STREAM("here");
-
-            minisam::Variables init_values;
-
-            init_values.add(minisam::key('p', 0), Eigen::Vector2d(previous_s_param, previous_t_param));
-
-            // optimize!
-            minisam::LevenbergMarquardtOptimizerParams opt_param;
-            opt_param.verbosity_level = minisam::NonlinearOptimizerVerbosityLevel::ITERATION;
-            opt_param.lambda_max = 5e10; //idk what this should be
-            minisam::LevenbergMarquardtOptimizer opt(opt_param);
-
-            minisam::Variables values;
-            auto status = opt.optimize(factor_graph, init_values, values);
-            if(status == minisam::NonlinearOptimizationStatus::SUCCESS) {
-                Eigen::Vector2d result = values.at<Eigen::Vector2d>(minisam::key('p', 0));
-                previous_s_param = result[0];
-                previous_t_param = result[1];
-                ROS_INFO_STREAM("s: " << previous_s_param << " t: " << previous_t_param);
-
-
+                // factor_graph.add(ExpCurveFittingFactor(minisam::key('p', 0), Eigen::Vector2d(disp_map_range,
+                //                                 pixel_depth.x), loss));
             }
 
+            minisam::DenseCholeskySolver cholesky_solver;
+            // minisam::ConjugateGradientSolver cg;
+            const int size = corrected_projections.size();
+            // Eigen::Matrix<double, -1, 2> A(A_vector.data());
+            // Eigen::Matrix<double, -1, 1> b(b_vector.data());
+            // Eigen::Map<Eigen::MatrixXd> A(A_vector.data(), size, 1);
+            // Eigen::Map<Eigen::MatrixXd> b(b_vector.data(), size, 1);
+            Eigen::MatrixXd A;
+            Eigen::MatrixXd b;
 
+            A.resize(size, 2);
+            b.resize(size, 1);
+
+            for(int i = 0; i < size; i++) {
+                A(i, 0) = A_vector[i];
+                A(i, 1) = 1;
+                b(i, 0) = b_vector[i];
+            }
+
+            Eigen::VectorXd x; //will be s, t
+            x.resize(2, 1);
+
+            // A.resize(size, 2);
+            // b.resize(size, 1);
+            
+            // b.resize(corrected_projections.size(), 1);
+            const Eigen::MatrixXd A1(A);
+            const Eigen::MatrixXd b1(b);
+
+            // cg.initialize(A1.transpose() * A1);
+
+            minisam::LinearSolverStatus result = cholesky_solver.solve(A1.transpose() * A1, A1.transpose() * b1, x);
+
+            if (result == minisam::LinearSolverStatus::SUCCESS) {
+                // ROS_INFO_STREAM("Chol was success");
+                previous_s_param =  x(0, 0);
+                previous_t_param =  x(1, 0);
+                // ROS_INFO_STREAM("s: " << previous_s_param << " t: " << previous_t_param);
+
+
+            }
+            if(result == minisam::LinearSolverStatus::RANK_DEFICIENCY) {
+                ROS_INFO_STREAM("Chol was RANK_DEFICIENCY");
+
+            }
+            if(result == minisam::LinearSolverStatus::INVALID) {
+                ROS_INFO_STREAM("Chol was INVALID");
+            }
+
+
+            // minisam::Variables init_values;
+
+            // init_values.add(minisam::key('p', 0), Eigen::Vector2d(previous_s_param, previous_t_param));
+
+            // // optimize!
+            // minisam::LevenbergMarquardtOptimizerParams opt_param;
+            // opt_param.verbosity_level = minisam::NonlinearOptimizerVerbosityLevel::ITERATION;
+            // opt_param.lambda_max = 5e10; //idk what this should be
+            // opt_param.lambda_increase_factor_update = 1.1;
+            // minisam::LevenbergMarquardtOptimizer opt(opt_param);
+
+            // minisam::Variables values;
+            // auto status = opt.optimize(factor_graph, init_values, values);
+            // if(status == minisam::NonlinearOptimizationStatus::SUCCESS) {
+            //     Eigen::Vector2d result = values.at<Eigen::Vector2d>(minisam::key('p', 0));
+            //     previous_s_param = static_cast<uint16_t>(result[0]);
+            //     previous_t_param = static_cast<uint16_t>(result[1]);
+            //     ROS_INFO_STREAM("s: " << previous_s_param << " t: " << previous_t_param);
+
+
+            // }
+
+
+
+            cv::imshow("Disp before rectification", disp);
+            cv::waitKey(1);
             sensor_msgs::ImagePtr  mono_before_msg = cv_bridge::CvImage(header, "mono16", disp).toImageMsg();
+            bag.write("/camera/depth/unrectified_disp",save_time, mono_before_msg);
             mono_before.publish(mono_before_msg);
 
             sensor_msgs::ImagePtr rectified_rgb_msg = cv_bridge::CvImage(header, "bgr8", rgb_image).toImageMsg();
-            disp = previous_s_param * disp + previous_t_param;
             bag.write("/camera/rgb/image_raw",save_time, rectified_rgb_msg);
             undistorted_image_pub.publish(rectified_rgb_msg);
 
             sensor_msgs::ImagePtr rectified_rgb_lidar_msg = cv_bridge::CvImage(header, "bgr8", rgb_lidar).toImageMsg();
             undistorted_image_lidar_pub.publish(rectified_rgb_lidar_msg);
 
-            ROS_INFO_STREAM("her1");
+
+            cv::Mat disp_rectified = (previous_s_param * disp + previous_t_param);
+            cv::bitwise_not(disp_rectified, disp_rectified);
+            // disp_rectified.convertTo(disp_rectified, CV_16UC1);
+            // disp.copyTo(disp_rectified);
+            // for(int i = 0; i < disp_rectified.rows; i++) {
+            //     for(int j = 0; j < disp_rectified.cols; j++) {
+            //         float value = disp_rectified.at<uint16_t>(i,j);
+            //         float new_disp = -1.0*previous_s_param * value + previous_t_param;
+            //         disp_rectified.at<uint16_t>(i,j) = new_disp;
+            //         // ROS_INFO_STREAM( disp_rectified.at<uint16_t>(i,j) << " " << new_disp);
+            //         // ROS_INFO_STREAM( previous_s_param << " " << previous_t_param);
+            //         // ROS_INFO_STREAM(value);
+
+            //     }
+            // }
+
+            // disp_rectified.convertTo(disp_rectified, CV_16UC1);
+            // for(int i = 0; i < disp_rectified.rows; i++) {
+            //     for(int j = 0; j < disp_rectified.cols; j++) {
+            //        ROS_INFO_STREAM(disp_rectified.at<uint16_t>(i,j));
+            //     }
+            // }
+
+
+
 
             cv::imshow("Projection", rgb_image);
             cv::waitKey(1);
-            sensor_msgs::ImagePtr  img_msg = cv_bridge::CvImage(header, "mono16", disp).toImageMsg();
+            sensor_msgs::ImagePtr  img_msg = cv_bridge::CvImage(header, "mono16", disp_rectified).toImageMsg();
             bag.write("/camera/depth/image_raw",save_time, *img_msg);
             mono_after.publish(img_msg);
-            // cv::imshow("Disp", disp);
-            // cv::waitKey(1);
+            cv::imshow("Disp after dectification", disp_rectified);
+            cv::waitKey(1);
         }
 
     private:
@@ -408,8 +512,8 @@ class UsydDataPCCollectPlayBack {
         std::map<std::string, UsydDataPCCollectPlayBack::TimingInfoPtr> topic_timing_map;
 
         ros::Time update_timing(const std::string& topic, const ros::Time& msg_time);
-        double previous_t_param = 5;
-        double previous_s_param = 2;
+        double previous_t_param = 1;
+        double previous_s_param = 1;
 
 };
 

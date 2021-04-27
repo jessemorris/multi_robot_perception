@@ -95,7 +95,7 @@ class MidasRos(RosCppCommunicator):
         #image normal is usual depth style imaage where closer objects are white
         image_normal =  (2**16 * (prediction - depth_min) / (depth_max - depth_min)).astype("uint16")
 
-        # image_normal = cv2.bitwise_not(image_normal)
+        image_normal = cv2.bitwise_not(image_normal)
         return image_normal
 
 

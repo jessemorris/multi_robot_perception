@@ -213,7 +213,6 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
     mono_depth_mat = cv_ptr->image;
 
     //only for midas for now
-    // cv::bitwise_not(mono_depth_mat, mono_depth_mat);
 
     SemanticObjectVector semantic_objects = vdo_input->semantic_objects;
 
