@@ -57,10 +57,10 @@
   <arg name="data_code" default="2"/>
 
   <!-- <arg name="depth_map_factor" default="2200"/> -->
-  <arg name="depth_map_factor" default="3000.0"/>
+  <arg name="depth_map_factor" default="8000"/>
 
 
-  <arg name="thdepth_bg" default="40"/>
+  <arg name="thdepth_bg" default="80"/>
   <arg name="thdepth_obj" default="25"/>
   <arg name="max_track_points_bg" default="1700"/>
   <arg name="max_track_points_obj" default="800"/>

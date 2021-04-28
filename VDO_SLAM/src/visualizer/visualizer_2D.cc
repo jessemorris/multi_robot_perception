@@ -79,10 +79,6 @@ namespace VDO_SLAM {
         odom_gt.data = make_unique<Odometry>(odom);
         odom_gt.data->pose.setTranslation(odom_translation);
 
-
-        // float x_offset = odom_gt.data.translation()[0];
-        // float y_offset = odom_gt.data.translation()[1];
-
         display_lock.lock();
 
         double x = odom_gt.data->pose.translation()[0];
