@@ -16,6 +16,7 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/Image.h>
+#include <nav_msgs/Odometry.h>
 
 #include <opencv2/opencv.hpp>
 

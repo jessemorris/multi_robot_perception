@@ -31,7 +31,7 @@ ImageRgbDepth::ImageRgbDepth(ros::NodeHandle& n)
     :   BaseProcessing(n),
         raw_img_synch(n,rgb_topic, 300),
         depth_img_synch(n,depth_topic, 300),
-        sync(MySyncPolicy(10), raw_img_synch, depth_img_synch) {
+        sync(MySyncPolicy(300), raw_img_synch, depth_img_synch) {
 
 
     mask_rcnn_interface = std::make_shared<mask_rcnn::MaskRcnnInterface>(n);

@@ -13,7 +13,7 @@
 
     <!-- Empty string ("") means no ground-truth available. Used for init if
         requested to do ground-truth initialization. -->
-    <arg name="odometry_ground_truth_topic"       default="/tesse/odom"/>
+    <arg name="odometry_ground_truth_topic"       default="/odom"/>
 
     <!--Input gps topic name if available-->
     <arg name="gps_topic"       default=""/>

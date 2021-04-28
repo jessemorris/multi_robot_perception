@@ -176,16 +176,19 @@ namespace VDO_SLAM {
 
 
     void RosVisualizer::odom_gt_callback(const nav_msgs::OdometryConstPtr& msg) {
-        if (is_first_odom) {
-            odom_x_offset = msg->pose.pose.position.x;
-            odom_y_offset = msg->pose.pose.position.y;
-            is_first_odom = false;
-        }
-        gt_odom.pose.pose.position.x = odom_x_offset - msg->pose.pose.position.x ;
-        gt_odom.pose.pose.position.y = odom_y_offset - msg->pose.pose.position.y;
-        gt_odom.pose.pose.position.z = 0;
+        // if (is_first_odom) {
+        //     odom_x_offset = msg->pose.pose.position.x;
+        //     odom_y_offset = msg->pose.pose.position.y;
+        //     is_first_odom = false;
+        // }
+        // gt_odom.pose.pose.position.x = odom_x_offset - msg->pose.pose.position.x ;
+        // gt_odom.pose.pose.position.y = odom_y_offset - msg->pose.pose.position.y;
+        // gt_odom.pose.pose.position.z = 0;
 
-        gt_odom.pose.pose.orientation = msg->pose.pose.orientation;
+        // gt_odom.pose.pose.orientation = msg->pose.pose.orientation;
+        nav_msgs::Odometry odom_msg = *msg;
+        VDO_SLAM::Odometry odom = VDO_SLAM::Odometry::create<nav_msgs::Odometry>(odom_msg);
+        update_gt_odom(odom);
     }
 
     void RosVisualizer::gps_callback(const sensor_msgs::NavSatFixConstPtr& msg) {

@@ -28,6 +28,22 @@ namespace VDO_SLAM {
     };
 
     /**
+     * @brief Defines a base class to convert to and from different types.
+     * Useful for converting between VDO types and ROS objects or messages.
+     * 
+     */
+    // struct ConversionBase {
+        
+    //     template<class T>
+    //     inline static Time create(T& t);
+
+    //     template<class T>
+    //     inline T convert();
+
+    // };
+
+
+    /**
      * @brief Represents a time object with seconds and nano seconds. Makes it easy to
      * convert between this and other representations (eg ROS)
      * 
@@ -55,10 +71,31 @@ namespace VDO_SLAM {
             template<class T>
             inline T convert();
 
+
             friend std::ostream &operator << (std::ostream& output, const Time& object) {
                 output << "sec: " << object.sec << " nsec: " << object.nsec << std::endl;
                 return output;
             }
+
+    };
+
+
+    struct Odometry {
+
+        g2o::SE3Quat pose;
+        g2o::SE3Quat twist;
+        Time time;
+
+        template<class T>
+        inline static Odometry create(T& t);
+
+        template<class T>
+        inline T convert();
+
+        friend std::ostream &operator << (std::ostream& output, const Odometry& object) {
+            output << "\npose: \n" << object.pose << "\ntwist: \n" << object.twist << "\ntime: \n" << object.time << std::endl;
+            return output;
+        }
 
     };
 

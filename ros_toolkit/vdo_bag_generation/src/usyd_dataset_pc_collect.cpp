@@ -285,7 +285,7 @@ class UsydDataPCCollectPlayBack {
             // CoordMatrix A(correct_lidar_points.size()*2, 2);
             // ROS_INFO_STREAM(A.rows() << " " << A.cols());
             // ColMatrix b(correct_lidar_points.size()*2, 1);
-            static constexpr double max_distance = 40;
+            static constexpr double max_distance = 50;
             static constexpr double max_disp = 65536;
             double scaling_factor = max_disp/max_distance;
 

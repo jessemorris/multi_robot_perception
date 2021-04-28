@@ -63,12 +63,31 @@ namespace VDO_SLAM {
 
     }
 
-    void Visualizer2D::update_gt_odom(g2o::SE3Quat& odom_gt_) {
+    void Visualizer2D::update_gt_odom(Odometry& odom) {
+        if (odom_gt.is_first()) {
+            odom_gt.data = make_unique<Odometry>(odom);
+            odom_gt.first_data = make_unique<Odometry>(odom);
+            odom_gt.is_first_ = false;
+
+        }
+
+
+        Eigen::Vector3d odom_translation = odom.pose.translation();
+        odom_translation[0] = odom_gt.first_data->pose[0] -  odom_translation[0];
+        odom_translation[1] = odom_gt.first_data->pose[1] -  odom_translation[1];
+
+        odom_gt.data = make_unique<Odometry>(odom);
+        odom_gt.data->pose.setTranslation(odom_translation);
+
+
+        // float x_offset = odom_gt.data.translation()[0];
+        // float y_offset = odom_gt.data.translation()[1];
+
         display_lock.lock();
 
-        double x = odom_gt_.translation()[0];
-        double y = odom_gt_.translation()[1];
-        double z = odom_gt_.translation()[2];
+        double x = odom_gt.data->pose.translation()[0];
+        double y = odom_gt.data->pose.translation()[1];
+        double z = odom_gt.data->pose.translation()[2];
        
         double x_display = static_cast<int>(x*params->scale) + params->x_offset;
         double y_display = static_cast<int>(y*params->scale) + params->y_offset;

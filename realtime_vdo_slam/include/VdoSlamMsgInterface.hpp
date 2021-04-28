@@ -33,6 +33,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Twist.h>
 #include <mutex>
 
 #include <vdo_slam/utils/Types.h>
@@ -54,6 +56,37 @@ namespace VDO_SLAM {
         t.nsec = nsec;
         return t;
     }
+
+    template<>
+    inline Odometry Odometry::create<nav_msgs::Odometry>(nav_msgs::Odometry& odom_msg) {
+        Odometry odom;
+
+        geometry_msgs::Pose p = odom_msg.pose.pose;
+        geometry_msgs::Twist t = odom_msg.twist.twist;
+        g2o::SE3Quat pose = utils::g2o_converter::from_pose_msg(p);
+        g2o::SE3Quat twist = utils::g2o_converter::from_twist_msg(t);
+
+        ros::Time ros_time = odom_msg.header.stamp;
+        Time time = Time::create<ros::Time>(ros_time);
+
+        odom.pose = pose;
+        odom.twist = twist;
+        odom.time = time;
+        return odom;
+    }
+
+    template<>
+    inline nav_msgs::Odometry Odometry::convert() {
+        nav_msgs::Odometry odom_msg;
+
+        odom_msg.pose.pose =  utils::g2o_converter::to_pose_msg(pose);
+        odom_msg.twist.twist =  utils::g2o_converter::to_twist_msg(twist);
+        odom_msg.header.stamp = time.convert<ros::Time>();
+        return odom_msg;
+
+
+    }
+
 
     template<>
     inline SceneObjectPtr SceneObject::create<realtime_vdo_slam::VdoSceneObjectConstPtr>(realtime_vdo_slam::VdoSceneObjectConstPtr& _msg) {

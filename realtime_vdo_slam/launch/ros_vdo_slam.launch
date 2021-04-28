@@ -57,7 +57,7 @@
   <arg name="data_code" default="2"/>
 
   <!-- <arg name="depth_map_factor" default="2200"/> -->
-  <arg name="depth_map_factor" default="1500.0"/>
+  <arg name="depth_map_factor" default="3000.0"/>
 
 
   <arg name="thdepth_bg" default="40"/>

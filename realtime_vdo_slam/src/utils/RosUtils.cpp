@@ -247,6 +247,7 @@ namespace VDO_SLAM {
 
             }
 
+
        
         } //namespace g2o_converter
 
