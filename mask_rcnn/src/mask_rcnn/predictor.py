@@ -169,7 +169,7 @@ class COCODemo(object):
         self,
         cfg,
         confidence_threshold=0.8,
-        show_mask_heatmaps=False,
+        show_mask_heatmaps=True,
         masks_per_dim=2,
         min_image_size=224,
         weight_loading = None
@@ -388,7 +388,7 @@ class COCODemo(object):
             predictions (BoxList): the result of the computation by the model.
                 It should contain the field `mask` and `labels`.
         """
-        masks = predictions.get_field("mask").numpy()
+        masks = predictions.get_field("mask")
         labels = predictions.get_field("labels")
 
         colors = self.compute_colors_for_labels(labels).tolist()

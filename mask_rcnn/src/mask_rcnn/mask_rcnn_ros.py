@@ -62,7 +62,7 @@ class MaskRcnnRos(RosCppCommunicator):
         self.coco_demo = COCODemo(
             cfg,
             confidence_threshold=0.75,
-            show_mask_heatmaps=False,
+            show_mask_heatmaps=True,
             masks_per_dim=5
         )
 
@@ -279,6 +279,11 @@ class MaskRcnnRos(RosCppCommunicator):
         coloured_img = coloured_img.astype('uint8')
         return coloured_img
 
+    def overlay_mask(self, mask, rgb_image):
+        mask_alpha = cv2.cvtColor(mask_alpha, cv2.COLOR_RGB2RGBA)
+        mask_alpha[:, :, 3] = alpha_data
+
+
 
 
 
@@ -316,15 +321,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--topic', default="0")
+    parser.add_argument('--image', default="0")
     args = parser.parse_args()
     
     topic = args.topic
+    image_path = args.image
+
 
     input_device = "camera"
     maskrcnn = MaskRcnnRos()
 
 
-    if topic == "0":
+    if topic == "0" and image_path == "0":
         rospy.loginfo("Using video camera as input")
 
 
@@ -343,6 +351,18 @@ if __name__ == "__main__":
             # cv2.imshow("Preds", test_image)
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
+
+    elif image_path != "0" and topic == "0":
+        rospy.loginfo("Loading image from: {}".format(image_path))
+        image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+
+        image_file_array = image_path.split(".")
+        output_image = image_file_array[0] + "_mask_prediction." + image_file_array[1]
+        print("Writing output to: {}".format(output_image))
+        response_image = maskrcnn.coco_demo.run_on_opencv_image(image)
+        # display_image = maskrcnn. generate_coloured_mask(response_image)
+        cv2.imwrite(output_image, response_image)
+
 
         
 

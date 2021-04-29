@@ -81,5 +81,6 @@
         "geometry": "cpp",
         "sparse": "cpp",
         "*.tpp": "cpp"
-    }
+    },
+    "python.pythonPath": "/usr/bin/python3"
 }
