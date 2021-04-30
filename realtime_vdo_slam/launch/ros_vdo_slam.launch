@@ -23,7 +23,7 @@
   <arg name="config_file" default="realtime_vdo.yaml"/>
 
   <!--  MONOCULAR=0, STEREO=1, RGBD=2-->
-  <arg name="sensor_mode" default="0"/>
+  <arg name="sensor_mode" default="2"/>
 
   <!--If tru the ros visualizer will be created-->
   <arg name="use_viz" default="true"/>
@@ -57,11 +57,11 @@
   <arg name="data_code" default="2"/>
 
   <!-- <arg name="depth_map_factor" default="2200"/> -->
-  <arg name="depth_map_factor" default="8000"/>
+  <arg name="depth_map_factor" default="900"/>
 
 
-  <arg name="thdepth_bg" default="80"/>
-  <arg name="thdepth_obj" default="25"/>
+  <arg name="thdepth_bg" default="30"/>
+  <arg name="thdepth_obj" default="10"/>
   <arg name="max_track_points_bg" default="1700"/>
   <arg name="max_track_points_obj" default="800"/>
 
@@ -74,8 +74,8 @@
 
 
 
-  <arg name="window_size" default="20"/>
-  <arg name="overlap_size" default="4"/>
+  <arg name="window_size" default="40"/>
+  <arg name="overlap_size" default="25"/>
 
   <arg name="use_sample_feature" default="0"/>
 

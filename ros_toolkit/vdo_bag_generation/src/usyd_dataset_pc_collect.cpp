@@ -245,7 +245,7 @@ class UsydDataPCCollectPlayBack {
                 double dis = pow(pixel_depth.x * pixel_depth.x + pixel_depth.y * pixel_depth.y + pixel_depth.z * pixel_depth.z, 0.5);
                 int range = std::min(float(round((dis / 50) * 149)), (float) 149.0);
                 
-                if (range > 20) {
+                if (range > 12) {
                     continue;
                 }
 
@@ -285,9 +285,10 @@ class UsydDataPCCollectPlayBack {
             // CoordMatrix A(correct_lidar_points.size()*2, 2);
             // ROS_INFO_STREAM(A.rows() << " " << A.cols());
             // ColMatrix b(correct_lidar_points.size()*2, 1);
-            static constexpr double max_distance = 70;
+            static constexpr double max_distance = 40;
             static constexpr double max_disp = 65536;
             double scaling_factor = max_disp/max_distance;
+            // double scaling_factor = max_distance/max_disp;
 
             lidar_camera_projection::ImagePixelDepth image_pixel_depth;
             image_pixel_depth.header.stamp = save_time;

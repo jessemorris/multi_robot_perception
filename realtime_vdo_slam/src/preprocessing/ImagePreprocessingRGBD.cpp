@@ -56,7 +56,6 @@ void ImageRgbDepth::image_callback(ImageConst raw_image, ImageConst depth) {
     cv_bridge::CvImagePtr cv_ptr_depth = cv_bridge::toCvCopy(*depth, sensor_msgs::image_encodings::MONO16);
     // sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
 
-    monodepth_raw.publish(cv_ptr_depth->toImageMsg());
 
 
 
@@ -134,6 +133,9 @@ void ImageRgbDepth::image_callback(ImageConst raw_image, ImageConst depth) {
 
         sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(original_header, "rgb8", image).toImageMsg();
         rgb_repub.publish(img_msg);
+
+        monodepth_raw.publish(cv_ptr_depth->toImageMsg());
+
 
 
         if(scene_flow_success && mask_rcnn_success) {

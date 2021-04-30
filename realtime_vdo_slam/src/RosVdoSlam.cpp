@@ -212,7 +212,25 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
     cv_ptr = cv_bridge::toCvCopy(vdo_input->depth, sensor_msgs::image_encodings::MONO16);
     mono_depth_mat = cv_ptr->image;
 
+    // mono_depth_mat = 1.0/mono_depth_mat;
+    // cv::imshow("Depth", mono_depth_mat);
+    // cv::waitKey(1);
+
+    // mono_depth_mat /= 256.0;
+    // mono_depth_mat.convertTo(mono_depth_mat, CV_8UC1);
+    // cv::bitwise_not(mono_depth_mat, mono_depth_mat);
+
+    // mono_depth_mat *= 256.0;
+    // mono_depth_mat.convertTo(mono_depth_mat, CV_16UC1);
+
     //only for midas for now
+    // cv::imshow("Depth OG", mono_depth_mat);
+    // cv::waitKey(1);
+    // mono_depth_mat.convertTo(mono_depth_mat, CV_8UC1);
+    // cv::bitwise_not(mono_depth_mat, mono_depth_mat);
+    // mono_depth_mat.convertTo(mono_depth_mat, CV_16UC1);
+    // cv::imshow("Depth", mono_depth_mat);
+    // cv::waitKey(1);
 
     SemanticObjectVector semantic_objects = vdo_input->semantic_objects;
 

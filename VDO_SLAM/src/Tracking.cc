@@ -352,6 +352,8 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
                         //for monocular the input image does need to be reversed - the code actually inverts the depth map to "normal"
                         // when it does mbf/depth/factor. 
                         float value = (imD.at<uint16_t>(i,j)/mDepthMapFactor);
+                        // VDO_INFO_MSG(value);
+                        // VDO_INFO_MSG(imD.at<uint16_t>(i,j));
                         mDepthMap.at<float>(i,j) = value;
                     }
 

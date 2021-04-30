@@ -62,7 +62,7 @@ class MaskRcnnRos(RosCppCommunicator):
         self.coco_demo = COCODemo(
             cfg,
             confidence_threshold=0.75,
-            show_mask_heatmaps=True,
+            show_mask_heatmaps=False,
             masks_per_dim=5
         )
 

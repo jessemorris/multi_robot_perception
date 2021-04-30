@@ -8,8 +8,15 @@ import ros_numpy
 import rospy
 import numpy as np
 from scipy.spatial.transform import Rotation as R
+from sklearn.metrics import mean_squared_error
+import signal
+import matplotlib.pyplot as plt
 
 import cv2
+
+global should_continue_
+should_continue_= True
+
 
 class DataCapture:
 
@@ -28,8 +35,35 @@ class DataCapture:
 
         self.scaling_factor = 65536.0/70.0
 
+        self._unrectified_data_rmse = []
+        self._rectified_data_rmse = []
+        self._points_per_frame = []
+        # self._gt_data = []
+        self._time_stamps = []
+        self._number_frames = -1
+
         self.ts.registerCallback(self.callback)
 
+    def stop(self):
+        self.rgb_image_sub.sub.unregister()
+        self.unrectified_disp_sub.sub.unregister()
+        self.rectified_disp_sub.sub.unregister()
+        self.lidar_points.sub.unregister()
+
+    def run_analysis(self):
+        fig, (ax1, ax2) = plt.subplots(2)
+        x = np.linspace(0, self._number_frames, self._number_frames+1)
+        ax1.plot(x, self._unrectified_data_rmse)
+        ax1.set_title("Disparity")
+        ax2.plot(x, self._rectified_data_rmse)
+        ax2.set_title("Disparity after scale and shift")
+        # plt.plot(x, self._gt_data, label="Rectified")
+        ax2.set_xlabel("# Frames")
+        ax1.set_ylabel("RMSE")
+        ax2.set_ylabel("RMSE")
+
+        plt.legend()
+        plt.show()
 
     def callback(self, rgb_image_msg, unrectified_disp_msg, rectified_disp_msg, lidar_points_msg):
         rgb_image = ros_numpy.numpify(rgb_image_msg)
@@ -43,7 +77,16 @@ class DataCapture:
         # header.frame_id = "base_link"
 
         points = np.zeros((len(lidar_points_msg.data), 3))
+
+        unrecified_data = []
+        rectified_data = []
+        gt_data = []
         
+        if len(lidar_points_msg.data) <= 0:
+            rospy.loginfo("No data messages")
+            return
+
+
         for i, lidar_pixel in enumerate(lidar_points_msg.data):
             # points[i][0] = lidar_pixel.z
             # points[i][1] = lidar_pixel.x
@@ -54,31 +97,59 @@ class DataCapture:
 
 
             unrectified_depth_value = unrectified_disp[lidar_pixel.pixel_y][lidar_pixel.pixel_x]/self.scaling_factor
+            unrecified_data.append(unrectified_depth_value)
 
             rectified_depth_value = rectified_disp[lidar_pixel.pixel_y][lidar_pixel.pixel_x]/self.scaling_factor
+            rectified_data.append(rectified_depth_value)
 
             lidar_depth = lidar_pixel.z
+            gt_data.append(lidar_depth)
 
-            rospy.loginfo("Unrectified {} rectified {} gt {}".format(unrectified_depth_value, rectified_depth_value, lidar_depth))
+            # rospy.loginfo("Unrectified {} rectified {} gt {}".format(unrectified_depth_value, rectified_depth_value, lidar_depth))
 
-            cv2.circle(rgb_image,(lidar_pixel.pixel_x, lidar_pixel.pixel_y), 3, (255,255,255), -1)
+            # cv2.circle(rgb_image,(lidar_pixel.pixel_x, lidar_pixel.pixel_y), 3, (255,255,255), -1)
+            self._time_stamps.append(rgb_image_msg.header.stamp)
 
-        # points = np.dot(points, rotation_matrix.T)
+
+        #run RMSE for frame
+        self._unrectified_data_rmse.append(mean_squared_error(gt_data,unrecified_data))
+
+        rectified_rmse = mean_squared_error(gt_data,rectified_data)
+        rospy.loginfo(rectified_rmse)
+        self._rectified_data_rmse.append(rectified_rmse)
+        self._points_per_frame = len(lidar_points_msg.data)
+        self._number_frames += 1
+
 
         cloud = pcl2.create_cloud_xyz32(header, points)
         self.lidar_pub.publish(cloud)
 
 
-        # cloud.from_array(points)
-        cv2.imshow("RGB", rgb_image)
-        cv2.waitKey(1)
+        # # cloud.from_array(points)
+        # cv2.imshow("RGB", rgb_image)
+        # cv2.waitKey(1)
+
+def signal_handler(signal, frame):
+    print("Stopping callbacks")
+    global should_continue_
+    should_continue_= False
+
+
 
 
 
 
 
 if __name__ == "__main__":
-    rospy.init_node("midas_rectification_lidar_error")
+    rospy.init_node("midas_rectification_lidar_error",  disable_signals=True)
+
     data_capture = DataCapture()
 
-    rospy.spin()
+    signal.signal(signal.SIGINT, signal_handler)
+
+    while not rospy.is_shutdown():
+        if should_continue_ == False:
+            break
+
+    data_capture.stop()
+    data_capture.run_analysis()
