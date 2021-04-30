@@ -79,19 +79,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
     mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
     mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
 
-
-    // ------------------------------------------------------------------------------------------
-    // ++++++++++++++++++++++++++++ New added for background features +++++++++++++++++++++++++++
-    // ------------------------------------------------------------------------------------------
-
-    // clock_t s_1, e_1;
-    // double fea_det_time;
-    // s_1 = clock();
-    // ORB extraction
     ExtractORB(0,imGray);
-    // e_1 = clock();
-    // fea_det_time = (double)(e_1-s_1)/CLOCKS_PER_SEC*1000;
-    // cout << "feature detection time: " << fea_det_time << endl;
 
     N = mvKeys.size();
     VDO_DEBUG_MSG("mvKeys size " << mvKeys.size());

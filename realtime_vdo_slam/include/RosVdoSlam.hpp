@@ -25,8 +25,6 @@
 #include <nav_msgs/Odometry.h>
 
 
-
-#include "RosScene.hpp"
 #include "VdoSlamInput.hpp"
 #include "visualizer/RosVisualizer.hpp"
 #include "tracking/SemanticTracker.hpp"
