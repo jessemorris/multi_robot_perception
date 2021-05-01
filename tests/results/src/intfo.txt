@@ -1,0 +1,3 @@
+disparity_normalization_graphs_using_baseline_fx:
+using fx * baseline /units * disp to get depth
+392.31 * 0.0584 / 0.001 where fx is the baseline of the camera on the car

@@ -80,7 +80,8 @@
         "lu": "cpp",
         "geometry": "cpp",
         "sparse": "cpp",
-        "*.tpp": "cpp"
+        "*.tpp": "cpp",
+        "queue": "cpp"
     },
     "python.pythonPath": "/usr/bin/python3"
 }

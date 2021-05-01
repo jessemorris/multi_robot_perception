@@ -213,28 +213,6 @@ class ThreadsafeQueue : public ThreadsafeQueueBase<T> {
 
 };
 
-// /**
-//  * @brief The ThreadsafeNullQueue class acts as a placeholder queue, but does
-//  * nothing. Useful for pipeline modules that do not require a queue.
-//  */
-// template <typename T>
-// class ThreadsafeNullQueue : public ThreadsafeQueue<T> {
-//  public:
-//   KIMERA_POINTER_TYPEDEFS(ThreadsafeNullQueue);
-//   KIMERA_DELETE_COPY_CONSTRUCTORS(ThreadsafeNullQueue);
-//   explicit ThreadsafeNullQueue(const std::string& queue_id)
-//       : ThreadsafeQueue<T>(queue_id) {}
-//   ~ThreadsafeNullQueue() override = default;
-
-//   //! Do nothing
-//   // virtual bool push(const T& new_value) override { return true; }
-//   virtual bool push(T) override { return true; }
-//   virtual bool pushBlockingIfFull(T, size_t) { return true; };
-//   virtual bool popBlocking(T&) override { return true; }
-//   virtual std::shared_ptr<T> popBlocking() override { return nullptr; }
-//   virtual bool pop(T&) override { return true; }
-//   virtual std::shared_ptr<T> pop() override { return nullptr; }
-// };
 
 template <typename T>
 ThreadsafeQueueBase<T>::ThreadsafeQueueBase()
@@ -268,7 +246,7 @@ bool ThreadsafeQueue<T>::pushBlockingIfFull(T new_value,
 	std::unique_lock<std::mutex> lk(mutex_);
 	// Wait until the queue has space or shutdown requested.
 	data_cond_.wait(lk, [this, max_queue_size] {
-	return data_queue_.size() < max_queue_size || shutdown_;
+		return data_queue_.size() < max_queue_size || shutdown_;
 	});
 	if (shutdown_) return false;
 	data_queue_.push(data);
@@ -344,4 +322,57 @@ std::shared_ptr<T> ThreadsafeQueue<T>::pop() {
 	data_cond_.notify_one();
 	return result;
 }
+
+
+/**
+ * @brief Same as threadsafe queue but has a maximum size allowance.
+ * If the size of the queue exceeds the max size when pushed, the oldest object will
+ * removed from the queue and the new object pushed on. This differs 
+ * from the default ThreadSafe Queue behaviour which will wait till 
+ * size < max size
+ * 
+ * @tparam T 
+ */
+template<typename T, int N>
+class ThreadSafeMaxQueue : public ThreadsafeQueue<T> {
+	public:
+		using TQ = ThreadsafeQueue<T>;
+		explicit ThreadSafeMaxQueue();
+		virtual ~ThreadSafeMaxQueue() = default;
+
+		bool push(T new_value) override;
+
+	private:
+		using TQ::data_cond_;
+		using TQ::data_queue_;
+		using TQ::mutex_;
+		using TQ::shutdown_;
+
+
+
+};
+
+template<typename T, int N>
+ThreadSafeMaxQueue<T, N>::ThreadSafeMaxQueue()
+	:	ThreadsafeQueue<T>() {}
+
+
+template <typename T, int N>
+bool ThreadSafeMaxQueue<T, N>::push(T new_value) {
+	if (shutdown_) return false;
+	std::shared_ptr<T> data(std::make_shared<T>(std::move(new_value)));
+	std::unique_lock<std::mutex> lk(mutex_);
+
+	size_t queue_size = data_queue_.size();
+	if (queue_size > N) {
+		data_queue_.pop();
+	}
+	data_queue_.push(data);
+	lk.unlock();  // Unlock before notify.
+	data_cond_.notify_one();
+	// Thread-safe so doesn't need external mutex
+	return true;
+}
+
+
 

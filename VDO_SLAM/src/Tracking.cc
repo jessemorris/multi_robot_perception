@@ -335,7 +335,6 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
     {
         for (int j = 0; j < imD.cols; j++)
         {
-            // VDO_DEBUG_MSG( imD.at<uint16_t>(i,j));
             if (imD.at<uint16_t>(i,j)<0) {
                 mDepthMap.at<float>(i,j)=0;
             }

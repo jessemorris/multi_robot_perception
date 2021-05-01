@@ -118,6 +118,13 @@ class UsydDataPCCollectPlayBack {
             std::vector<std::string> topics{"/map", "/odom", "/tf", "/ublox_gps/fix", 
                 "/tf_static", "/camera/camera_info", "/camera/rgb", "/velodyne/points"};
 
+            nh.getParam("fx", fx);
+            nh.getParam("baseline", baseline);
+            nh.getParam("depth_units", depth_units);
+
+            ROS_INFO_STREAM("fx: " << fx << " baseline: " << baseline << " depth units: " << depth_units);
+            
+
             ros::Time time = ros::Time::now();
 
             for (int i = 0; i < topics.size(); i++) {
@@ -245,7 +252,7 @@ class UsydDataPCCollectPlayBack {
                 double dis = pow(pixel_depth.x * pixel_depth.x + pixel_depth.y * pixel_depth.y + pixel_depth.z * pixel_depth.z, 0.5);
                 int range = std::min(float(round((dis / 50) * 149)), (float) 149.0);
                 
-                if (range > 12) {
+                if (range < 12) {
                     continue;
                 }
 
@@ -285,11 +292,7 @@ class UsydDataPCCollectPlayBack {
             // CoordMatrix A(correct_lidar_points.size()*2, 2);
             // ROS_INFO_STREAM(A.rows() << " " << A.cols());
             // ColMatrix b(correct_lidar_points.size()*2, 1);
-            static constexpr double max_distance = 40;
-            static constexpr double max_disp = 65536;
-            double scaling_factor = max_disp/max_distance;
-            // double scaling_factor = max_distance/max_disp;
-
+            
             lidar_camera_projection::ImagePixelDepth image_pixel_depth;
             image_pixel_depth.header.stamp = save_time;
             // ROS_INFO_STREAM(projected_pts->header.frame_id);
@@ -328,8 +331,10 @@ class UsydDataPCCollectPlayBack {
                 cv::circle(rgb_lidar,
                        cv::Point(correct_pixel.pixel_x, correct_pixel.pixel_y), 3,
                        CV_RGB(255 * colmap[range][0], 255 * colmap[range][1], 255 * colmap[range][2]), -1);
-                double disp_map_range = (double)disp.at<uint16_t>(correct_pixel.pixel_y, correct_pixel.pixel_x)/scaling_factor;
-                A_vector.push_back(disp_map_range);
+                double disp_map_range = (double)disp.at<uint16_t>(correct_pixel.pixel_y, correct_pixel.pixel_x);
+                double estimated_depth = (fx * baseline)/(depth_units * disp_map_range);
+                // double estimated_depth = (fx * baseline*disp_map_range)/(depth_units);
+                A_vector.push_back(estimated_depth);
                 // ROS_INFO_STREAM(disp_map_range);
                 // A_vector.push_back(1.0);
 
@@ -412,12 +417,20 @@ class UsydDataPCCollectPlayBack {
             // cv::Mat disp_rectified = cv::Mat(disp.size(), CV_32FC1);
              cv::Mat disp_rectified;
             disp.copyTo(disp_rectified);
+            
             for(int i = 0; i < disp.rows; i++) {
                 for(int j = 0; j < disp.cols; j++) {
-                    float unrectified_value = static_cast<float>(disp.at<uint16_t>(i,j));
-                    float value = previous_s_param * unrectified_value/scaling_factor + previous_t_param;
-                    // ROS_INFO_STREAM(unrectified_value << " " << value << " " <<  value * scaling_factor);
-                    disp_rectified.at<uint16_t>(i, j) = static_cast<uint16_t>(value * scaling_factor);
+                    double unrectified_value = static_cast<double>(disp.at<uint16_t>(i,j));
+                    // double estimated_depth = (fx * baseline)/(depth_units * unrectified_value);
+                    double rectified_depth =  previous_s_param * unrectified_value + previous_t_param;
+                    if (rectified_depth >= pow(2, 16)) {
+                        ROS_INFO_STREAM(rectified_depth << "is to big " << unrectified_value);
+                    }
+                    // double rectified_disp = (fx * baseline)/(rectified_depth * depth_units);
+
+                    // double rectified_value = previous_s_param * unrectified_value + previous_t_param;
+                    // ROS_INFO_STREAM(unrectified_value << " " << rectified_depth << " " <<  rectified_disp);
+                    disp_rectified.at<uint16_t>(i, j) = static_cast<uint16_t>(rectified_depth);
                     // uint16_t new_vale = value * scaling_factor;
                     // ROS_INFO_STREAM(disp_rectified.at<uint16_t>(i, j));
                     //  ROS_INFO_STREAM(new_vale);
@@ -469,6 +482,10 @@ class UsydDataPCCollectPlayBack {
         typedef std::shared_ptr<UsydDataPCCollectPlayBack::TimingInfo> TimingInfoPtr;
 
         midas_ros::MidasDepthInterfacePtr midas_depth;
+
+        double fx;
+        double baseline;
+        double depth_units;
 
 
         std::string out_file;

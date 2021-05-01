@@ -82,7 +82,6 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
     ExtractORB(0,imGray);
 
     N = mvKeys.size();
-    VDO_DEBUG_MSG("mvKeys size " << mvKeys.size());
     if(mvKeys.empty())
         return;
 
@@ -90,7 +89,6 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
 
     if (UseSampleFea==0)
     {
-        VDO_DEBUG_MSG("Using detected features");
         // // // Option I: ~~~~~~~ use detected features ~~~~~~~~~~ // // //
         for (int i = 0; i < mvKeys.size(); ++i)
         {
@@ -150,7 +148,6 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const cv::Mat &imFlo
             if (maskSEM.at<int>(y,x)!=0) {  // new added in Jun 13 2019
                 if (mask_id_map.find(maskSEM.at<int>(y,x)) == mask_id_map.end()) {
                     mask_id_map[maskSEM.at<int>(y,x)] = true;
-                    std::cout << "Found id " <<   maskSEM.at<int>(y,x) << std::endl;
                 }
                 continue;
             }
@@ -532,7 +529,7 @@ cv::Mat Frame::UnprojectStereoStat(const int &i, const bool &addnoise)
     }
     else
     {
-        cout << "found a depth value < 0 ..." << endl;
+        VDO_WARN_MSG("Found a value < 0");
         return cv::Mat();
     }
 }
@@ -550,7 +547,7 @@ cv::Mat Frame::ProjectStereoObject(const int i) {
 
     }
     else {
-        VDO_DEBUG_MSG("0 depth found for stereo projection");
+        VDO_WARN_MSG("0 depth found for stereo projection");
         return cv::Mat();
     }
 
@@ -588,7 +585,7 @@ cv::Mat Frame::UnprojectStereoObject(const int &i, const bool &addnoise)
         return Rwl*x3Dc+twl;
     }
     else{
-        cout << "found a depth value < 0 ..." << endl;
+        VDO_WARN_MSG("Found a value < 0");
         return cv::Mat();
     }
 }
@@ -618,7 +615,7 @@ cv::Mat Frame::UnprojectStereoObjectCamera(const int &i, const bool &addnoise)
         return x3Dc;
     }
     else{
-        cout << "found a depth value < 0 ..." << endl;
+        VDO_WARN_MSG("Found a value < 0");
         return cv::Mat();
     }
 }
@@ -648,7 +645,7 @@ cv::Mat Frame::UnprojectStereoObjectNoise(const int &i, const cv::Point2f of_err
         return Rwl*x3Dc+twl;
     }
     else{
-        cout << "found a depth value < 0 ..." << endl;
+        VDO_WARN_MSG("Found a value < 0");
         return cv::Mat();
     }
 }

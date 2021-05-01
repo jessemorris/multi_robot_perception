@@ -28,7 +28,8 @@
 #include "VdoSlamInput.hpp"
 #include "visualizer/RosVisualizer.hpp"
 #include "tracking/SemanticTracker.hpp"
-#include "utils/ThreadedQueue.hpp"
+#include <vdo_slam/utils/ThreadedQueue.hpp>
+// #include "utils/ThreadedQueue.hpp"
 #include  <realtime_vdo_slam/VdoInput.h>
 #include <realtime_vdo_slam/VdoSlamScene.h>
 #include <vdo_slam/Scene.h>

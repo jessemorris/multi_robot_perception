@@ -33,7 +33,7 @@ class DataCapture:
                                                     self.rectified_disp_sub,
                                                     self.lidar_points], 1000)
 
-        self.scaling_factor = 65536.0/70.0
+        self.scaling_factor = 392.31 * 16.7 / 0.001
 
         self._unrectified_data_rmse = []
         self._rectified_data_rmse = []
@@ -96,10 +96,10 @@ class DataCapture:
             points[i][2] = lidar_pixel.z
 
 
-            unrectified_depth_value = unrectified_disp[lidar_pixel.pixel_y][lidar_pixel.pixel_x]/self.scaling_factor
+            unrectified_depth_value = unrectified_disp[lidar_pixel.pixel_y][lidar_pixel.pixel_x]
             unrecified_data.append(unrectified_depth_value)
 
-            rectified_depth_value = rectified_disp[lidar_pixel.pixel_y][lidar_pixel.pixel_x]/self.scaling_factor
+            rectified_depth_value = rectified_disp[lidar_pixel.pixel_y][lidar_pixel.pixel_x]
             rectified_data.append(rectified_depth_value)
 
             lidar_depth = lidar_pixel.z

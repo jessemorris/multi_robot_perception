@@ -2,20 +2,21 @@ import open3d as o3d
 import cv2
 import numpy as np
 
-folder_path = "/home/jesse/Code/src/ros/src/rostk_plotting/records/03:22:2021-09:21:49/"
-
+# folder_path = "/home/jesse/Code/src/ros/src/rostk_plotting/records/03:22:2021-09:21:49/"
+folder_path = "/home/jesse/Code/src/ros/src/rostk_plotting/records/05:01:2021-10:16:07/"
 # color_raw = o3d.io.read_image(folder_path + "0.png")
-color_raw_numpy = cv2.imread(folder_path + "1.png")
+color_raw_numpy = cv2.imread(folder_path + "0.png")
 color_raw_numpy = cv2.cvtColor(color_raw_numpy, cv2.COLOR_BGR2RGB)
 
-depth_raw_numpy = cv2.imread(folder_path + "0_prediction.png")
+depth_raw_numpy = cv2.imread(folder_path + "1.png")
+
 
 # depth_raw = o3d.io.read_image(folder_path + "20_prediction.png")
 # cv2.imshow("Depth", depth_raw_numpy)
 # cv2.waitKey(1)
 
 # depth_raw_numpy = cv2.normalize(src=depth_raw_numpy, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-# depth_inverted = cv2.bitwise_not(depth_raw_numpy)
+depth_raw_numpy = cv2.bitwise_not(depth_raw_numpy)
 
 # cv2.imshow("Depth inverted", depth_inverted)
 # cv2.waitKey(-1)
