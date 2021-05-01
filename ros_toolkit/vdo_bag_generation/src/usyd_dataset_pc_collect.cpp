@@ -252,9 +252,9 @@ class UsydDataPCCollectPlayBack {
                 double dis = pow(pixel_depth.x * pixel_depth.x + pixel_depth.y * pixel_depth.y + pixel_depth.z * pixel_depth.z, 0.5);
                 int range = std::min(float(round((dis / 50) * 149)), (float) 149.0);
                 
-                if (range < 12) {
-                    continue;
-                }
+                // if (range < 12) {
+                //     continue;
+                // }
 
                 cv::Point p;
                 p.x = static_cast<float>(pixel_depth.pixel_x);
@@ -332,14 +332,15 @@ class UsydDataPCCollectPlayBack {
                        cv::Point(correct_pixel.pixel_x, correct_pixel.pixel_y), 3,
                        CV_RGB(255 * colmap[range][0], 255 * colmap[range][1], 255 * colmap[range][2]), -1);
                 double disp_map_range = (double)disp.at<uint16_t>(correct_pixel.pixel_y, correct_pixel.pixel_x);
-                double estimated_depth = (fx * baseline)/(depth_units * disp_map_range);
-                // double estimated_depth = (fx * baseline*disp_map_range)/(depth_units);
-                A_vector.push_back(estimated_depth);
+                // double estimated_depth = (fx * baseline)/(depth_units * disp_map_range);
+                A_vector.push_back(disp_map_range);
                 // ROS_INFO_STREAM(disp_map_range);
                 // A_vector.push_back(1.0);
 
                 //shoudl be z once looking at gmsl_center_link frame
-                b_vector.push_back(static_cast<double>(pixel_depth.z));
+                double lidar_disp = (fx * baseline)/(depth_units * static_cast<double>(pixel_depth.z));
+                // b_vector.push_back(static_cast<double>(pixel_depth.z));
+                b_vector.push_back(lidar_disp);
             }
 
 
@@ -423,13 +424,16 @@ class UsydDataPCCollectPlayBack {
                     double unrectified_value = static_cast<double>(disp.at<uint16_t>(i,j));
                     // double estimated_depth = (fx * baseline)/(depth_units * unrectified_value);
                     double rectified_depth =  previous_s_param * unrectified_value + previous_t_param;
-                    if (rectified_depth >= pow(2, 16)) {
-                        ROS_INFO_STREAM(rectified_depth << "is to big " << unrectified_value);
+                    if (static_cast<uint16_t>(rectified_depth) >= 65536) {
+                        rectified_depth = 65535;
                     }
+                    // if (rectified_depth >= pow(2, 16)) {
+                    //     ROS_INFO_STREAM(rectified_depth << "is to big " << unrectified_value);
+                    // }
                     // double rectified_disp = (fx * baseline)/(rectified_depth * depth_units);
 
                     // double rectified_value = previous_s_param * unrectified_value + previous_t_param;
-                    // ROS_INFO_STREAM(unrectified_value << " " << rectified_depth << " " <<  rectified_disp);
+                    // ROS_INFO_STREAM(unrectified_value << " " << rectified_depth << " " << rectified_disp);
                     disp_rectified.at<uint16_t>(i, j) = static_cast<uint16_t>(rectified_depth);
                     // uint16_t new_vale = value * scaling_factor;
                     // ROS_INFO_STREAM(disp_rectified.at<uint16_t>(i, j));
