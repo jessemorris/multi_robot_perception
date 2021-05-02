@@ -176,16 +176,6 @@ namespace VDO_SLAM {
 
 
     void RosVisualizer::odom_gt_callback(const nav_msgs::OdometryConstPtr& msg) {
-        // if (is_first_odom) {
-        //     odom_x_offset = msg->pose.pose.position.x;
-        //     odom_y_offset = msg->pose.pose.position.y;
-        //     is_first_odom = false;
-        // }
-        // gt_odom.pose.pose.position.x = odom_x_offset - msg->pose.pose.position.x ;
-        // gt_odom.pose.pose.position.y = odom_y_offset - msg->pose.pose.position.y;
-        // gt_odom.pose.pose.position.z = 0;
-
-        // gt_odom.pose.pose.orientation = msg->pose.pose.orientation;
         nav_msgs::Odometry odom_msg = *msg;
         VDO_SLAM::Odometry odom = VDO_SLAM::Odometry::create<nav_msgs::Odometry>(odom_msg);
         update_gt_odom(odom);
@@ -225,14 +215,6 @@ namespace VDO_SLAM {
     ros::Publisher RosVisualizer::create_map_update_pub(ros::NodeHandle& nh) {
         return nh.advertise<realtime_vdo_slam::VdoSlamMap>("/vdoslam/output/map", 10);
     }
-
-    // bool RosVisualizer::update_spin(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
-    //     publish_odom(slam_scene);
-    //     publish_3D_viz(slam_scene);
-    //     publish_display_mat(slam_scene);
-    //     publish_bounding_box_mat(slam_scene);
-    // }
-
 
     void RosVisualizer::publish_odom(const realtime_vdo_slam::VdoSlamScenePtr& slam_scene) {
         nav_msgs::Odometry odom;

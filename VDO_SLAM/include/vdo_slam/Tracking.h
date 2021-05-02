@@ -226,6 +226,7 @@ class Tracking
 
         std::shared_ptr<Scene> scene;
 
+
         ColourManager color_manager;
 
         //Calibration matrix

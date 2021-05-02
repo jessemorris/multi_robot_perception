@@ -13,7 +13,7 @@
   <!-- If true, and use calibration file is false, the system will get the camera intrinsics
   from the camera info topic defined in the config file. If False, the camera information
   properties must be defined here (K, D etc)-->
-  <arg name="use_camera_info_topic" default="true" />
+  <arg name="use_camera_info_topic" default="false" />
 
   <!-- System params for VDO SLAM. Used if  use_calibtration_file is true-->
 	<arg name="calibration_file" default="vdo_config.yaml"/>
@@ -57,11 +57,11 @@
   <arg name="data_code" default="2"/>
 
   <!-- <arg name="depth_map_factor" default="2200"/> -->
-  <arg name="depth_map_factor" default="800"/>
+  <arg name="depth_map_factor" default="700"/>
 
 
-  <arg name="thdepth_bg" default="40"/>
-  <arg name="thdepth_obj" default="40"/>
+  <arg name="thdepth_bg" default="30"/>
+  <arg name="thdepth_obj" default="45"/>
   <arg name="max_track_points_bg" default="1700"/>
   <arg name="max_track_points_obj" default="800"/>
 

@@ -59,7 +59,6 @@ namespace VDO_SLAM {
         return true;
     }
 
-
     std::vector<std::shared_ptr<SceneObject>>& Scene::get_scene_objects() {
         return scene_objects;
     }
