@@ -51,17 +51,17 @@
   <arg name="fps" default="12"/>
 
   <!-- <arg name="bf" default="387.5744"/> -->
-  <arg name="bf" default="200"/>
+  <arg name="bf" default="300"/>
 
   <arg name="RGB" default="0"/>
   <arg name="data_code" default="2"/>
 
   <!-- <arg name="depth_map_factor" default="2200"/> -->
-  <arg name="depth_map_factor" default="900"/>
+  <arg name="depth_map_factor" default="800"/>
 
 
-  <arg name="thdepth_bg" default="30"/>
-  <arg name="thdepth_obj" default="10"/>
+  <arg name="thdepth_bg" default="40"/>
+  <arg name="thdepth_obj" default="40"/>
   <arg name="max_track_points_bg" default="1700"/>
   <arg name="max_track_points_obj" default="800"/>
 
@@ -74,7 +74,7 @@
 
 
 
-  <arg name="window_size" default="40"/>
+  <arg name="window_size" default="5"/>
   <arg name="overlap_size" default="25"/>
 
   <arg name="use_sample_feature" default="0"/>

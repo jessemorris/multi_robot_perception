@@ -19,6 +19,9 @@ else()
    message("VDO_DEBUG flag set to False.")
 endif()
 
+add_definitions(-D__VDO_SLAM_DIR__="${CMAKE_SOURCE_DIR}/")
+message("Setting VDO_SLAM_DIR: ${CMAKE_SOURCE_DIR}/")
+
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 

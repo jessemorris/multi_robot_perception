@@ -218,7 +218,6 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
 
     // mono_depth_mat /= 256.0;
     // mono_depth_mat.convertTo(mono_depth_mat, CV_8UC1);
-    // cv::bitwise_not(mono_depth_mat, mono_depth_mat);
 
     // mono_depth_mat *= 256.0;
     // mono_depth_mat.convertTo(mono_depth_mat, CV_16UC1);
