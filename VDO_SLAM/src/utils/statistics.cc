@@ -35,6 +35,11 @@ namespace VDO_SLAM {
 
 
     void StatisticsManager::printStatistics() {
+        if (!system_node_["params"].IsDefined()) {
+            VDO_ERROR_MSG("Cannot print params becuase they are not set");
+            return;
+        }
+
         std::stringstream out;
         out << "Statistics\n";
 
@@ -45,9 +50,9 @@ namespace VDO_SLAM {
         std::string out_string = out.str();
 
         VDO_INFO_MSG(out_string);
-
-
     }
+
+    
     void StatisticsManager::writeStatistics() {
         if (should_write) {
             std::string system_file = RESULTS_DIR + "system.yaml";

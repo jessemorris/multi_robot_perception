@@ -13,7 +13,7 @@
   <!-- If true, and use calibration file is false, the system will get the camera intrinsics
   from the camera info topic defined in the config file. If False, the camera information
   properties must be defined here (K, D etc)-->
-  <arg name="use_camera_info_topic" default="false" />
+  <arg name="use_camera_info_topic" default="true" />
 
   <!-- System params for VDO SLAM. Used if  use_calibtration_file is true-->
 	<arg name="calibration_file" default="vdo_config.yaml"/>

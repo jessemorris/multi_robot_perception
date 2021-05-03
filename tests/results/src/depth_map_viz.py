@@ -3,12 +3,12 @@ import cv2
 import numpy as np
 
 # folder_path = "/home/jesse/Code/src/ros/src/rostk_plotting/records/03:22:2021-09:21:49/"
-folder_path = "/home/jesse/Code/src/ros/src/rostk_plotting/records/05:01:2021-10:16:07/"
+folder_path = "/home/jesse/Code/src/ros/src/rostk_plotting/records/05:03:2021-20:49:37/"
 # color_raw = o3d.io.read_image(folder_path + "0.png")
-color_raw_numpy = cv2.imread(folder_path + "0.png")
+color_raw_numpy = cv2.imread(folder_path + "2.png")
 color_raw_numpy = cv2.cvtColor(color_raw_numpy, cv2.COLOR_BGR2RGB)
 
-depth_raw_numpy = cv2.imread(folder_path + "1.png")
+depth_raw_numpy = cv2.imread(folder_path + "3.png")
 
 
 # depth_raw = o3d.io.read_image(folder_path + "20_prediction.png")

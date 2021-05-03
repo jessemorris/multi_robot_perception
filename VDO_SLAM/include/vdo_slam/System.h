@@ -83,8 +83,6 @@ namespace VDO_SLAM {
         // Tracker. It receives a frame and computes the associated camera pose.
         Tracking* mpTracker;
 
-        StatisticsManagerPtr satistics_;
-
         // ThreadSafeMaxQueue<SlamScenePtr, 
         //we repeat this in RosVdoSlam so at some point will need to merge into one
         //after we bring the semantic merging into VDO-SLAM and out of ROS

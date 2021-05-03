@@ -158,8 +158,8 @@ namespace VDO_SLAM {
         SlamScenePtr scene = Scene::create<realtime_vdo_slam::VdoSlamSceneConstPtr>(slam_scene_ptr);
         VisualizerOutputPtr viz_output = spinOnce(scene);
 
-        publish_bounding_box_mat(viz_output);
-        publish_display_mat(viz_output);
+        // publish_bounding_box_mat(viz_output);
+        // publish_display_mat(viz_output);
 
     }
 

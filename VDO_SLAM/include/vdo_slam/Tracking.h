@@ -24,6 +24,7 @@
 #include "vdo_slam/utils/Types.h"
 #include "vdo_slam/Params.h"
 #include "vdo_slam/visualizer/colour.h"
+#include "vdo_slam/utils/statistics.h"
 
 #include <memory>
 #include <mutex>
@@ -130,6 +131,9 @@ class Tracking
 
         eTrackingState mState;
         eTrackingState mLastProcessedState;
+
+        //NOTE: currently only set in constructor that uses VdoParams so will segfault otherwise
+        StatisticsManagerPtr statistics;
 
         // Dataset Selection
         enum eDataState{

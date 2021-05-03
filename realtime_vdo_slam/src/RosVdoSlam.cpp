@@ -11,6 +11,7 @@
 #include <vdo_slam/utils/VdoUtils.h>
 #include <vdo_slam/System.h>
 #include <vdo_slam/Scene.h>
+#include <vdo_slam/definitions.h>
 #include <vdo_slam/visualizer/visualizer_params.h>
 
 #include <ros/package.h>
@@ -35,7 +36,7 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
 
         if (use_viz) {
             VisualizerParamsPtr viz_params = std::make_shared<VisualizerParams>();
-            viz_params->classes_filepath = "/home/jesse/Code/src/ros/src/multi_robot_perception/VDO_SLAM/include/vdo_slam/visualizer/classes.csv";
+            viz_params->classes_filepath = std::string(__VDO_SLAM_DIR__) + "include/vdo_slam/visualizer/classes.csv";
             handle.getParam("/vdo_pipeline/visualizer/display_window", viz_params->display_window);
 
 
@@ -61,6 +62,17 @@ RosVdoSlam::~RosVdoSlam() {
     if (vdo_worker_thread.joinable()) {
         vdo_worker_thread.join();
     }
+}
+
+
+void RosVdoSlam::shutdown() {
+    ROS_INFO_STREAM("Shutting down ROS VDO SLAM System");
+    if (vdo_worker_thread.joinable()) {
+        vdo_worker_thread.join();
+    }
+
+    ros_viz->shutdown();
+    slam_system->shutdown();
 }
 
 std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHandle& nh) {
@@ -105,8 +117,6 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
 
             //if true -> we use the modified camera matrix P
             if(apply_undistortion) {
-                // ROS_INFO_STREAM(cam_info.modified_camera_matrix.size());
-                // ROS_INFO_STREAM(cam_info.modified_camera_matrix);
                 //should be 3x3
                 params.fx = cam_info.modified_camera_matrix.at<double>(0,0);
                 params.cx = cam_info.modified_camera_matrix.at<double>(0,2);
@@ -212,25 +222,6 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
     cv_ptr = cv_bridge::toCvCopy(vdo_input->depth, sensor_msgs::image_encodings::MONO16);
     mono_depth_mat = cv_ptr->image;
 
-    // mono_depth_mat = 1.0/mono_depth_mat;
-    // cv::imshow("Depth", mono_depth_mat);
-    // cv::waitKey(1);
-
-    // mono_depth_mat /= 256.0;
-    // mono_depth_mat.convertTo(mono_depth_mat, CV_8UC1);
-
-    // mono_depth_mat *= 256.0;
-    // mono_depth_mat.convertTo(mono_depth_mat, CV_16UC1);
-
-    //only for midas for now
-    // cv::imshow("Depth OG", mono_depth_mat);
-    // cv::waitKey(1);
-    // mono_depth_mat.convertTo(mono_depth_mat, CV_8UC1);
-    // cv::bitwise_not(mono_depth_mat, mono_depth_mat);
-    // mono_depth_mat.convertTo(mono_depth_mat, CV_16UC1);
-    // cv::imshow("Depth", mono_depth_mat);
-    // cv::waitKey(1);
-
     SemanticObjectVector semantic_objects = vdo_input->semantic_objects;
 
 
@@ -286,10 +277,6 @@ void RosVdoSlam::merge_scene_semantics(SlamScenePtr& scene, const std::vector<ma
         int association = tracked[i];
         SceneObjectPtr object_ptr = scene_objects[i];
 
-        // VDO_SLAM::RosSceneObject scene_object(*scene_objects[i], scene_time);
-        // realtime_vdo_slam::VdoSceneObjectPtr vdo_scene_object_ptr = scene_object.to_msg();
- 
-
         //check association was valid
         if (association >= 0 || association < semantic_objects.size()) {
             mask_rcnn::SemanticObject semantic_object = semantic_objects[association];
@@ -318,10 +305,8 @@ void RosVdoSlam::merge_scene_semantics(SlamScenePtr& scene, const std::vector<ma
 
         }
 
-        // vdo_slam_scene->objects.push_back(*vdo_scene_object_ptr);
 
     }
-    // return vdo_slam_scene;
 
 }
 
@@ -376,10 +361,6 @@ void RosVdoSlam::vdo_worker() {
             // realtime_vdo_slam::VdoSlamScenePtr summary_msg = ros_scene->to_msg();
             realtime_vdo_slam::VdoSlamScenePtr summary_msg = vdo_scene->convert<realtime_vdo_slam::VdoSlamScenePtr>();
             if(summary_msg != nullptr) {
-                // sensor_msgs::Image image_msg;
-                // utils::mat_to_image_msg(image_msg, input->raw, sensor_msgs::image_encodings::RGB8, summary_msg->header);
-                // summary_msg->original_frame = image_msg;
-
                 //we send a std::shared ptr as the visualizer is in the same node so we maximise sending speed
                 //see ros interprocess comms: http://wiki.ros.org/roscpp/Overview/Publishers%20and%20Subscribers#Intraprocess_Publishing
                 scene_pub.publish(summary_msg);

@@ -81,6 +81,9 @@ class RosVdoSlam {
          */
         void vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& vdo_input);
 
+
+        void shutdown();
+
     private:
         ros::NodeHandle handle;
     

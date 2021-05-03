@@ -16,11 +16,17 @@ namespace VDO_SLAM {
 
         VisualizerOutput2DPtr result = std::make_shared<VisualizerOutput2D>(*output_viz_);
         return result;
+    }
 
-
+    void Visualizer2D::shutdown() {
+        VDO_INFO_MSG("Shutting down Visualizer 2D");
+        statistics_manager_->writeStatistics();
     }
 
     void Visualizer2D::update_object_points_display(SlamScenePtr& slam_scene_) {
+        statistics_manager_->logScene(*slam_scene_);
+
+
         display_lock.lock();
         
         double x = slam_scene_->poseT()[0];
@@ -70,6 +76,8 @@ namespace VDO_SLAM {
             odom_gt.is_first_ = false;
 
         }
+
+        statistics_manager_->logOdom(odom);
 
 
         Eigen::Vector3d odom_translation = odom.pose.translation();

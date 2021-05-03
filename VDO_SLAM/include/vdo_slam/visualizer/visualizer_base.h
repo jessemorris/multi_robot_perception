@@ -5,6 +5,7 @@
 #include "vdo_slam/visualizer/visualizer_output_base.h"
 #include "vdo_slam/visualizer/colour.h"
 #include "vdo_slam/utils/VdoUtils.h"
+#include "vdo_slam/utils/statistics.h"
 #include "vdo_slam/Scene.h"
 
 #include <functional>
@@ -50,12 +51,19 @@ namespace VDO_SLAM {
             virtual ~VisualizerBase() = default;
 
             /**
+             * @brief Closes and GUI functionality and writes loggers to file if necessary;
+             * 
+             */
+            virtual void shutdown() = 0;
+
+            /**
              * @brief Updates any visualization with the new slam scene
              * 
              * @param slam_scene_ 
              */
             virtual VisualizerOutputPtr spinOnce(SlamScenePtr& slam_scene_) = 0;
 
+            //currently unimplemented
             void connect_render_func(RenderFunc&& func_);
 
         protected:
@@ -64,6 +72,9 @@ namespace VDO_SLAM {
             RenderFunc render_func;
 
             ColourManager color_manager_;
+
+            //Is here for now just so we can get results
+            StatisticsManagerPtr statistics_manager_;
 
         
 

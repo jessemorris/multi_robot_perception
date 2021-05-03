@@ -28,8 +28,6 @@ namespace VDO_SLAM {
         //Create the Map
         mpMap = new Map();
 
-        satistics_ = std::make_shared<StatisticsManager>(params, true);
-        satistics_->printStatistics();
 
         //Initialize the Tracking thread
         //(it will live in the main thread of execution, the one that called this constructor)
@@ -84,9 +82,9 @@ namespace VDO_SLAM {
 
     void System::shutdown() {
 
-        if(satistics_) {
-            satistics_->writeStatistics();
-        }
+        // if(satistics_) {
+        //     satistics_->writeStatistics();
+        // }
         VDO_INFO_MSG("Shutting down SLAM system");
 
     }

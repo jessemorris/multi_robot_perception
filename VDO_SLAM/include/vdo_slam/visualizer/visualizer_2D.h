@@ -33,6 +33,7 @@ namespace VDO_SLAM {
             Visualizer2D(VisualizerParamsPtr& params_);
 
             VisualizerOutputPtr spinOnce(SlamScenePtr& slam_scene_) override;
+            void shutdown() override;
 
             void update_gt_odom(Odometry& odom);
 
