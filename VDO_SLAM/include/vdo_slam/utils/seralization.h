@@ -117,9 +117,12 @@ namespace YAML {
 
             //this should be uint16_t but atm code in Tracking sets to floats and
             //currently dont want to change in case it introduces bugs
-            node["image_center"]["u"] = rhs.center_image.at<float>(0, 0);
-            node["image_center"]["v"] = rhs.center_image.at<float>(1, 0);
 
+            //currently we do not encodce the image center becuase this only gets called in the viauzlizer
+            //this is after the emssage gets converted to ROS (where we create the bounding box) and loose the 
+            //center image data - but this information is encoded in the bounding box
+            // node["image_center"]["u"] = rhs.center_image.at<float>(0, 0);
+            // node["image_center"]["v"] = rhs.center_image.at<float>(1, 0);
             node["semantic_instance_index"] = rhs.semantic_instance_index;
             node["label"] = rhs.label;
             node["tracking_id"] = rhs.tracking_id;
@@ -128,6 +131,29 @@ namespace YAML {
             node["diff_time"] = rhs.timestamp;
             node["bounding_box"] = rhs.bounding_box;
             node["scene_time"] = rhs.scene_time;
+
+            node["pose"]["translation"]["x"] = rhs.pose->translation()[0];
+            node["pose"]["translation"]["y"] = rhs.pose->translation()[1];
+            node["pose"]["translation"]["z"] = rhs.pose->translation()[2];
+
+            node["pose"]["rotation"]["x"] = rhs.pose->rotation().x();
+            node["pose"]["rotation"]["y"] = rhs.pose->rotation().y();
+            node["pose"]["rotation"]["z"] = rhs.pose->rotation().z();
+            node["pose"]["rotation"]["w"] = rhs.pose->rotation().w();
+
+            node["twist"]["linear"]["x"] = rhs.twist->translation()[0];
+            node["twist"]["linear"]["y"] = rhs.twist->translation()[1];
+            node["twist"]["linear"]["z"] = rhs.twist->translation()[2];
+
+            //for now this is just the way the odom messges are written becuase
+            //we convert between ros and here so much
+            node["twist"]["angular"]["x"] = rhs.twist->rotation().x();
+            node["twist"]["angular"]["y"] = rhs.twist->rotation().y();
+            node["twist"]["angular"]["z"] = rhs.twist->rotation().z();
+
+
+            
+            
             
             return node;
         }
@@ -146,6 +172,25 @@ namespace YAML {
             }
 
             node["scene_time"] = rhs.scene_time;
+            node["camera_pose"]["translation"]["x"] = rhs.pose->translation()[0];
+            node["camera_pose"]["translation"]["y"] = rhs.pose->translation()[1];
+            node["camera_pose"]["translation"]["z"] = rhs.pose->translation()[2];
+
+            node["camera_pose"]["rotation"]["x"] = rhs.pose->rotation().x();
+            node["camera_pose"]["rotation"]["y"] = rhs.pose->rotation().y();
+            node["camera_pose"]["rotation"]["z"] = rhs.pose->rotation().z();
+            node["camera_pose"]["rotation"]["w"] = rhs.pose->rotation().w();
+
+            node["camera_twist"]["linear"]["x"] = rhs.twist->translation()[0];
+            node["camera_twist"]["linear"]["y"] = rhs.twist->translation()[1];
+            node["camera_twist"]["linear"]["z"] = rhs.twist->translation()[2];
+
+            //for now this is just the way the odom messges are written becuase
+            //we convert between ros and here so much
+            node["camera_twist"]["angular"]["x"] = rhs.twist->rotation().x();
+            node["camera_twist"]["angular"]["y"] = rhs.twist->rotation().y();
+            node["camera_twist"]["angular"]["z"] = rhs.twist->rotation().z();
+
             //note we do not encode the rgb_frame (cv::Mat type). We can change this later
             
             return node;

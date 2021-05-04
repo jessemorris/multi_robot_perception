@@ -29,6 +29,7 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
     handle(n) {
         handle.getParam("/ros_vdo_slam/use_viz", use_viz);
         handle.getParam("/ros_vdo_slam/viz_rate", viz_rate);
+        handle.getParam("/ros_vdo_slam/use_ros_time", use_ros_time);
 
 
         handle.getParam("/ros_vdo_slam/optimization_trigger_frame", global_optim_trigger);
@@ -203,7 +204,13 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
         ROS_ERROR_STREAM("VDO SLAM input time is zero");
     }
 
-    current_time = vdo_input->header.stamp;
+    if (use_ros_time) {
+        current_time = ros::Time::now();
+    }
+    else {
+        current_time = vdo_input->header.stamp;
+
+    }
     ros::Duration diff = current_time - previous_time;
     //time should be in n seconds or seconds (or else?)
     double time_difference = diff.toSec();
@@ -332,7 +339,7 @@ void RosVdoSlam::vdo_worker() {
                 input->flow,
                 input->mask,
                 slam_time,
-                input->time_diff,
+                slam_time.to_sec(),
                 image_trajectory,global_optim_trigger);
 
             // std::unique_ptr<VDO_SLAM::Scene> unique_scene =  

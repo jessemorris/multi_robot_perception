@@ -9,6 +9,11 @@
    If False, will use the calibration params defined here and the specified camera info topic  -->
   <arg name="use_calibration_file" default="false" />
 
+  <!-- If true, the interface will overwrite the messages times to the time recieved 
+  and not their header time. This is useful becuase the bagfiles used for testing
+  are in message order but not synchronized by timestamp--> -->
+  <arg name="use_ros_time" default="true" />
+
 
   <!-- If true, and use calibration file is false, the system will get the camera intrinsics
   from the camera info topic defined in the config file. If False, the camera information
@@ -120,6 +125,8 @@
 
     <param name="use_viz" value="$(arg use_viz)"/>
     <param name="viz_rate" value="$(arg viz_rate)"/>
+
+    <param name="use_ros_time" value="$(arg use_ros_time)" />
 
     <!--only check if we load the information from this launc file. Wait for camera_info msg
     on topic defined in config file. Else, use the camera info defined here. -->

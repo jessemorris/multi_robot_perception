@@ -124,6 +124,8 @@ class RosVdoSlam {
         int viz_rate;
         bool use_viz;
 
+        bool use_ros_time;
+
         ros::Publisher scene_pub;
         ros::Publisher map_pub;
         VDO_SLAM::RosVisualizerPtr ros_viz;

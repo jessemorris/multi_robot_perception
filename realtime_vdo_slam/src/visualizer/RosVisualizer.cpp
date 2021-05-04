@@ -24,6 +24,9 @@ namespace VDO_SLAM {
             image_transport(nh),
             listener(tf_buffer) {
 
+
+            nh.getParam("/ros_vdo_slam/use_ros_time", use_ros_time);
+
             //create mems for async callback queues
             vdo_scene_queue_ptr = std::make_shared<ros::CallbackQueue>();
             publish_queue_ptr = std::make_shared<ros::CallbackQueue>();
@@ -177,6 +180,12 @@ namespace VDO_SLAM {
 
     void RosVisualizer::odom_gt_callback(const nav_msgs::OdometryConstPtr& msg) {
         nav_msgs::Odometry odom_msg = *msg;
+
+        if(use_ros_time) {
+            //overwrite message time
+            odom_msg.header.stamp = ros::Time::now();
+        }
+
         VDO_SLAM::Odometry odom = VDO_SLAM::Odometry::create<nav_msgs::Odometry>(odom_msg);
         update_gt_odom(odom);
     }

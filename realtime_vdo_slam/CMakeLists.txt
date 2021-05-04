@@ -172,8 +172,8 @@ add_library(${PROJECT_NAME} SHARED
 	src/tracking/SemanticTracker.cpp
 	src/visualizer/RosVisualizer.cpp
 	src/visualizer/RosAsyncManager.cpp
-	src/data_provider/DataProviderInterface.cpp
-	src/data_provider/RosBagDataProvider.cpp
+	# src/data_provider/DataProviderInterface.cpp
+	# src/data_provider/RosBagDataProvider.cpp
 	# src/scene_graph/SceneGraphBuilder.cpp
 	# src/scene_graph/SceneGraph.cpp
 	# src/scene_graph/SceneGraphOptimizer.cpp

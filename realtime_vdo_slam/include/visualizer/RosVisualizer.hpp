@@ -167,6 +167,9 @@ namespace VDO_SLAM {
             ros::NodeHandle nh;
             int spin_rate;
 
+            //replicant or param in RosVdoSlam -> jsut here now so we can get resylts
+            bool use_ros_time;
+
             VDO_SLAM::RosAsyncPublisherPtr async_manager;
 
 
