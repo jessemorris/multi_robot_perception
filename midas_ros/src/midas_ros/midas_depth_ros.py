@@ -98,7 +98,7 @@ class MidasRos(RosCppCommunicator):
 
 
         #adding bitwise not makes smaller values (black) closer to the camera
-        image_normal = cv2.bitwise_not(image_normal)
+        # image_normal = cv2.bitwise_not(image_normal)
         return image_normal
 
 

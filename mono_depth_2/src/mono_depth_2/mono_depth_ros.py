@@ -51,7 +51,7 @@ sys.path.insert(0, package_path)
 #mono_640x192
 
 class MonoDepth2Ros(RosCppCommunicator):
-    def __init__(self, model_path= package_path + "/src/mono_depth_2/models/", model_name = "mono_640x192"):
+    def __init__(self, model_path= package_path + "/src/mono_depth_2/models/", model_name = "mono+stereo_640x192"):
         RosCppCommunicator.__init__(self)
         self.model_name = model_name
 
@@ -142,7 +142,7 @@ class MonoDepth2Ros(RosCppCommunicator):
 
 
         disp = outputs[("disp", 0)]
-        _, disp = self.disp_to_depth(disp, 0.01, 100)
+        # _, disp = self.disp_to_depth(disp, 0.01, 100)
         disp_resized = torch.nn.functional.interpolate(
             disp, (original_height, original_width), mode="bilinear", align_corners=False)
 
@@ -153,6 +153,15 @@ class MonoDepth2Ros(RosCppCommunicator):
         depth_image_float = disp_resized.squeeze().cpu().detach().numpy()
 
         depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=65536, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
+        # depth_image = cv2.normalize(src=depth_image_float, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+
+        # depth_image = cv2.bitwise_not(depth_image)
+
+        # depth_image[depth_image > 254] = 0
+
+        # depth_image = cv2.normalize(src=depth_image, dst=None, alpha=0, beta=65536, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_16U)
+
+
 
         del tensor_image
         del image 

@@ -59,6 +59,19 @@ namespace VDO_SLAM {
             vdo_slam_map_subscriber_options.transport_hints.tcpNoDelay(true);
             slam_map_sub = nh.subscribe(vdo_slam_map_subscriber_options);
 
+
+            //do same for odomgt sub (for now)
+            ros::SubscribeOptions gt_odom_subscriber_options =
+                ros::SubscribeOptions::create<nav_msgs::Odometry>(
+                    "/vdoslam/output/odom_gt",
+                    kMaxSceneQueueSize,
+                    boost::bind(&RosVisualizer::odom_gt_callback, this, _1),
+                    ros::VoidPtr(),
+                    vdo_scene_queue_ptr.get());
+
+            gt_odom_subscriber_options.transport_hints.tcpNoDelay(true);
+            gt_odom_sub = nh.subscribe(gt_odom_subscriber_options);
+
             //create the actual async spinner to listen to the vdoslam/output/scene topic
             static constexpr size_t kSceneSpinnerThreads = 2u;
             async_spinner_scene =
@@ -84,7 +97,7 @@ namespace VDO_SLAM {
                 std::make_unique<ros::AsyncSpinner>(kPublishSpinnerThreads, publish_queue_ptr.get());
 
 
-            nh.getParam("/vdo_pipeline/visualizer/odometry_ground_truth_topic", odom_gt_topic);
+            // nh.getParam("/vdo_pipeline/visualizer/odometry_ground_truth_topic", odom_gt_topic);
             nh.getParam("/vdo_pipeline/visualizer/gps_topic", gps_topic);
 
 
@@ -93,9 +106,9 @@ namespace VDO_SLAM {
             nh.getParam("/vdo_pipeline/odom_frame_id", odom_frame);
             nh.getParam("/vdo_pipeline/base_link_frame_id", base_frame);
 
-            if(gt_odom_in_use()) {
-                odom_gt_sub = nh.subscribe<nav_msgs::Odometry>(odom_gt_topic, 100, &RosVisualizer::odom_gt_callback, this);
-            }
+            // if(gt_odom_in_use()) {
+            //     odom_gt_sub = nh.subscribe<nav_msgs::Odometry>(odom_gt_topic, 100, &RosVisualizer::odom_gt_callback, this);
+            // }
 
             if(gps_in_use()) {
                 gps_sub = nh.subscribe<sensor_msgs::NavSatFix>(gps_topic, 100, &RosVisualizer::gps_callback, this);
@@ -161,8 +174,8 @@ namespace VDO_SLAM {
         SlamScenePtr scene = Scene::create<realtime_vdo_slam::VdoSlamSceneConstPtr>(slam_scene_ptr);
         VisualizerOutputPtr viz_output = spinOnce(scene);
 
-        // publish_bounding_box_mat(viz_output);
-        // publish_display_mat(viz_output);
+        publish_bounding_box_mat(viz_output);
+        publish_display_mat(viz_output);
 
     }
 
@@ -181,10 +194,10 @@ namespace VDO_SLAM {
     void RosVisualizer::odom_gt_callback(const nav_msgs::OdometryConstPtr& msg) {
         nav_msgs::Odometry odom_msg = *msg;
 
-        if(use_ros_time) {
-            //overwrite message time
-            odom_msg.header.stamp = ros::Time::now();
-        }
+        // if(use_ros_time) {
+        //     //overwrite message time
+        //     odom_msg.header.stamp = ros::Time::now();
+        // }
 
         VDO_SLAM::Odometry odom = VDO_SLAM::Odometry::create<nav_msgs::Odometry>(odom_msg);
         update_gt_odom(odom);
@@ -219,6 +232,10 @@ namespace VDO_SLAM {
 
     ros::Publisher RosVisualizer::create_viz_pub(ros::NodeHandle& nh) {
         return nh.advertise<realtime_vdo_slam::VdoSlamScene>("/vdoslam/output/scene", 10);
+    }
+
+    ros::Publisher RosVisualizer::create_odom_viz(ros::NodeHandle& nh) {
+        return nh.advertise<nav_msgs::Odometry>("/vdoslam/output/odom_gt", 10);
     }
 
     ros::Publisher RosVisualizer::create_map_update_pub(ros::NodeHandle& nh) {

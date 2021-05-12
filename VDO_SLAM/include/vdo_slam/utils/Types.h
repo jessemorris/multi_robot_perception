@@ -123,13 +123,14 @@ namespace VDO_SLAM {
 
         public:
 
-            BoundingBox() {}
+            BoundingBox() {is_init_ =false;}
             BoundingBox(double x_, double y_, double width_, double height_);
             BoundingBox(const BoundingBox& bb) {
                 x = bb.x;
                 y = bb.y;
                 width = bb.width;
                 height = bb.height;
+                is_init_ = true;
             }
 
             template<class T>
@@ -140,6 +141,7 @@ namespace VDO_SLAM {
 
 
             cv::Rect2d to_rect();
+            inline const bool is_init() const {return is_init_;};
 
             //this should follow the same structure as cv::Rect
             double x;
@@ -148,7 +150,7 @@ namespace VDO_SLAM {
             double height;
 
         protected:
-            bool is_init = false;
+            bool is_init_;
     };
 
 

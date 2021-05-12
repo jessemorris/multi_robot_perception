@@ -18,6 +18,7 @@ global should_continue_
 should_continue_= True
 
 
+#unit bad
 class DataCapture:
 
     def __init__(self):
@@ -59,7 +60,7 @@ class DataCapture:
         ax2.set_title("Disparity after scale and shift")
         # plt.plot(x, self._gt_data, label="Rectified")
         ax2.set_xlabel("# Frames")
-        ax1.set_ylabel("RMSE")
+        ax1.set_ylabel("RMSE") #TODO: UNITS!
         ax2.set_ylabel("RMSE")
 
         plt.legend()

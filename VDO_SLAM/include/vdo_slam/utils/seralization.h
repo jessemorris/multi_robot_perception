@@ -76,6 +76,7 @@ namespace YAML {
             node["y"] = rhs.y;
             node["width"] = rhs.width;
             node["height"] = rhs.height;
+            node["is_init"] = rhs.is_init();
             return node;
         }
 
@@ -131,6 +132,7 @@ namespace YAML {
             node["diff_time"] = rhs.timestamp;
             node["bounding_box"] = rhs.bounding_box;
             node["scene_time"] = rhs.scene_time;
+
 
             node["pose"]["translation"]["x"] = rhs.pose->translation()[0];
             node["pose"]["translation"]["y"] = rhs.pose->translation()[1];

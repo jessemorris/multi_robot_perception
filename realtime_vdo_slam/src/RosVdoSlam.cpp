@@ -26,14 +26,19 @@
 using namespace VDO_SLAM;
 
 RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
-    handle(n) {
+    handle(n),
+    last_odom_ptr(nullptr) {
         handle.getParam("/ros_vdo_slam/use_viz", use_viz);
         handle.getParam("/ros_vdo_slam/viz_rate", viz_rate);
         handle.getParam("/ros_vdo_slam/use_ros_time", use_ros_time);
+        handle.getParam("/vdo_pipeline/visualizer/odometry_ground_truth_topic", odom_gt_topic);
 
 
         handle.getParam("/ros_vdo_slam/optimization_trigger_frame", global_optim_trigger);
         ROS_INFO_STREAM("Global Optimization Trigger at frame id: " << global_optim_trigger);
+
+        vdo_input_queue_ptr = std::make_shared<ros::CallbackQueue>();
+        odom_input_queue_ptr = std::make_shared<ros::CallbackQueue>();
 
         if (use_viz) {
             VisualizerParamsPtr viz_params = std::make_shared<VisualizerParams>();
@@ -48,14 +53,58 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
         previous_time = ros::Time::now();
         image_trajectory = cv::Mat::zeros(800, 600, CV_8UC3);
 
-        vdo_input_sub = handle.subscribe("/vdoslam/input/all", 100, &RosVdoSlam::vdo_input_callback, this);
+        //make asynch subscribers
+        static constexpr size_t kMaxSceneQueueSize = 1000u;
+        
+        ros::SubscribeOptions vdoinput_subscriber_options =
+            ros::SubscribeOptions::create<realtime_vdo_slam::VdoInput>(
+                "/vdoslam/input/all",
+                kMaxSceneQueueSize,
+                boost::bind(&RosVdoSlam::vdo_input_callback, this, _1),
+                ros::VoidPtr(),
+                vdo_input_queue_ptr.get());
+
+        vdoinput_subscriber_options.transport_hints.tcpNoDelay(true);
+        vdo_input_sub = handle.subscribe(vdoinput_subscriber_options);
+
+        static constexpr size_t kPublishSpinnerThreads = 2u;
+        async_spinner_vdoinput =
+                std::make_unique<ros::AsyncSpinner>(kPublishSpinnerThreads, vdo_input_queue_ptr.get());
+
+
+        //connect to odom gt topic if used
+        if(!odom_gt_topic.empty()) {
+            ros::SubscribeOptions odomgt_subscriber_options =
+            ros::SubscribeOptions::create<nav_msgs::Odometry>(
+                odom_gt_topic,
+                kMaxSceneQueueSize,
+                boost::bind(&RosVdoSlam::odom_gt_callback, this, _1),
+                ros::VoidPtr(),
+                odom_input_queue_ptr.get());
+
+            odomgt_subscriber_options.transport_hints.tcpNoDelay(true);
+            odom_gt_sub = handle.subscribe(odomgt_subscriber_options);
+
+            async_spinner_odominput =
+                std::make_unique<ros::AsyncSpinner>(kPublishSpinnerThreads, odom_input_queue_ptr.get());
+
+        }
+
+
+        // vdo_input_sub = handle.subscribe("/vdoslam/input/all", 100, &RosVdoSlam::vdo_input_callback, this);
 
         scene_pub = RosVisualizer::create_viz_pub(handle);
         map_pub = RosVisualizer::create_map_update_pub(handle);
+        odom_gt_pub = RosVisualizer::create_odom_viz(handle);
 
         slam_system = construct_slam_system(handle);
 
         vdo_worker_thread = std::thread(&RosVdoSlam::vdo_worker, this);
+
+        async_spinner_vdoinput->start();
+        async_spinner_odominput->start();
+
+
 
     }
 
@@ -72,8 +121,13 @@ void RosVdoSlam::shutdown() {
         vdo_worker_thread.join();
     }
 
+    async_spinner_vdoinput->stop();
+    async_spinner_odominput->stop();
+
+
     ros_viz->shutdown();
     slam_system->shutdown();
+
 }
 
 std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHandle& nh) {
@@ -197,6 +251,11 @@ std::shared_ptr<VDO_SLAM::System> RosVdoSlam::construct_slam_system(ros::NodeHan
 
 }
 
+
+void RosVdoSlam::odom_gt_callback(const nav_msgs::OdometryConstPtr& odom) {
+    last_odom_ptr = boost::make_shared<nav_msgs::Odometry>(*odom);
+}
+
 // void RosVdoSlam::vdo_input_callback(ImageConst raw_image, ImageConst mask, ImageConst flow, ImageConst depth) {
 void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& vdo_input) {
     //the actual time the image was craeted
@@ -234,6 +293,18 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
 
     std::shared_ptr<VdoSlamInput> input = std::make_shared<VdoSlamInput>(image,scene_flow_mat,
             mono_depth_mat, mask_rcnn_mat, semantic_objects, time_difference, current_time);
+
+
+    if (last_odom_ptr != nullptr) {
+        nav_msgs::Odometry odom = *last_odom_ptr;
+        input->gt_odom_ptr = boost::make_shared<nav_msgs::Odometry>(odom);
+        input->gt_odom_ptr->header.stamp = current_time;
+
+    }
+    else {
+        ROS_WARN_STREAM("Odom gt was null");
+        input->gt_odom_ptr = boost::make_shared<nav_msgs::Odometry>();
+    }
 
     //add the input to the thread queue so we can deal with it later
     // push_vdo_input(input);
@@ -305,6 +376,7 @@ void RosVdoSlam::merge_scene_semantics(SlamScenePtr& scene, const std::vector<ma
             if (tracking_class_map.find(object_ptr->tracking_id) != tracking_class_map.end() ) {
                 //found -> assign label to scene object. Note, we will not have bounding box
                 object_ptr->label = tracking_class_map[object_ptr->tracking_id];
+                object_ptr->bounding_box = BoundingBox();
             } 
             else {
                 ROS_WARN_STREAM("Tracking association was invalid: Coud not find association in tracking map or by matching");
@@ -367,10 +439,19 @@ void RosVdoSlam::vdo_worker() {
             // ros_scene = std::make_shared<VDO_SLAM::RosScene>(*vdo_scene, input->image_time);
             // realtime_vdo_slam::VdoSlamScenePtr summary_msg = ros_scene->to_msg();
             realtime_vdo_slam::VdoSlamScenePtr summary_msg = vdo_scene->convert<realtime_vdo_slam::VdoSlamScenePtr>();
+            utils::mat_to_image_msg(summary_msg->original_frame, original_rgb, sensor_msgs::image_encodings::RGB8);
             if(summary_msg != nullptr) {
                 //we send a std::shared ptr as the visualizer is in the same node so we maximise sending speed
                 //see ros interprocess comms: http://wiki.ros.org/roscpp/Overview/Publishers%20and%20Subscribers#Intraprocess_Publishing
                 scene_pub.publish(summary_msg);
+
+
+
+                if (input->gt_odom_ptr != nullptr) {
+                    ROS_ASSERT(input->gt_odom_ptr->header.stamp.toSec() == image_time.toSec());
+
+                    odom_gt_pub.publish(input->gt_odom_ptr);
+                }
 
 
             }

@@ -18,6 +18,10 @@
 
 #include <midas_ros/MidasDepth.h>
 #include <midas_ros/MidasDepthInterface.hpp>
+
+#include <mono_depth_2/MonoDepth.h>
+#include <mono_depth_2/MonoDepthInterface.hpp>
+
 #include <minisam/core/LossFunction.h>
 #include <minisam/core/Eigen.h>
 #include <minisam/core/Factor.h>
@@ -141,9 +145,11 @@ class UsydDataPCCollectPlayBack {
             mono_after = it.advertise("usyd_dataset_pc/mono_after", 20);
 
             midas_depth  = std::make_shared<midas_ros::MidasDepthInterface>(nh);
+            mono_depth = std::make_shared<mono_depth_2::MonoDepthInterface>(nh);
             // sceneflow = std::make_shared<flow_net::FlowNetInterface>(nh);
             // mask_rcnn_interface = std::make_shared<mask_rcnn::MaskRcnnInterface>(nh);
             midas_depth->start_service();
+            mono_depth->start_service();
             // sceneflow->start_service();
             // mask_rcnn_interface->start_service();
             init_distortion_params();
@@ -270,12 +276,20 @@ class UsydDataPCCollectPlayBack {
 
             std::vector<lidar_camera_projection::PixelDepth> corrected_projections;
 
-            cv::Mat disp;
-            bool mono_depth_success = midas_depth->analyse(rgb_image, disp);
+            cv::Mat disp, mono_disp;
+            bool midas_depth_success = midas_depth->analyse(rgb_image, disp);
+
+            if (!midas_depth_success) {
+                return;
+            }
+
+            bool mono_depth_success = mono_depth->analyse(rgb_image, mono_disp);
 
             if (!mono_depth_success) {
                 return;
             }
+
+
 
             cv::Mat rgb_lidar;
             rgb_image.copyTo(rgb_lidar);
@@ -455,6 +469,12 @@ class UsydDataPCCollectPlayBack {
             cv::waitKey(1);
             sensor_msgs::ImagePtr  img_msg = cv_bridge::CvImage(header, "mono16", disp_rectified).toImageMsg();
             bag.write("/camera/depth/image_raw",save_time, *img_msg);
+
+
+            sensor_msgs::ImagePtr  img_msg_mono = cv_bridge::CvImage(header, "mono16", mono_disp).toImageMsg();
+            bag.write("/camera/depth_mono/image_raw",save_time, *img_msg_mono);
+
+
             mono_after.publish(img_msg);
             cv::imshow("Disp after dectification", disp_rectified);
             cv::waitKey(1);
@@ -486,6 +506,7 @@ class UsydDataPCCollectPlayBack {
         typedef std::shared_ptr<UsydDataPCCollectPlayBack::TimingInfo> TimingInfoPtr;
 
         midas_ros::MidasDepthInterfacePtr midas_depth;
+        mono_depth_2::MonoDepthInterfacePtr mono_depth;
 
         double fx;
         double baseline;

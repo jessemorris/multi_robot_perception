@@ -6,6 +6,7 @@
 #include <ros/ros.h>
 
 #include <mask_rcnn/SemanticObject.h>
+#include <nav_msgs/Odometry.h>
 
 namespace VDO_SLAM {
 
@@ -23,7 +24,7 @@ namespace VDO_SLAM {
         cv::Mat raw, flow, depth, mask;
         SemanticObjectVector semantic_objects;
         std::vector<std::vector<float> > object_pose_gt;
-        cv::Mat ground_truth;
+        nav_msgs::OdometryPtr gt_odom_ptr;
         double time_diff;
         ros::Time image_time; //when the image was created so we can keep track of the real time despite algorithmic delays
 
@@ -50,7 +51,7 @@ namespace VDO_SLAM {
             image_time(_image_time)
 
         {
-            ground_truth = cv::Mat::eye(4,4,CV_32F);
+            // ground_truth = cv::Mat::eye(4,4,CV_32F);
             _mask.convertTo(mask, CV_32SC1);
         }
 

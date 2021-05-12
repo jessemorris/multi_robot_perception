@@ -81,6 +81,9 @@ class RosVdoSlam {
          */
         void vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& vdo_input);
 
+        //for now
+        void odom_gt_callback(const nav_msgs::OdometryConstPtr& odom);
+
 
         void shutdown();
 
@@ -119,6 +122,18 @@ class RosVdoSlam {
 
         int global_optim_trigger;
 
+        RosCallbackQueuePtr vdo_input_queue_ptr;
+        RosCallbackQueuePtr odom_input_queue_ptr;
+
+        //this is just to mamager asynchronous gt odom messages
+        //used for subscribing to the vdo scene topic
+        std::unique_ptr<ros::AsyncSpinner> async_spinner_vdoinput;
+        std::unique_ptr<ros::AsyncSpinner> async_spinner_odominput;
+
+        bool vdo_input_spinner_started = false;
+        bool odom_input_spinner_started = false;
+
+
 
         //VdoSlam
         int viz_rate;
@@ -128,6 +143,7 @@ class RosVdoSlam {
 
         ros::Publisher scene_pub;
         ros::Publisher map_pub;
+        ros::Publisher odom_gt_pub;
         VDO_SLAM::RosVisualizerPtr ros_viz;
         VDO_SLAM::RosVizualizerSpinHandler ros_viz_handler;
 
@@ -152,6 +168,10 @@ class RosVdoSlam {
         std::map<TrackingID, ClassType> tracking_class_map;
 
         ros::Subscriber vdo_input_sub;
+        ros::Subscriber odom_gt_sub;
+
+        std::string odom_gt_topic;
+        nav_msgs::OdometryPtr last_odom_ptr;
 
 
         ros::Time current_time;

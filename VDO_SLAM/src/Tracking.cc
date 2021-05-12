@@ -565,8 +565,20 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
                 continue;
             if(maskSEM.at<int>(KeyPoints_tmp[0].pt.y,KeyPoints_tmp[0].pt.x)!=0)
                 continue;
-            cv::drawKeypoints(imRGB, KeyPoints_tmp, imRGB, cv::Scalar(0,0,0), 1); // red
+            // cv::drawKeypoints(imRGB, KeyPoints_tmp, imRGB, cv::Scalar(0,0,0), 1); // red
+            //re-draw keypoints as squares for better viz
+            const float r = 3;
+            for(cv::KeyPoint& kp : KeyPoints_tmp) {
+                cv::Point2f pt1,pt2;
+                pt1.x=kp.pt.x-r;
+                pt1.y=kp.pt.y-r;
+                pt2.x=kp.pt.x+r;
+                pt2.y=kp.pt.y+r;
+
+                cv::rectangle(imRGB,pt1,pt2,cv::Scalar(0,255,0));
+            }
         }
+
         // static and dynamic objects
         VDO_INFO_MSG("Static + dynamic obj: " <<  mCurrentFrame.vObjLabel.size());
         for (int i = 0; i < mCurrentFrame.vObjLabel.size(); ++i)

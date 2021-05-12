@@ -120,6 +120,15 @@ namespace VDO_SLAM {
              */
             static ros::Publisher create_viz_pub(ros::NodeHandle& nh);
 
+
+            /** @brief Static function to create a ros publisher that publishes to the topic that the visualizer expects data on.
+             * Publishes a nav_msgs::Odometry message.
+             * 
+             * @param nh 
+             * @return ros::Publisher 
+             */
+            static ros::Publisher create_odom_viz(ros::NodeHandle& nh);
+
             /**
              * @brief Static function to create a ros publisher that publishes to the topic that the visualizer expects data on
              * that contains an updated map
@@ -184,10 +193,18 @@ namespace VDO_SLAM {
             std::unique_ptr<ros::AsyncSpinner> async_spinner_publish;
             bool publish_spinner_started = false;
 
+            // //threaded callback for odom gt (for now)
+            // RosCallbackQueuePtr odom_gt_queue_ptr;
+            // std::unique_ptr<ros::AsyncSpinner> odom_spinner_sub;
+            // bool odom_gt_spinner_started = false;
+
             //subscribe to VdoSlamScene msg
             ros::Subscriber slam_scene_sub;
             //subscribe to VdoSlamMap msg
             ros::Subscriber slam_map_sub;
+
+            //subscribe to intenral gt_odom msgs
+            ros::Subscriber gt_odom_sub;
             
             //publishes the slam scene as markers for RVIZ
             ros::Publisher slam_scene_3d_pub;
