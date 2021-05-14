@@ -29,7 +29,7 @@ namespace VDO_SLAM
         double timestamp = -1;
         BoundingBox bounding_box;
         Time scene_time;
-        // std::vector<cv::KeyPoint> keypoints;
+        std::vector<cv::KeyPoint> keypoints;
 
         virtual ~SceneObject() {}
 

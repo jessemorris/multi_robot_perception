@@ -9,10 +9,27 @@
 
 namespace VDO_SLAM {
 
+    std::vector<StatisticsBase*> WriterObserver::statistics_obsevers{};
+
+
+    void WriterObserver::addObserver(StatisticsBase* stats) {
+        statistics_obsevers.push_back(stats);
+    }
+
+    void WriterObserver::write() {
+
+        for(auto base : statistics_obsevers) {
+            if (base) {
+                base->implWrite();
+            }
+        }
+    }
+
     StatisticsManager::StatisticsManager(bool should_write_)
         :   should_write(should_write_) {
 
             VDO_INFO_MSG("Results dir: " << RESULTS_DIR << " and writing set to: " << should_write);
+            WriterObserver::addObserver(this);
 
         }
 
@@ -22,6 +39,7 @@ namespace VDO_SLAM {
             VDO_INFO_MSG("Results dir: " << RESULTS_DIR << " and writing set to: " << should_write);
             system_node_["params"] = params_;
             params = params_;
+            WriterObserver::addObserver(this);
 
         }
 
@@ -53,7 +71,7 @@ namespace VDO_SLAM {
     }
 
     
-    void StatisticsManager::writeStatistics() {
+    void StatisticsManager::implWrite() {
         if (should_write) {
             std::string system_file = RESULTS_DIR + "system.yaml";
             std::string map_file = RESULTS_DIR + "map.yaml";
@@ -74,6 +92,36 @@ namespace VDO_SLAM {
         }
 
     }
+
+    Logger::Logger(const std::string& name) {
+
+        VDO_INFO_MSG("Making logger: " << name);
+        file_path = RESULTS_DIR + name + ".txt";
+        file.open (file_path);
+
+        WriterObserver::addObserver(this);
+
+    }
+
+    void Logger::implWrite() {
+        VDO_INFO_MSG("Written data to " << file_path);
+        file.close();
+    } 
+
+    void Logger::addLog(const std::string& info) {
+        file << info << "\n";
+    }
+
+    // void operator<<(std::ostream& os, Logger& logger) {
+    //     std::stringstream ss;
+    //     ss << os.rdbuf();
+    //     std::string str = ss.str();
+    //     logger.file << str << "\n";
+    // }
+
+    // void Logger::operator<<(const std::string& info) {
+
+    // }
 
 }
 

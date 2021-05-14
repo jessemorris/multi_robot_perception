@@ -11,6 +11,7 @@
 
 #include "vdo_slam/map/Map.h"
 #include "vdo_slam/Frame.h"
+#include "vdo_slam/utils/statistics.h"
 #include <vdo_slam_g2o/types/types_six_dof_expmap.h>
 
 
@@ -31,6 +32,8 @@ public:
     void static PartialBatchOptimization(Map* pMap, const cv::Mat Calib_K, const int WINDOW_SIZE);
     cv::Mat static Get3DinWorld(const cv::KeyPoint &Feats2d, const float &Dpts, const cv::Mat &Calib_K, const cv::Mat &CameraPose);
     cv::Mat static Get3DinCamera(const cv::KeyPoint &Feats2d, const float &Dpts, const cv::Mat &Calib_K);
+
+    static Logger log;
 
 };
 

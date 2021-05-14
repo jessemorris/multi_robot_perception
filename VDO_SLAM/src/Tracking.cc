@@ -593,8 +593,8 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
             if (KeyPoints_tmp[0].pt.x>=(mImGray.cols-1) || KeyPoints_tmp[0].pt.x<=0 || KeyPoints_tmp[0].pt.y>=(mImGray.rows-1) || KeyPoints_tmp[0].pt.y<=0)
                 continue;
 
-            HashableColor color = color_manager.get_colour_for_tracking_id(l);
-            cv::drawKeypoints(imRGB, KeyPoints_tmp, imRGB, color, 1);
+            // HashableColor color = color_manager.get_colour_for_tracking_id(l);
+            // cv::drawKeypoints(imRGB, KeyPoints_tmp, imRGB, color, 1);
 
             // switch (l)
             // {
@@ -681,12 +681,12 @@ std::pair<SceneType, std::shared_ptr<Scene>> Tracking::GrabImageRGBD(const cv::M
             //         break;
             // }
         }
-        cv::imshow("Static Background and Object Points", imRGB);
-        // cv::imwrite("feat.png",imRGB);
-        if (f_id<4)
-            cv::waitKey(1);
-        else
-            cv::waitKey(1);
+        // cv::imshow("Static Background and Object Points", imRGB);
+        // // cv::imwrite("feat.png",imRGB);
+        // if (f_id<4)
+        //     cv::waitKey(1);
+        // else
+        //     cv::waitKey(1);
 
     }
 
@@ -1173,7 +1173,7 @@ SceneType Tracking::Track()
 
             if (ObjIdTest_in.size()<50)
             {
-                VDO_DEBUG_MSG("Object Initialization Fail! ! !");
+                VDO_WARN_MSG("Object Initialization Fail");
                 mCurrentFrame.bObjStat[i] = false;
                 mCurrentFrame.vObjMod_gt[i] = cv::Mat::eye(4,4, CV_32F);
                 mCurrentFrame.vObjMod[i] = cv::Mat::eye(4,4, CV_32F);
@@ -1200,6 +1200,7 @@ SceneType Tracking::Track()
             // // // // image show the matching on each object
             // std::vector<cv::KeyPoint> PreKeys, CurKeys;
             // std::vector<cv::DMatch> TMes;
+            // int count = 0;
             // for (int j = 0; j < ObjIdTest.size(); ++j)
             // {
             //     // save key points for visualization
@@ -1419,9 +1420,66 @@ SceneType Tracking::Track()
         Sem_Lab_Tmp.push_back(0);
         Obj_Stat_Tmp.push_back(true);
         // (6.2) Save Object Motions and Label
+        
+        //key is tracking label and value is the keypoints on that object
+        //we have to loop through vObjLabel and find the ones for each object
+        std::map<int, std::vector<cv::KeyPoint>> object_keypoints_map;
+        // VDO_INFO_MSG("vnObjInlierID size " << mCurrentFrame.vnObjInlierID.size());
+        // VDO_INFO_MSG("vObjMod size " << mCurrentFrame.vObjMod.size());
+        //  VDO_INFO_MSG("ObjIdNew size " << ObjIdNew.size());
+
+        // for (size_t i = 0; i < ObjIdNew.size(); ++i) {
+        //     int tracking_label = mCurrentFrame.vObjLabel[i];
+        //     std::vector<cv::KeyPoint> keypoints;
+
+
+        //     for (int j = 0; j < ObjIdNew[i].size(); ++j){
+
+        //         for (int& val : mCurrentFrame.vnObjInlierID[ObjIdNew[i][j]]) {
+        //             VDO_INFO_MSG(val);
+        //         }
+        //         // if (mCurrentFrame.vnObjInlierID[ObjIdNew[i][j]] == -1) {
+        //         //     continue;
+        //         // } 
+
+
+        //         keypoints.push_back(mCurrentFrame.mvObjKeys[ObjIdNew[i][j]]);
+        //     }
+
+        //     object_keypoints_map.insert({tracking_label, keypoints});
+
+
+        // }
+        for (size_t i = 0; i < mCurrentFrame.vObjLabel.size(); ++i) {
+            if(mCurrentFrame.vObjLabel[i]==-1 || mCurrentFrame.vObjLabel[i]==-2) {
+                continue;
+            }
+
+            int tracking_label = mCurrentFrame.vObjLabel[i];
+            cv::KeyPoint kp = mCurrentFrame.mvObjKeys[i];
+
+            if (kp.pt.x>=(mImGray.cols-1) || kp.pt.x<=0 || kp.pt.y>=(mImGray.rows-1) || kp.pt.y<=0) {
+                continue;
+            }
+
+            //check if we've seen this object before
+            if(object_keypoints_map.find(tracking_label) == object_keypoints_map.end()) {
+                //not in map
+                std::vector<cv::KeyPoint> keypoints = {kp};
+                object_keypoints_map.insert({tracking_label, keypoints});
+                VDO_INFO_MSG("Found new object track " << tracking_label);
+            }
+            else {
+                object_keypoints_map[tracking_label].push_back(kp);
+            }
+        }
+
+
         for (int i = 0; i < mCurrentFrame.vObjMod.size(); ++i) {
             if (!mCurrentFrame.bObjStat[i])
                 continue;
+
+            
             Obj_Stat_Tmp.push_back(mCurrentFrame.bObjStat[i]);
             Mot_Tmp.push_back(mCurrentFrame.vObjMod[i]);
             ObjPose_Tmp.push_back(mCurrentFrame.vObjPosePre[i]);
@@ -1440,6 +1498,10 @@ SceneType Tracking::Track()
             // scene_object.pose = cv::Point3f(world_x, world_y, 0);
             // scene_object.velocity = cv::Point2f(vel_x, vel_y);
             scene_object->tracking_id = mCurrentFrame.nModLabel[i];
+            scene_object->keypoints =object_keypoints_map[scene_object->tracking_id];
+            // HashableColor color = color_manager.get_colour_for_tracking_id(scene_object->tracking_id);
+            // cv::drawKeypoints(scene->rgb_frame,  scene_object->keypoints, scene->rgb_frame, color, 1);
+
             scene_object->unique_id = i;
             scene_object->semantic_instance_index = mCurrentFrame.nSemPosition[i];
             scene_object->center_image = mCurrentFrame.vObjCentre2D[i];
@@ -1448,6 +1510,13 @@ SceneType Tracking::Track()
             scene->add_scene_object(scene_object);
 
         }
+        //  cv::imshow("Static Background and Object Points", scene->rgb_frame);
+        // // cv::imwrite("feat.png",imRGB);
+        // if (f_id<4)
+        //     cv::waitKey(1);
+        // else
+        //     cv::waitKey(1);
+
         // (6.3) Save to The Map
         mpMap->vmRigidMotion.push_back(Mot_Tmp); //THIS ONE IS OBJECT MOTION (4x4 matrix) -> 
         mpMap->vmObjPosePre.push_back(ObjPose_Tmp);
@@ -1490,7 +1559,6 @@ SceneType Tracking::Track()
     // cout << "Fid: " << f_id << endl;
     // cout << "StopFrame: " << StopFrame << endl;
     bGlobalBatch = true;
-    VDO_DEBUG_MSG(f_id);
     if (f_id==StopFrame) // bFrame2Frame f_id>=2
     {
     
@@ -1500,7 +1568,15 @@ SceneType Tracking::Track()
         double loc_ba_time;
         s_5 = clock();
         // Get Partial Batch Optimization
-        // Optimizer::PartialBatchOptimization(mpMap,mK,f_id);
+        int n_window;
+        if (StopFrame == global_f_id-1) {
+            n_window = StopFrame - 1;
+        }
+        else {
+            n_window = 2 * StopFrame - 1;
+        }
+
+        // Optimizer::PartialBatchOptimization(mpMap,mK,n_window);
         Optimizer::FullBatchOptimization(mpMap,mK);
 
         VDO_INFO_MSG("Finished full batch batch");

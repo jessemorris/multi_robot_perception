@@ -68,11 +68,15 @@ namespace VDO_SLAM {
 
         void shutdown();
 
+        inline bool is_shutdown() {return is_shutdown_;} 
+
         
 
         void SaveResultsIJRR2020(const string &filename);
 
     private:
+
+        bool is_shutdown_ = false;
 
         // Input sensor
         eSensor mSensor;

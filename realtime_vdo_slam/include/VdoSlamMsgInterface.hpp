@@ -23,6 +23,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Point.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <realtime_vdo_slam/VdoSlamScene.h>
@@ -107,6 +108,18 @@ namespace VDO_SLAM {
 
         vision_msgs::BoundingBox2D bb = _msg->bounding_box;
         scene_object->bounding_box = BoundingBox::create<vision_msgs::BoundingBox2D>(bb);
+
+
+        std::vector<cv::KeyPoint> key_points;
+        for(const geometry_msgs::Point& point : _msg->keypoints) {
+            cv::KeyPoint kp;
+            kp.pt.x = point.x;
+            kp.pt.y = point.y;
+            key_points.push_back(kp);
+        }
+
+        scene_object->keypoints = key_points;
+
         return scene_object;
     }
 
@@ -128,6 +141,18 @@ namespace VDO_SLAM {
 
         vision_msgs::BoundingBox2D bb = _msg.bounding_box;
         scene_object->bounding_box = BoundingBox::create<vision_msgs::BoundingBox2D>(bb);
+
+        std::vector<cv::KeyPoint> key_points;
+        for(const geometry_msgs::Point& point : _msg.keypoints) {
+            cv::KeyPoint kp;
+            kp.pt.x = point.x;
+            kp.pt.y = point.y;
+            key_points.push_back(kp);
+        }
+
+        scene_object->keypoints = key_points;
+
+
         return scene_object;
     }
 
@@ -140,6 +165,16 @@ namespace VDO_SLAM {
         msg->semantic_label = semantic_instance_index;
         msg->label = label;
 
+        std::vector<geometry_msgs::Point> key_points;
+        for (cv::KeyPoint& kp : keypoints) {
+            geometry_msgs::Point point;
+            point.x = kp.pt.x;
+            point.y = kp.pt.y;
+            point.z = -1;
+            key_points.push_back(point);
+        }
+
+        msg->keypoints = key_points;
         //we should not label here becuase the scene object may not have the correct label
         msg->tracking_id = tracking_id;
         msg->time = scene_time.convert<ros::Time>();

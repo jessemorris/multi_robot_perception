@@ -110,9 +110,9 @@ namespace VDO_SLAM {
             //     odom_gt_sub = nh.subscribe<nav_msgs::Odometry>(odom_gt_topic, 100, &RosVisualizer::odom_gt_callback, this);
             // }
 
-            if(gps_in_use()) {
-                gps_sub = nh.subscribe<sensor_msgs::NavSatFix>(gps_topic, 100, &RosVisualizer::gps_callback, this);
-            }
+            // if(gps_in_use()) {
+            //     gps_sub = nh.subscribe<sensor_msgs::NavSatFix>(gps_topic, 100, &RosVisualizer::gps_callback, this);
+            // }
 
 
             nav_msgs::Odometry odom;

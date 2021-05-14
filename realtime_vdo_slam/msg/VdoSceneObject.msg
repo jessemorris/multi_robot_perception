@@ -10,3 +10,7 @@ uint32 semantic_label
 uint32 tracking_id
 string label
 uint32 uid
+
+#use as placeholder for a cv::KeyPoint. We will only fill out x,y (leaving z = -1)
+#point.x = u on the image plane and point.y = v on the image plane
+geometry_msgs/Point[] keypoints

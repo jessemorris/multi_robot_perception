@@ -75,6 +75,7 @@ namespace VDO_SLAM {
         // }
 
         std::pair<SceneType, std::shared_ptr<Scene>> result_pair = mpTracker->GrabImageRGBD(imRGB,imD,imFlow,maskSEM, time_,timestamp,imTraj,nImage);
+        
         slam_scene_queue_.push(result_pair.second);
         return result_pair;
 

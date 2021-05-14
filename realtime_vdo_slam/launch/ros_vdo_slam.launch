@@ -62,11 +62,11 @@
   <arg name="data_code" default="2"/>
 
   <!-- <arg name="depth_map_factor" default="300"/> -->
-  <arg name="depth_map_factor" default="400"/>
+  <arg name="depth_map_factor" default="600"/>
 
 
-  <arg name="thdepth_bg" default="30"/>
-  <arg name="thdepth_obj" default="50"/>
+  <arg name="thdepth_bg" default="50"/>
+  <arg name="thdepth_obj" default="45"/>
   <arg name="max_track_points_bg" default="1700"/>
   <arg name="max_track_points_obj" default="800"/>
 
@@ -74,7 +74,7 @@
   <arg name="sf_ds_thresh" default="0.99"/> -->
 
   <!-- <arg name="sf_mg_thresh" default="0.12"/> -->
-   <arg name="sf_mg_thresh" default="0.40"/>
+   <arg name="sf_mg_thresh" default="0.8"/>
   <arg name="sf_ds_thresh" default="0.5"/>
 
 

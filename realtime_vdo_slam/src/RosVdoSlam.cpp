@@ -74,10 +74,11 @@ RosVdoSlam::RosVdoSlam(ros::NodeHandle& n) :
 
         //connect to odom gt topic if used
         if(!odom_gt_topic.empty()) {
+
             ros::SubscribeOptions odomgt_subscriber_options =
             ros::SubscribeOptions::create<nav_msgs::Odometry>(
                 odom_gt_topic,
-                kMaxSceneQueueSize,
+                1,
                 boost::bind(&RosVdoSlam::odom_gt_callback, this, _1),
                 ros::VoidPtr(),
                 odom_input_queue_ptr.get());
@@ -304,6 +305,7 @@ void RosVdoSlam::vdo_input_callback(const realtime_vdo_slam::VdoInputConstPtr& v
     else {
         ROS_WARN_STREAM("Odom gt was null");
         input->gt_odom_ptr = boost::make_shared<nav_msgs::Odometry>();
+        input->gt_odom_ptr->header.stamp = current_time;
     }
 
     //add the input to the thread queue so we can deal with it later
@@ -400,6 +402,8 @@ void RosVdoSlam::vdo_worker() {
 
         if (!vdo_input_queue.empty()) {
 
+
+
             vdo_input_queue.pop(input);
             ros::Time image_time = input->image_time;
             VDO_SLAM::Time slam_time = VDO_SLAM::Time::create<ros::Time>(image_time);
@@ -439,7 +443,7 @@ void RosVdoSlam::vdo_worker() {
             // ros_scene = std::make_shared<VDO_SLAM::RosScene>(*vdo_scene, input->image_time);
             // realtime_vdo_slam::VdoSlamScenePtr summary_msg = ros_scene->to_msg();
             realtime_vdo_slam::VdoSlamScenePtr summary_msg = vdo_scene->convert<realtime_vdo_slam::VdoSlamScenePtr>();
-            utils::mat_to_image_msg(summary_msg->original_frame, original_rgb, sensor_msgs::image_encodings::RGB8);
+            // utils::mat_to_image_msg(summary_msg->original_frame, original_rgb, sensor_msgs::image_encodings::RGB8);
             if(summary_msg != nullptr) {
                 //we send a std::shared ptr as the visualizer is in the same node so we maximise sending speed
                 //see ros interprocess comms: http://wiki.ros.org/roscpp/Overview/Publishers%20and%20Subscribers#Intraprocess_Publishing
@@ -454,6 +458,10 @@ void RosVdoSlam::vdo_worker() {
                 }
 
 
+            }
+
+            if (slam_system->is_shutdown()) {
+                ros::shutdown();
             }
         }
     }

@@ -40,13 +40,14 @@ class PlottingManager:
         # pose_odom_init_0 = pose_to_homogenous(self.odom_ft[0].pose)
         # pose_odom_init_1 = pose_to_homogenous(self.odom_ft[1].pose)
         # self.pose_odom_R =  pose_odom_init_0 @ pose_odom_init_1
-        self.pose_odom_R  = pose_to_homogenous(self.odom_ft[0].pose)
+        self.pose_odom_R  = pose_to_homogenous(self.odom_ft[5].pose)
         self.trajectory_dict = self.construct_trajetories_all()
 
     def _transform_pose(self, pose):
         hom_pose = pose_to_homogenous(pose)
         # pose_in_r = np.linalg.inv(self.pose_vio_R) @ hom_pose
-        pose_in_r = np.linalg.inv(hom_pose)  @ self.pose_odom_R @ hom_pose
+        # pose_in_r = np.linalg.inv(hom_pose)  @ self.pose_odom_R @ hom_pose
+        pose_in_r = self.pose_odom_R @ hom_pose
         # pose_in_r[0:3, 3] +=  self.pose_odom_R[0:3, 3]
         return homogenous_to_pose(pose_in_r)
         # return pose
@@ -134,6 +135,28 @@ class PlottingManager:
 
         return trajectory_dict
 
+    def construct_trajetories_class(self):
+        #make n tracking_id's by occurances by 2 (xy)
+        #tracking Id will start at 1, so index is tracking_id - 1
+        trajectory_dict = {}
+
+
+        for scene in self.scenes:
+            for scene_object in scene.scene_objects:
+                tracking_id = scene_object.label
+                pose_r = self._transform_pose(scene_object.pose)
+                # pose_r = scene_object.pose
+
+                # print(trajectory_dict)
+                # print(tracking_id in trajectory_dict)
+
+                if tracking_id not in trajectory_dict:
+                    trajectory_dict[tracking_id] = [[pose_r.position.x,pose_r.position.y]]
+                else:
+                    trajectory_dict[tracking_id].append([pose_r.position.x,pose_r.position.y])
+
+        return trajectory_dict
+
     def get_trajectory(self, id):
         if id in self.trajectory_dict:
             return np.array(self.trajectory_dict[id])
@@ -141,8 +164,11 @@ class PlottingManager:
             print("{} is not in trajectory dict".format(id))
 
 
-    def plot_trajectories(self):
-        traj_dict = self.construct_trajetories_all()
+    def plot_trajectories(self, type_="tracking_id"):
+        if type_ == "tracking_id":
+            traj_dict = self.construct_trajetories_all()
+        if type_ == "class":
+            traj_dict = self.construct_trajetories_class()
         for id, path in traj_dict.items():
             color = Color(pick_for=id)
             path = np.array(path)
@@ -159,13 +185,16 @@ if __name__ == "__main__":
     xy_scenes = pl.get_xy_scenes()
     xy_odom = pl.get_xy_odom()
 
-    # pl.plot_trajectories()
+    plot_type = "class"
+    # plot_type = "tracking_id"
+
+    pl.plot_trajectories(plot_type)
 
     # trajectory = pl.get_trajectory(10)
 
-    # plt.scatter(xy_scenes[:, 0], xy_scenes[:, 1], color='g')
+    plt.scatter(xy_scenes[:, 0], xy_scenes[:, 1], color='g')
     # plt.scatter(xy_odom[:, 0], xy_odom[:, 1], color='r')
-    # plt.show()
+    plt.show()
     pl.write_results_for_trajectory_eval()
     
     

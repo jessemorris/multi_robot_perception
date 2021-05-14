@@ -19,6 +19,7 @@
 #include <stdio.h>
 
 #include <realtime_vdo_slam/VdoInput.h>
+#include "VdoSlamMsgInterface.hpp"
 
 // #incl
 #include <mono_depth_2/MonoDepthInterface.hpp>
@@ -29,15 +30,27 @@ using namespace VDO_SLAM::preprocessing;
 
 ImageRgbDepth::ImageRgbDepth(ros::NodeHandle& n)
     :   BaseProcessing(n),
-        raw_img_synch(n,rgb_topic, 1000),
-        depth_img_synch(n,depth_topic, 1000),
-        sync(MySyncPolicy(1000), raw_img_synch, depth_img_synch) {
+        raw_img_synch(n,rgb_topic, 3000),
+        depth_img_synch(n,depth_topic, 3000),
+        sync(MySyncPolicy(3000), raw_img_synch, depth_img_synch) {
 
 
     mask_rcnn_interface = std::make_shared<mask_rcnn::MaskRcnnInterface>(n);
     sceneflow = std::make_shared<flow_net::FlowNetInterface>(n);
+
+    // nn_thread = std::thread(&ImageRgbDepth::nn_thread_worker, this);
+
+
     sync.registerCallback(boost::bind(&ImageRgbDepth::image_callback, this, _1, _2));
 }
+
+
+ImageRgbDepth::~ImageRgbDepth() {
+    if (nn_thread.joinable()) {
+        nn_thread.join();
+    }
+}
+
 
 void ImageRgbDepth::start_services() {
     mask_rcnn_interface->start_service();
@@ -47,6 +60,12 @@ void ImageRgbDepth::start_services() {
 
     run_scene_flow = true;
     run_mask_rcnn = true;
+}
+
+
+void ImageRgbDepth::nn_thread_worker() {
+
+    // while (!input_queue.isShutdown() && ros::ok())
 }
 
 void ImageRgbDepth::image_callback(ImageConst raw_image, ImageConst depth) {
@@ -70,6 +89,13 @@ void ImageRgbDepth::image_callback(ImageConst raw_image, ImageConst depth) {
     else {
         image = distored;
     }
+
+    std::shared_ptr<VDO_SLAM::FrameInput> frame_input = std::make_shared<VDO_SLAM::FrameInput>();
+    frame_input->raw = image;
+    frame_input->depth = cv_ptr_depth->image;
+
+    ros::Time time = raw_image->header.stamp;
+    frame_input->image_time = VDO_SLAM::Time::create<ros::Time>(time);
 
     std_msgs::Header original_header = raw_image->header;
 

@@ -1,5 +1,6 @@
 #include "vdo_slam/visualizer/visualizer_2D.h"
 #include "vdo_slam/utils/VdoUtils.h"
+#include "vdo_slam/utils/statistics.h"
 
 namespace VDO_SLAM {
 
@@ -20,7 +21,8 @@ namespace VDO_SLAM {
 
     void Visualizer2D::shutdown() {
         VDO_INFO_MSG("Shutting down Visualizer 2D");
-        statistics_manager_->writeStatistics();
+        // statistics_manager_->writeStatistics();
+        WriterObserver::write();
     }
 
     void Visualizer2D::update_object_points_display(SlamScenePtr& slam_scene_) {
@@ -135,6 +137,9 @@ namespace VDO_SLAM {
             cv::rectangle(overlayed, cv::Rect2d(object->bounding_box.x, object->bounding_box.y,
                 object->bounding_box.width, object->bounding_box.height), 
                 color, 2);
+
+
+            cv::drawKeypoints(overlayed, object->keypoints, overlayed, color, 1);
 
 
             //add info

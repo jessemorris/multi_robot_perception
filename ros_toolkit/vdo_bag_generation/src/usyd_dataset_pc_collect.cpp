@@ -439,7 +439,7 @@ class UsydDataPCCollectPlayBack {
                     // double estimated_depth = (fx * baseline)/(depth_units * unrectified_value);
                     double rectified_depth =  previous_s_param * unrectified_value + previous_t_param;
                     if (static_cast<uint16_t>(rectified_depth) >= 65536) {
-                        rectified_depth = 65535;
+                        rectified_depth = 65534;
                     }
                     // if (rectified_depth >= pow(2, 16)) {
                     //     ROS_INFO_STREAM(rectified_depth << "is to big " << unrectified_value);

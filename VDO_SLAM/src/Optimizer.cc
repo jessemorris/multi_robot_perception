@@ -7,6 +7,7 @@
 **/
 
 #include "vdo_slam/Optimizer.h"
+#include "vdo_slam/Macros.h"
 
 #include <vdo_slam_g2o/core/block_solver.h>
 #include <vdo_slam_g2o/core/optimization_algorithm_levenberg.h>
@@ -37,6 +38,8 @@ namespace VDO_SLAM
 {
 
 using namespace std;
+
+Logger Optimizer::log("optimizer");
 
 void Optimizer::PartialBatchOptimization(Map* pMap, const cv::Mat Calib_K, const int WINDOW_SIZE)
 {
@@ -1933,6 +1936,10 @@ void Optimizer::FullBatchOptimization(Map* pMap, const cv::Mat Calib_K)
     optimizer.save("dynamic_slam_graph_before_opt.g2o");
     optimizer.optimize(300);
     optimizer.save("dynamic_slam_graph_after_opt.g2o");
+
+    VDO_INFO_MSG("Optimizer chi squared: " <<  optimizer.chi2());
+    // log << "Chi squared " << optimizer.chi2();
+    log.addLog("chi squared " + std::to_string(optimizer.activeRobustChi2()) + " " + std::to_string(optimizer.activeEdges().size()));
 
     if (check_after_opt)
     {
